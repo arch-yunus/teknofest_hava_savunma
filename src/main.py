@@ -14,6 +14,8 @@ from rich import print as rprint
 from radar import RadarSistemi, Hedef
 from interceptor import OnleyiciBatarya, MuhimmatYokHatasi
 from telemetry import TelemetriSistemi
+from tehdit_siniflandirici import TehditSiniflandirici, TehditOnceligi
+from kalman_takip import KalmanTakipYoneticisi
 import utils
 
 console = Console()
@@ -26,37 +28,59 @@ def ayarları_yukle(yol: str = "config/ayarlar.yaml") -> Dict[str, Any]:
         return {}
 
 def create_status_table(target_data: list, battery_ammo: int) -> Table:
-    table = Table(title="[bold blue]GÖKKALKAN YZ - CANLI TEMAS ÇİZELGESİ[/]", border_style="blue")
-    
-    table.add_column("ID", style="cyan", no_wrap=True)
-    table.add_column("Mesafe (km)", justify="right", style="magenta")
-    table.add_column("İrtifa (km)", justify="right", style="green")
-    table.add_column("Hız (km/h)", justify="right", style="yellow")
-    table.add_column("TTI (sn)", justify="right", style="red")
-    table.add_column("CPA (km)", justify="right", style="bold red")
+    table = Table(
+        title="[bold blue]GÖKKALKAN YZ v3.0 — CANLI TEMAS ÇİZELGESİ[/]",
+        border_style="blue"
+    )
+
+    table.add_column("ID",         style="cyan",      no_wrap=True)
+    table.add_column("Mesafe(km)", justify="right",   style="magenta")
+    table.add_column("İrtifa(km)", justify="right",   style="green")
+    table.add_column("Hız(km/h)",  justify="right",   style="yellow")
+    table.add_column("TTI(sn)",    justify="right",   style="red")
+    table.add_column("CPA(km)",    justify="right",   style="bold red")
+    table.add_column("Tip",        justify="center",  style="white")
+    table.add_column("Öncelik",    justify="center")
+    table.add_column("Karar",      style="bold")
+
+    ONCELIK_RENK = {
+        "KRİTİK":  "[bold red]",
+        "YUKSEK":  "[bold yellow]",
+        "ORTA":    "[yellow]",
+        "DUSUK":   "[dim]",
+    }
 
     for t in target_data:
+        oncelik_str = t.get("oncelik", "?")
+        renk = ONCELIK_RENK.get(oncelik_str, "")
+
         table.add_row(
             t['id'],
             f"{t['mesafe']:.2f}",
             f"{t['irtifa']:.2f}",
             f"{t['hiz']:.1f}",
             f"{t['tti']:.1f}" if t['tti'] else "---",
-            f"{t['cpa']:.2f}"
+            f"{t['cpa']:.2f}",
+            t.get("tip", "?"),
+            f"{renk}{oncelik_str}[/]" if renk else oncelik_str,
+            t.get("karar", "?"),
         )
-    
-    table.caption = f"[bold white]Mühimmat Durumu: {battery_ammo}[/]"
+
+    table.caption = f"[bold white]Mühimmat: {battery_ammo} | Aktif İzci: {target_data.__len__()}[/]"
     return table
+
 
 def main():
     ayarlar = ayarları_yukle()
     telemetri = TelemetriSistemi(log_dosyasi="logs/gokkalkan_gorev.log")
-    
+    siniflandirici = TehditSiniflandirici()
+    kalman_yoneticisi = KalmanTakipYoneticisi(dt=1.0)
+
     radar = RadarSistemi(
         menzil_km=ayarlar.get('radar', {}).get('menzil_km', 200),
         tespit_olasiligi=ayarlar.get('radar', {}).get('tespit_olasiligi', 0.4)
     )
-    
+
     batarya = OnleyiciBatarya(
         muhimmat=ayarlar.get('batarya', {}).get('muhimmat', 15),
         hassasiyet_ayarlari=ayarlar.get('batarya', {}).get('vurus_hassasiyeti')
@@ -65,7 +89,8 @@ def main():
     # Başlangıç Ekranı
     console.clear()
     console.print(Panel.fit(
-        "[bold cyan]GÖKKALKAN YZ v2.5.0 - HAVA SAVUNMA KOMUTA MERKEZİ[/]\n"
+        "[bold cyan]GÖKKALKAN YZ v3.0 — HAVA SAVUNMA KOMUTA MERKEZİ[/]\n"
+        "[dim]Yeni Özellikler: Kalman Takip Filtresi · AI Tehdit Sınıflandırıcı[/]\n"
         "[dim]Mimar: Bahattin Yunus Çetin | Sektör: Karadeniz/Trabzon[/]",
         border_style="bold blue"
     ))
@@ -77,49 +102,69 @@ def main():
     ) as progress:
         progress.add_task(description="Radar sistemleri senkronize ediliyor...", total=None)
         time.sleep(1)
+        progress.add_task(description="Kalman takip filtreleri yükleniyor...", total=None)
+        time.sleep(0.8)
+        progress.add_task(description="Tehdit sınıflandırma motoru başlatılıyor...", total=None)
+        time.sleep(0.8)
         progress.add_task(description="Silah sistemleri kalibre ediliyor...", total=None)
-        time.sleep(1)
+        time.sleep(0.5)
         progress.add_task(description="Gök vatan veritabanı bağlandı.", total=None)
         time.sleep(0.5)
 
-    telemetri.olay_kaydet("INFO", "Sistem tam kapasite ile başlatıldı.")
-    
-    active_ui_targets = []
+    telemetri.olay_kaydet("INFO", "GÖKKALKAN v3.0 tam kapasite ile başlatıldı.")
 
     try:
         with Live(create_status_table([], batarya.muhimmat), refresh_per_second=1) as live:
             while True:
                 radar.guncelle()
-                yeni_temas = radar.tara()
-                
-                # Mevcut hedefleri UI için hazırla
+                radar.tara()
+
                 current_targets = []
-                for h in radar.aktif_hedefler:
+                for h in list(radar.aktif_hedefler):
+                    # Kalman filtresi güncellemesi
+                    izci = kalman_yoneticisi.hedef_guncelle(
+                        h.id, h.x, h.y, h.z, h.vx, h.vy, h.vz
+                    )
+                    # Filtrelenmiş konum/hız ile hedefi güncelle (opsiyonel)
+                    fx, fy, fz = izci.konum_tahmini()
+
                     tti = utils.carpisma_suresi_hesapla(h)
                     cpa = utils.en_yakin_nokta_hesapla(h)
                     hiz = h.toplam_hiz
-                    
+
+                    # Tehdit değerlendirmesi
+                    degerlendirme = siniflandirici.siniflandir(h, cpa, tti)
+
                     data = {
-                        "id": h.id,
-                        "mesafe": h.mesafe,
-                        "irtifa": h.z,
-                        "hiz": hiz,
-                        "tti": tti,
-                        "cpa": cpa
+                        "id":      h.id,
+                        "mesafe":  h.mesafe,
+                        "irtifa":  fz,
+                        "hiz":     hiz,
+                        "tti":     tti,
+                        "cpa":     cpa,
+                        "tip":     degerlendirme.tehdit_tipi.name.replace("_", " "),
+                        "oncelik": degerlendirme.oncelik.name,
+                        "karar":   degerlendirme.onerilen_karar,
+                        "skor":    degerlendirme.tehdit_skoru,
                     }
                     current_targets.append(data)
 
-                    # Otomatik Angajman Mantığı
+                    # Otomatik Angajman Mantığı (kritik tehditler için)
                     kritik_cpa = ayarlar.get('tehdit_limitleri', {}).get('kritik_mesafe', 50.0)
-                    if cpa < kritik_cpa and h.id not in [t.id for t in active_ui_targets]: # Sadece yeni kritikler için log at
+                    if (
+                        degerlendirme.oncelik == TehditOnceligi.KRİTİK
+                        or cpa < kritik_cpa
+                    ):
                         telemetri.olay_kaydet("WARNING", f"KRİTİK TEHDİT: {h.id}", data)
-                        
-                        # Angajman görsel efekti (Konsolun üstüne yazar)
-                        live.console.print(f"[bold red]>>> TEHDİT KİLİDİ: {h.id} <<<[/]")
+                        live.console.print(
+                            f"[bold red]>>> TEHDİT KİLİDİ: {h.id} "
+                            f"({degerlendirme.tehdit_tipi.name}) <<<[/]"
+                        )
                         try:
                             if batarya.angaje_ol(h):
                                 live.console.print(f"[bold green][+] İMHA BAŞARILI: {h.id}[/]")
                                 radar.aktif_hedefler.remove(h)
+                                kalman_yoneticisi.hedef_sil(h.id)
                             else:
                                 live.console.print(f"[bold yellow][-] ISKALAMA: {h.id} takibi sürüyor![/]")
                         except MuhimmatYokHatasi as e:

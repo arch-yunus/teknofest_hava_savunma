@@ -4,158 +4,163 @@
 
 ![GökKalkan AI Banner](docs/banner.png)
 
-![Sistem](https://img.shields.io/badge/KOMUTA-MERKEZ%C4%B0-blue?style=for-the-badge&logo=opsgenie)
-![Sürüm](https://img.shields.io/badge/VERS%C4%B0YON-3.0_ULTIMATE_ENCYCLOPEDIC-gold?style=for-the-badge)
-![Otonom](https://img.shields.io/badge/MOD-TAM_OTONOM-success?style=for-the-badge)
-![Kapsam](https://img.shields.io/badge/B%C4%B0LG%C4%B0-SINIRSIZ-red?style=for-the-badge)
+[![Komuta Merkezi](https://img.shields.io/badge/KOMUTA--MERKEZ%C4%B0-Aktif-0052cc?style=for-the-badge&logo=opsgenie&logoColor=white)](https://github.com/bahattinyunus/teknofest_hava_savunma)
+[![Sürüm numarası](https://img.shields.io/badge/VERS%C4%B0YON-3.0_ULTIMATE-ffd700?style=for-the-badge&logo=rocket&logoColor=black)](https://github.com/bahattinyunus/teknofest_hava_savunma/releases)
+[![Otonomi Seviyesi](https://img.shields.io/badge/MOD-TAM_OTONOM-28a745?style=for-the-badge&logo=robot&logoColor=white)](https://github.com/bahattinyunus/teknofest_hava_savunma)
+[![Python Version](https://img.shields.io/badge/PYTHON-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Lisans](https://img.shields.io/badge/L%C4%B0SANS-MIT-ff5722?style=for-the-badge&logo=git&logoColor=white)](LICENSE)
+[![Build Status](https://img.shields.io/badge/S%C4%B0STEM-STAB%C4%B0L-10b981?style=for-the-badge&logo=github-actions&logoColor=white)](https://github.com/bahattinyunus/teknofest_hava_savunma)
+
+<br>
+<i>"Bilginin sınırları, gökyüzünün sınırları gibidir; her ikisi de sadece ufuk çizgisine kadar değil, sonsuzluğa kadar uzanır."</i>
+<br>
+
+**[Teknik Mimari (TEKNIK_MIMARI.md)](docs/TEKNIK_MIMARI.md)** 🔸 **[Milli Teknoloji Manifestosu (MANIFESTO.md)](docs/MANIFESTO.md)**
 
 </div>
 
 ---
 
-## 🏛️ GİRİŞ: Modern Hava Harbinin Dijital Kalesi
+## 🚀 PROJE VİZYONU: Modern Hava Harbinin Dijital Kalesi
 
-**GökKalkan AI**, hava savunma disiplinini sadece kodsatırlarıyla değil, tarihsel, teknik ve stratejik boyutlarıyla ele alan yaşayan bir ansiklopedidir. Bu belge, TEKNOFEST vizyonunu akademik bir derinlikle birleştirerek, savunma sanayii meraklıları ve mühendisleri için uçtan uca bir rehber sunar.
+**GökKalkan AI**, hava savunma disiplinini bir bilgisayar simülasyonundan çok daha ötesine taşıyan, tarihsel, teknik ve stratejik boyutlarıyla ele alan **yaşayan bir yapay zeka ansiklopedisidir.** TEKNOFEST vizyonunu akademik bir derinlikle birleştirerek, savunma sanayii meraklıları ve mühendisleri için uçtan uca, askeri sınıf (military-grade) bir komuta kontrol rehberi ve simülasyon iskeleti sunar.
 
-> "Bilginin sınırları, gökyüzünün sınırları gibidir; her ikisi de sadece ufuk çizgisine kadar değil, sonsuzluğa kadar uzanır."
-
----
-
-> **[Teknik Mimari (TEKNIK_MIMARI.md)](docs/TEKNIK_MIMARI.md)** | **[Milli Teknoloji Manifestosu (MANIFESTO.md)](docs/MANIFESTO.md)**
+Sistem, elektromanyetik spektrumdaki zayıf sinyalleri yakalayarak, **Kalman Filtreleme**, **Yapay Zeka Tabanlı Tehdit Sınıflandırma** algoritmaları ve **Gelişmiş Önleyici Projeksiyonları** ile hedefleri etkisiz hale getirecek saniyenin altındaki (sub-second) reaksiyonları yönetmek üzere tasarlanmıştır.
 
 ---
 
-## 📚 1. BÖLÜM: Hava Savunma Tarihçesi ve Doktrinel Evrim
+## 🔮 MİMARİ ve İŞ AKIŞI: Otonom Karar Destek Mekanizması
 
-### 1.1. Antik Dönemden Modern Çağa
-Hava savunma düşüncesi, uçağın savaş alanına girmesinden çok önce, "yüksekten gelen tehlikeye" karşı kalkanlarla başlamıştır. Ancak modern anlamda ilk uçaksavar (AA - Anti-Aircraft) bataryaları, 1910'larda balonları ve ilk uçakları düşürmek için modifiye edilmiş toplarla kurulmuştur. 
+Aşağıda GökKalkan AI sisteminin C2 (Komuta Kontrol) Merkezinde nasıl çalıştığı ve hedefleri nasıl angaje ettiği görselleştirilmiştir:
 
-### 1.2. Radar Çağı ve Bilişim Devrimi
-II. Dünya Savaşı'ndaki **Battle of Britain**, radarın savaşı nasıl kazandırdığının en büyük kanıtıdır. GökKalkan AI, bu mirası devralarak elektromanyetik dalgaları sadece algılamakla kalmaz, onları yapay zeka algoritmalarıyla süzerek "Bilinçli Savunma" seviyesine taşır.
-
----
-
-## 📡 2. BÖLÜM: Radar Teknolojileri ve Sinyal İşleme
-
-### 2.1. Spektrum Yönetimi
-Radarlar farklı frekans bantlarında (L, S, X, Ku) çalışır.
-- **L-Bant:** Uzun menzil, düşük çözünürlük (Uzak mesafe erken uyarı).
-- **X-Bant:** Kısa menzil, yüksek çözünürlük (Ateş kontrol ve füze güdümleme).
-- **GökKalkan Modeli:** Çok bantlı (Multi-band) sanal tarama yaparak hem erken uyarı hem de hassas angajman sağlar.
-
-### 2.2. RCS (Radar Kesit Alanı) ve Stealth Teknolojisi
-Stealth (Görünmezlik) uçaklar, radar dalgalarını yutmak (RAM kaplama) veya farklı yönlere saptırmak (Geometrik tasarım) için tasarlanır. GökKalkan AI, bu zayıf yansımaları (Clutter) ayıklamak için **Gelişmiş Filtreleme** algoritmaları kullanır.
-
----
-
-## �️ 3. BÖLÜM: Elektronik Harp (EH) ve Karşı Tedbirler
-
-Hava savunma, sadece füze fırlatmak değildir; aynı zamanda elektromanyetik spektrumda verilen bir savaştır.
-
-### 3.1. Karıştırma (Jamming) ve Aldatma (Spoofing)
-Düşman, radarımızı "kör etmek" için yüksek güçlü gürültü yayınlayabilir. GökKalkan AI'nın **ECCM (Electronic Counter-Counter Measures)** yetenekleri şunları içerir:
-- **Frekans Atlama:** Sinyalin sürekli frekans değiştirerek karıştırıcıdan kaçması.
-- **Sidelobe Blanking:** Yan loblardan gelen sahte sinyallerin temizlenmesi.
-
-### 3.2. Chaff ve Flare Simülasyonu
-Hedefler, füzelerimizi aldatmak için metal parçacıkları (Chaff) veya ısı fişekleri (Flare) atabilir. Sistemimiz, bu sahte temasları hız ve sıcaklık profili üzerinden ayırt edebilir.
+```mermaid
+sequenceDiagram
+    participant R as 📡 Radar & Sensör Ağı
+    participant KF as 🎯 Kalman Takibi (KalmanTracker)
+    participant AI as 🧠 AI Sınıflandırıcı (TehditSiniflandirici)
+    participant C2 as 🛡️ Ana Komuta Merkezi (Sistem Yöneticisi)
+    participant W as 🚀 Önleyici (Interceptor)
+    
+    R->>KF: Polar Koordinat & Doppler Verisi
+    Note over KF: Gürültü Filtreleme (Clutter)<br/>& Yörünge Tahmini
+    KF->>AI: İşlenmiş Kinematik İzler
+    Note over AI: Random Forest <br/>Taktik Karar Matrisi
+    AI->>C2: Hedef Tanımı & Tehdit Seviyesi
+    alt Tehdit Seviyesi: KRİTİK
+        C2-->>W: Angajman Emri (Launch Request)
+        W-->>W: TTI ve CPA Projeksiyonu
+        W->>C2: İmha Raporu Vektörü (Kill Assessment)
+    else Tehdit Seviyesi: İZLEME
+        C2->>C2: İz İzlemeye Devam Et (Track-While-Scan)
+    end
+```
 
 ---
 
-## 🚀 4. BÖLÜM: Önleyici Füze ve Aerodinamik Prensipleri
+## 📂 PROJE ANATOMİSİ: Askeri Sınıf Yazılım Hiyerarşisi
 
-### 4.1. Tahrik Sistemleri
-- **Katı Yakıtlı Motorlar:** Hızlı tepki süresi, uzun raf ömrü. (GökKalkan Interceptor standartı).
-- **Ramjet/Scramjet:** Hipersonik hızlara ulaşmak için kullanılan ileri seviye oksijen yakma teknolojileri.
+Sistem mimarisi modüler yapıya dayanır; her bir Python dosyası modern bir hava savunma doktrinindeki karşılığına denk gelir.
 
-### 4.2. Güdüm Yöntemleri (Guidance)
-1.  **Aktif Radar Güdüm:** Füze kendi radarını taşır ("Ateşle ve Unut").
-2.  **Yarı Aktif Güdüm:** Füze, ana radarın hedefe tuttuğu "ışığı" takip eder.
-3.  **Homing (Isı Güdümlü):** Hedefin motor egzozundan yayılan IR (Kızılötesi) izini takip eder.
-
----
-
-## 📐 5. BÖLÜM: Üst Düzey Karar Destek Algoritmaları
-
-GökKalkan AI, her saniye binlerce veriyi şu üçlü filtre ile işler:
-
-### 5.1. TTI (Time To Impact) Projeksiyonu
-Sistem, hedefin sadece o anki hızını değil, ivmesini ve vektörel sapmasını kullanarak çarpışma anını milisaniyelik bir hassasiyetle tahmin eder.
-
-### 5.2. CPA (Closest Point of Approach) Analizi
-Bataryanın "Kör Noktalarına" veya "En Zayıf Sektörlerine" yapılabilecek sızmaları önlemek için geometrik bir teğet hesabı yapar.
-
-### 5.3. Tehdit Klasifikasyon Matrisi
-- **Düzensiz Hareket:** Yüksek G manevrası yapan bir savaş uçağı.
-- **Doğrusal ve Hızlı:** Bir seyir füzesi (Cruise Missile).
-- **Yavaş ve Kararsız:** Bir Drone veya İHA.
+```text
+teknofest_hava_savunma/
+├── docs/                   # Doktrinler, Ansiklopediler, Mimari Notlar
+│   ├── TEKNIK_MIMARI.md    # Matematiksel modeller ve algoritmalar
+│   └── MANIFESTO.md        # Sistemin felsefesi ve hedef kitlesi
+├── src/                    # 🧠 GökKalkan AI Çekirdek Kodları
+│   ├── main.py             # C2 (Komuta-Kontrol) Karar Merkezi
+│   ├── radar.py            # Elektromanyetik Sinyal & Sensör Simülasyonu
+│   ├── kalman_takip.py     # Hassas İz ve Yörünge Filtreleme (Kalman Filter)
+│   ├── tehdit_siniflandirici.py # AI/ML Tabanlı Tehdit Skorlama & Kimlik (IFF)
+│   ├── interceptor.py      # Güdüm, TTI (Time-to-Impact) ve Önleme Matrisleri
+│   ├── telemetry.py        # Canlı Operasyonel Veri Kaydı ve Loglama
+│   └── utils.py            # Aerodinamik Matris Sabitleri & Çeviriciler
+├── tests/                  # Muharebe Öncesi Sanal Atış ve Test Sahası
+│   └── test_simulasyon.py  # Ünit ve Entegrasyon testleri 
+├── LICENSE                 # MIT Lisansı
+├── requirements.txt        # Python Bağımlılık Bildirimi
+└── README.md               # İstihbarat ve Proje Brifingi (Şu an buradasınız!)
+```
 
 ---
 
-## 🌍 6. BÖLÜM: Küresel Hava Savunma Stratejileri
+## ⚡ 1. BÖLÜM: Bilişim Devrimi İçinde Hava Savunma
 
-### 6.1. NATO vs Doğu Bloğu Doktrinleri
-- **NATO:** Daha çok hava hakimiyetine (uçaklara) ve mobil orta menzilli sistemlere (Patriot, NASAMS) dayanır.
-- **Rusya/Çin:** Sabit ve çok katmanlı devasa füze ağlarına (S-400, HQ-9) önem verir.
-- **Milli Hamle:** GökKalkan AI, her iki dünyanın en iyi pratiklerini alarak hibrit ve ağ merkezli bir yapı sunar.
-
-### 6.2. Sürü Saldırıları (Swarm) Savunması
-Geleceğin savaşı, yüzlerce ucuz dronun aynı anda saldırdığı "Sürü" (Swarm) taktiğidir. GökKalkan AI'nın işlemci gücü, aynı anda yüzlerce bağımsız teması takip edip önceliklendirecek şekilde optimize edilmiştir.
+GökKalkan AI, pürüzsüz bir spektrum yönetimi sunarken radarın çalışma prensiplerini dijital bir arayüzle kodlar.
+*   **Çok Bantlı Simülasyon (L, S, X, Ku Bandı):** Farklı frekanslarda sahte taramalarla erken uyarı veya hedef kilitlenmesini gerçeğe uygun şekilde simüle eder.
+*   **Stealth & RCS (Radar Kesit Alanı):** Güçlü filtreleme algoritmaları, hedeflerin (örneğin seyir füzeleri veya 5. nesil savaş uçakları) düşük RCS (Radar Cross Section) profillerini bile tespit etmemize olanak tanır.
+*   **ECCM (Electronic Counter-Counter Measures):** Düşman "Jammer" faaliyetlerini engelleyecek sidelobe blanking ve frekans atlama gibi yazılımsal altyapılar geliştirme vizyonuna sahiptir.
 
 ---
 
-## 🔤 7. BÖLÜM: Profesyonel Terimler Ansiklopedisi (A-Z)
+## 🎯 2. BÖLÜM: Üst Düzey Karar Destek & Angajman Algoritmaları
+
+Hedef tespiti sonrası milisaniyeler içerisinde binlerce işlem yapan GökKalkan'ın AI Çekirdek Filtreleri:
+
+| Algoritma | Kısa Tanım | Teknik Boyut |
+| :--- | :--- | :--- |
+| **CPA Analizi** | *Closest Point of Approach* | Radarın/merkezin en korunmasız noktasından sızmaları önlemek için geometrik teğet ve vektör projeksiyonu. |
+| **TTI Hesaplama** | *Time To Impact* | Hedefin Hız, İvme, Yükseklik verisini alarak milisaniyelik çarpışma/vurma anı hesaplaması. |
+| **YZ Sınıflandırma** | *Random Forest Kimlik* | Hedefin doğrusal (Füze), pırpır/yavaş (Drone) veya manevralı (Uçak) oluşuna göre kimlik ataması. |
+
+---
+
+## 🔤 3. BÖLÜM: Profesyonel Terimler Ansiklopedisi (A-Z)
 
 | Terim | Kategori | Detaylı Tanım |
 | :--- | :--- | :--- |
-| **BVR** | Operasyonel | *Beyond Visual Range*. Görüş ötesi menzil, pilotun çıplak gözle göremediği hedeflere angaje olması. |
-| **CEP** | Balistik | *Circular Error Probable*. Bir mühimmatın isabet hassasiyetini gösteren istatistiksel daire. |
-| **EW** | Harp | *Electronic Warfare*. Elektromanyetik spektrumun kontrolü için verilen savaş. |
-| **G-Load** | Aerodinamik | Hedefin veya füzenin manevra yaparken maruz kaldığı yerçekimi kuvveti katı. |
-| **Handoff** | Kontrol | Bir hedef takibinin bir radardan diğerine veya ana komuta merkezine aktarılması. |
-| **IFF Mode 5** | Güvenlik | Modern NATO standartlarında kriptolu dost-düşman tanıma sistemi. |
-| **Look-down/Shoot-down** | Radar | Aşağı bakış ve aşağı vuruş; radarların yer gürültüsü arasından alçak uçan hedefleri seçmesi. |
+| **BVR** | Operasyonel | *Beyond Visual Range*. Görüş ötesi menzil, devasa radarlarla düşmanın çok uzaktan tespiti. |
+| **CEP** | Balistik | *Circular Error Probable*. Bir hedefin/mühimmatın isabet hassasiyetinin istatistiksel yanılma payı. |
+| **Jamming / Spoofing** | Harp (EW) | Düşman radarlarını veya iletişimi kör etmeye yarayan, elektron spektrumu saldırıları. |
+| **IFF Mode 5** | Güvenlik | Modern NATO standartlarında yüksek kriptolu dost-düşman (Identification Friend or Foe) sorgulama sistemi. |
 
 ---
 
-## 🛠️ 8. BÖLÜM: Sistem Operasyon ve Geliştirici Protokolü
+## ⚙️ HIZLI BAŞLANGIÇ: Operasyonel Başlatma Protokolü
 
-### 8.1. Yazılım Gereksinimleri
-GökKalkan AI, performans için `NumPy` üzerinden düşük seviyeli matris işlemleri yapar. Görsel arayüz için `rich` kullanılırken, veri bütünlüğü `PyYAML` ile korunur.
+Sistemi kendi lokal biriminizde ayağa kaldırmak ve C2 Komuta Merkezini çalıştırmak için terminalinizde aşağıdaki yönergeleri izleyin:
 
-### 8.2. Görev Başlatma (Mission Launch)
+### 1) Sektörel Üs Kurulumu
+
+Projeyi kendi donanımınıza klonlayın ve içine girin:
 ```bash
-# Sektörel üs kurulumu
 git clone https://github.com/bahattinyunus/teknofest_hava_savunma.git
 cd teknofest_hava_savunma
+```
 
-# Bağımlılıkların senkronizasyonu
+### 2) Mühimmat ve Sensör Uyumlandırılması (Dependencies)
+
+GökKalkan AI; veri analizi için `NumPy`, makine öğrenmesi için `scikit-learn` ve modern konsol tasarımı için `rich` kütüphanelerine ihtiyaç duyar:
+```bash
 pip install -r requirements.txt
+```
 
-# Ana Komuta Merkezini Devreye Al
+### 3) Komuta Merkezini Aktive Edin (Launch)
+
+Karar merkezini başlatın ve radar taramasına başlayın:
+```bash
 python src/main.py
 ```
 
 ---
 
-## 👨‍✈️ Mimari Heyet ve Vizyon Sahibi
+<br/>
 
 <div align="center">
 
-### Bahattin Yunus Çetin
-**Kıdemli Sistem Mimarı | Vatan Savunması Yazılım Mühendisi**
-📍 *Of / Trabzon'un Dijital Siperlerinden...*
+### 👨‍✈️ MİMARİ HEYET VE VİZYON
 
-[![GitHub](https://img.shields.io/badge/TEMAS-GITHUB-black?style=for-the-badge&logo=github)](https://github.com/bahattinyunus)
-[![LinkedIn](https://img.shields.io/badge/BA%C4%9ELANTI-LINKEDIN-blue?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/bahattinyunuscetin)
+**Bahattin Yunus Çetin**<br/>
+*Kıdemli Sistem Mimarı | Vatan Savunması Yazılım Mühendisi*<br/>
+📍 *Of / Trabzon'un Dijital Siperlerinden...*<br/><br/>
+[![GitHub](https://img.shields.io/badge/TEMAS-GITHUB-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/bahattinyunus)
+[![LinkedIn](https://img.shields.io/badge/BA%C4%9ELANTI-LINKEDIN-0077b5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/bahattinyunuscetin)
 
-</div>
+<br/>
 
----
+**Hava savunma, bir milletin gökyüzündeki imzasıdır. GökKalkan AI, bu imzanın dijital mürekkebi olmak için geliştirilmiştir.**
+<br/>
+<br/>
+<h3 align="center"><i>"Türkiye Yüzyılı'nda, Gök Vatan Emin Ellerde!"</i></h3>
+<br/>
 
-### 📜 Sonuç ve Temenni
-Hava savunma, bir milletin gökyüzündeki imzasıdır. GökKalkan AI, bu imzanın dijital mürekkebi olmak için geliştirilmiştir. Her satırı yerli, her algoritması milli gururla yazılmıştır.
-
-<div align="center">
-<i>"Türkiye Yüzyılı'nda, Gök Vatan Emin Ellerde!"</i>
 </div>

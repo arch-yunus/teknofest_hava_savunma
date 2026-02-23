@@ -1,0 +1,236 @@
+:root {
+    --bg-dark: #050a0f;
+    --radar-green: #08ff08;
+    --radar-dark: #001a00;
+    --radar-grid: rgba(8, 255, 8, 0.2);
+    --target-red: #ff3333;
+    --text-color: #88ff88;
+    --panel-bg: rgba(0, 20, 0, 0.8);
+    --border-color: #00cc00;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-color);
+    font-family: 'Share Tech Mono', monospace;
+    overflow: hidden; /* Prevent scrolling */
+}
+
+.container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+}
+
+/* SIDEBAR STYLES */
+.sidebar {
+    width: 350px;
+    background-color: var(--panel-bg);
+    border-right: 2px solid var(--border-color);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 5px 0 15px rgba(0, 255, 0, 0.1);
+    z-index: 10;
+}
+
+.logo-box {
+    margin-bottom: 30px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 15px;
+}
+
+.logo-box h1 {
+    font-size: 2.5em;
+    color: var(--radar-green);
+    text-shadow: 0 0 10px var(--radar-green);
+    letter-spacing: 2px;
+}
+
+.logo-box p {
+    font-size: 1.2em;
+    color: #ffd700;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.led {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.led.green {
+    background-color: var(--radar-green);
+    box-shadow: 0 0 10px var(--radar-green);
+    animation: blink 2s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.metrics-panel h2 {
+    font-size: 1.2em;
+    margin-bottom: 15px;
+    color: #fff;
+    border-left: 3px solid var(--radar-green);
+    padding-left: 10px;
+}
+
+.target-list {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+/* Custom scrollbar */
+.target-list::-webkit-scrollbar { width: 5px; }
+.target-list::-webkit-scrollbar-track { background: var(--bg-dark); }
+.target-list::-webkit-scrollbar-thumb { background: var(--border-color); }
+
+.target-card {
+    background: rgba(8, 255, 8, 0.05);
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    margin-bottom: 10px;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+}
+
+.target-card.kritik {
+    border-color: var(--target-red);
+    background: rgba(255, 51, 51, 0.1);
+    color: #ffaaaa;
+}
+
+.target-card.kritik .id-badge {
+    color: var(--target-red);
+    text-shadow: 0 0 5px var(--target-red);
+}
+
+.footer-info {
+    margin-top: auto;
+    border-top: 1px solid var(--border-color);
+    padding-top: 15px;
+    font-size: 0.8em;
+}
+
+/* RADAR CONTAINER STYLES */
+.radar-container {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(circle at center, #002200 0%, var(--bg-dark) 100%);
+}
+
+.radar-wrapper {
+    position: relative;
+    width: 800px;
+    height: 800px;
+    border-radius: 50%;
+    background-color: var(--radar-dark);
+    border: 3px solid var(--border-color);
+    box-shadow: 0 0 50px rgba(8, 255, 8, 0.2), inset 0 0 50px rgba(8, 255, 8, 0.2);
+    overflow: hidden;
+}
+
+.grid-circle {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    border: 1px dashed var(--radar-grid);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.crosshair-x {
+    position: absolute;
+    top: 50%; left: 0;
+    width: 100%; height: 1px;
+    background-color: var(--radar-grid);
+}
+
+.crosshair-y {
+    position: absolute;
+    top: 0; left: 50%;
+    width: 1px; height: 100%;
+    background-color: var(--radar-grid);
+}
+
+.center-dot {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px; height: 10px;
+    background-color: var(--border-color);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--border-color);
+}
+
+/* The sweeping scanner animation */
+.scanner {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 50%; height: 50%;
+    background: conic-gradient(from 0deg, transparent 70%, rgba(8, 255, 8, 0.6) 100%);
+    transform-origin: 0 0;
+    animation: scan 4s linear infinite;
+    pointer-events: none;
+    z-index: 5;
+}
+
+@keyframes scan {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Blips (Targets on Radar) */
+#blips-container {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+}
+
+.blip {
+    position: absolute;
+    width: 12px; height: 12px;
+    background-color: #ffff00;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 10px #ffff00;
+    opacity: 0.8;
+    transition: all 0.5s linear;
+}
+
+.blip.kritik {
+    background-color: var(--target-red);
+    box-shadow: 0 0 15px var(--target-red);
+    animation: pulse 1s infinite alternate;
+}
+
+.blip-label {
+    position: absolute;
+    top: 15px; left: 15px;
+    font-size: 12px;
+    white-space: nowrap;
+    text-shadow: 0 0 3px black;
+}
+
+@keyframes pulse {
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+    100% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+}

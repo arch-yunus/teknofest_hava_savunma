@@ -63,6 +63,44 @@ class RadarSistemi:
             return yeni_hedef
         return None
 
+    def tara_suru_saldirisi(self) -> List[Hedef]:
+        """Aynı vektörden gelen 5 ile 12 arasında İHA (Swarm) üretir."""
+        if random.random() < (self.tespit_olasiligi * 0.1): # Sürü saldırısı nadirdir
+            suru = []
+            adet = random.randint(5, 12)
+            
+            # Ana sürü merkezi
+            aci = random.uniform(0, 2 * math.pi)
+            uzaklik = random.uniform(self.menzil_km * 0.7, self.menzil_km)
+            merkez_x = uzaklik * math.cos(aci)
+            merkez_y = uzaklik * math.sin(aci)
+            merkez_z = random.uniform(0.5, 3.0) # Sürü alçaktan gelir
+            
+            # Sürü hızı (hepsi aynı yöne, merkeze doğru)
+            hiz_mag = random.uniform(0.15, 0.3)
+            ana_vx = -merkez_x / uzaklik * hiz_mag
+            ana_vy = -merkez_y / uzaklik * hiz_mag
+            
+            for i in range(adet):
+                # Merkezin etrafında hafif dağılım (Jitter)
+                x = merkez_x + random.uniform(-2.0, 2.0)
+                y = merkez_y + random.uniform(-2.0, 2.0)
+                z = merkez_z + random.uniform(-0.2, 0.2)
+                
+                # Hızlarda mikro sapmalar
+                vx = ana_vx + random.uniform(-0.02, 0.02)
+                vy = ana_vy + random.uniform(-0.02, 0.02)
+                vz = random.uniform(-0.005, 0.005)
+                
+                iha = Hedef(
+                    hedef_id=f"SWRM-{random.randint(1000, 9999)}",
+                    x=x, y=y, z=z, vx=vx, vy=vy, vz=vz
+                )
+                self.aktif_hedefler.append(iha)
+                suru.append(iha)
+            return suru
+        return []
+
     def guncelle(self):
         """Tüm hedeflerin konumlarını günceller."""
         for h in self.aktif_hedefler:

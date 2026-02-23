@@ -17,6 +17,8 @@ from telemetry import TelemetriSistemi
 from tehdit_siniflandirici import TehditSiniflandirici, TehditOnceligi
 from kalman_takip import KalmanTakipYoneticisi
 import utils
+from api import start_server, push_data_to_clients
+import threading
 
 console = Console()
 
@@ -113,11 +115,17 @@ def main():
 
     telemetri.olay_kaydet("INFO", "GÖKKALKAN v3.0 tam kapasite ile başlatıldı.")
 
+    # V4.0 UI Upgrade: Start FastAPI server in a background thread
+    api_thread = threading.Thread(target=start_server, kwargs={"host": "0.0.0.0", "port": 8000}, daemon=True)
+    api_thread.start()
+    console.print("[bold green]Taktik Web Radar Paneli başlatıldı: http://localhost:8000[/]")
+
     try:
         with Live(create_status_table([], batarya.muhimmat), refresh_per_second=1) as live:
             while True:
                 radar.guncelle()
                 radar.tara()
+                radar.tara_suru_saldirisi()  # V4.0 Sürü İHA Tarayıcısı Devrede
 
                 current_targets = []
                 for h in list(radar.aktif_hedefler):
@@ -146,6 +154,8 @@ def main():
                         "oncelik": degerlendirme.oncelik.name,
                         "karar":   degerlendirme.onerilen_karar,
                         "skor":    degerlendirme.tehdit_skoru,
+                        "x":       h.x,
+                        "y":       h.y
                     }
                     current_targets.append(data)
 
@@ -171,6 +181,8 @@ def main():
                             live.console.print(f"[bold red][X] KRİTİK HATA: {e}[/]")
 
                 live.update(create_status_table(current_targets, batarya.muhimmat))
+                # Broadcast targets to Web GUI
+                push_data_to_clients(current_targets)
                 time.sleep(1)
 
     except KeyboardInterrupt:

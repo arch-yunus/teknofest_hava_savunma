@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GökKalkan AI | Command Center V4.0</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts for Cyberpunk/Modern look -->
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar for Telemetry -->
+        <aside class="sidebar">
+            <div class="logo-box">
+                <h1>GÖKKALKAN</h1>
+                <p>V4.0 ULTIMATE</p>
+                <div class="status-indicator">
+                    <div class="led green"></div>
+                    <span>SYSTEM ONLINE</span>
+                </div>
+            </div>
+
+            <div class="metrics-panel">
+                <h2>TARGET INTEL</h2>
+                <div id="target-list" class="target-list">
+                    <!-- Targets injected via JS -->
+                </div>
+            </div>
+
+            <div class="footer-info">
+                <p>C2 NODE: SECTOR 7</p>
+                <p>WS CONNECTION: <span id="ws-status" style="color:red">DISCONNECTED</span></p>
+            </div>
+        </aside>
+
+        <!-- Main Radar Display -->
+        <main class="radar-container">
+            <div class="radar-wrapper">
+                <div class="scanner"></div>
+                <!-- Dynamic blips container -->
+                <div id="blips-container"></div>
+                
+                <!-- Radar grid markings -->
+                <div class="grid-circle" style="width: 25%; height: 25%;"></div>
+                <div class="grid-circle" style="width: 50%; height: 50%;"></div>
+                <div class="grid-circle" style="width: 75%; height: 75%;"></div>
+                <div class="grid-circle" style="width: 100%; height: 100%;"></div>
+                
+                <div class="crosshair-x"></div>
+                <div class="crosshair-y"></div>
+                <div class="center-dot"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

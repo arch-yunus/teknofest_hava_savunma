@@ -25,7 +25,7 @@
 
 **GökKalkan AI**, hava savunma disiplinini bir bilgisayar simülasyonundan çok daha ötesine taşıyan, tarihsel, teknik ve stratejik boyutlarıyla ele alan **yaşayan bir yapay zeka ansiklopedisidir.** TEKNOFEST vizyonunu akademik bir derinlikle birleştirerek, savunma sanayii meraklıları ve mühendisleri için uçtan uca, askeri sınıf (military-grade) bir komuta kontrol rehberi ve simülasyon iskeleti sunar.
 
-Sistem, elektromanyetik spektrumdaki zayıf sinyalleri yakalayarak, **Kalman Filtreleme**, **Yapay Zeka Tabanlı Tehdit Sınıflandırma** algoritmaları ve **Gelişmiş Önleyici Projeksiyonları** ile hedefleri etkisiz hale getirecek saniyenin altındaki (sub-second) reaksiyonları otonom olarak yönetmek üzere tasarlanmıştır. Projenin kalbinde, sadece kod yazmak değil; havada süzülen bir tehdidin ardındaki fiziksel mekaniği ve harp doktrinini anlamak yatar.
+Sistem, elektromanyetik spektrumdaki zayıf sinyalleri yakalayarak, **Kalman Filtreleme**, **Yapay Zeka Tabanlı Tehdit Sınıflandırma** algoritmaları ve **Gelişmiş Önleyici Projeksiyonları** ile hedefleri etkisiz hale getirecek saniyenin altındaki (sub-second) reaksiyonları otonom olarak yönetmek üzere tasarlanmıştır. Projenin kalbinde, sadece kod yazmak değil; havada süzülen bir tehdidin ardındaki fiziksel mekaniği ve harp doktrinini anlamak yatar. GökKalkan artık sadece komut satırında değil, WebSocket destekli entegre **Web Tabanlı Radar Paneli** (V4.0) üzerinden de komuta edilebilir.
 
 ---
 
@@ -75,6 +75,8 @@ teknofest_hava_savunma/
 │   ├── tehdit_siniflandirici.py # AI/ML Tabanlı Tehdit Skorlama & Kimlik (IFF)
 │   ├── interceptor.py      # Güdüm, TTI (Time-to-Impact) ve Önleme Matrisleri
 │   ├── telemetry.py        # Canlı Operasyonel Veri Kaydı ve Kara Kutu (Blackbox)
+│   ├── api.py              # 🌐 V4.0: FastAPI & WebSocket C2 İletişim Sunucusu  
+│   ├── static/             # 🌐 V4.0: C2 Radar Dashboard HTML/CSS/JS Assets
 │   └── utils.py            # Aerodinamik Matris Sabitleri, Fonksiyonlar & Çeviriciler
 ├── tests/                  # 💥 Muharebe Öncesi Sanal Atış ve Test Sahası
 │   └── test_simulasyon.py  # Ünit, Yük ve Çarpışma Entegrasyon testleri 
@@ -161,7 +163,7 @@ GökKalkan AI, durağan bir sistem değil, sürekli gelişen bir organizmadır. 
 - [x] **v1.0**: Temel Radar ve Önleyici yapısının kurulması.
 - [x] **v2.0**: Kalman Filtresi ile yörünge tahmini ve düzeltme adaptasyonu.
 - [x] **v3.0**: AI Destekli Tehdit Sınıflandırıcı (Random Forest) ve Telemetri eklentisi.
-- [ ] **v4.0 (Yakında)**: Gerçek zamanlı 3D GUI (Arayüz) entegrasyonu (PyQt5 veya Web-tabanlı).
+- [x] **v4.0 (YENİ)**: Gerçek zamanlı 2D Animasyonlu Radar Arayüzü (Web-tabanlı, FastAPI + WebSockets) ve Sürü İHA Senaryoları.
 - [ ] **v5.0**: Çoklu Batarya Ağı (Network-centric warfare) simülasyonu. Başka sunucularla Soket iletişimi kurarak ortak hava resmi (Recognized Air Picture - RAP) oluşturma.
 - [ ] **v6.0**: RL (Reinforcement Learning) tabanlı füze manevra optimizasyonu.
 
@@ -212,6 +214,10 @@ Karar mekanizmasını başlatıp semaları taramaya başlayın:
 ```bash
 python src/main.py
 ```
+
+### 5) Operasyonel Komuta Ekranına (GUI) Bağlanın
+Ana Python dosyası çalışırken tarayıcınızı açın ve gerçek zamanlı radar verilerini izlemek için C2 Paneline bağlanın:
+👉 **[http://localhost:8000](http://localhost:8000)**
 
 ---
 

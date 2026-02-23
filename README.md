@@ -65,6 +65,7 @@ Sistem mimarisi, monolitik yapılardan uzak durularak tamamen modüler ve mikro-
 teknofest_hava_savunma/
 ├── docs/                   # 📚 Doktrinler, Ansiklopediler, Mimari Notlar
 │   ├── TEKNIK_MIMARI.md    # Matematiksel sensör modelleri ve formüller
+│   ├── LORE.md             # Sistemin Felsefesi ve Harp Tarihçesi (YENİ!)
 │   ├── banner.png          # GökKalkan Görsel Sancağı
 │   └── MANIFESTO.md        # Sistemin felsefesi ve hedef kitlesi
 ├── src/                    # 🧠 GökKalkan AI Çekirdek Kodları
@@ -77,6 +78,7 @@ teknofest_hava_savunma/
 │   └── utils.py            # Aerodinamik Matris Sabitleri, Fonksiyonlar & Çeviriciler
 ├── tests/                  # 💥 Muharebe Öncesi Sanal Atış ve Test Sahası
 │   └── test_simulasyon.py  # Ünit, Yük ve Çarpışma Entegrasyon testleri 
+├── CODE_OF_CONDUCT.md      # 🛡️ Askeri Disiplin ve Geliştirici Kuralları
 ├── LICENSE                 # ⚖️ MIT Lisansı
 ├── requirements.txt        # 📦 Python Bağımlılık Bildirimi (Ortam İzolasyonu)
 └── README.md               # 📜 İstihbarat ve Proje Brifingi (Şu an buradasınız!)

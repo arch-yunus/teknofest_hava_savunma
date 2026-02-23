@@ -94,26 +94,55 @@ GökKalkan AI, pürüzsüz bir spektrum yönetimi sunarken, donanımsal radar ç
 
 ---
 
-## 🎯 2. BÖLÜM: Üst Düzey Karar Destek & Angajman Algoritmaları
+## 🎯 2. BÖLÜM: Üst Düzey Karar Destek & YZ Derinlikleri
 
-Binlerce veri noktasını ve elektromanyetik yansımayı alıp süzmek yetmez. GökKalkan'ın AI Çekirdek Filtreleri, veriyi anlama dönüştürür:
+Binlerce veri noktasını ve elektromanyetik yansımayı alıp süzmek yetmez. GökKalkan'ın AI Çekirdek Filtreleri, veriyi anlama dönüştürür.
 
-| Algoritma / Konsept | Sistematik Amacı | Teknik Yükseklik |
-| :--- | :--- | :--- |
-| **CPA Analizi** | *Closest Point of Approach* (En Yakın Yaklaşım Noktası) | Radarın/merkezin en korunmasız noktasından sızmaları önlemek için saniyelik vektör projeksiyonu ve 3D teğet hesabı yapar. |
-| **TTI Hesaplama** | *Time To Impact* (Çarpışmaya Kalan Süre) | Hedefin Hız, İvme, Yükseklik verilerini bir denkleme oturtarak milisaniyelik çarpışma/vurma anını hesaplar. Gecikme töleransı minimaldir. |
-| **YZ Sınıflandırma** | *Random Forest Kimliklendirme* | Hedefin kinematik davranışı doğrusal ise (Seyir Füzesi), yavaş ve pırpır ise (Drone) veya son anda yüksek G-Force manevrası yapıyorsa (Savaş Uçağı), ona uygun tehdit skoru atar. |
-| **Kalman Filter** | *Lineer Dinamik Sistem Tahmini* | Sensörlerdeki (radar) termal ve çevresel gürültüyü (clutter) gidererek, hedefin gerçekte nerede olduğunu ve nereye gittiğini en uygun istatistikle tahmin eder. |
+### 2.1 Makine Öğrenmesi ile IFF (Dost-Düşman Tanıma)
+Sistemimiz, `scikit-learn` tabanlı bir **Random Forest (Rastgele Orman)** modeli kullanarak uçuş profillerini analiz eder.
+*   **Model Özellik Çıkarımı:** Sistem sadece hedefin anlık hızını değil; ivmesini (G-Kuvveti), yükseklik değişim profilini ve radar kesit alanını eşzamanlı olarak modele sokar.
+*   **Davranışsal Skorlama:** Düşük hız ve sabit irtifa genellikle bir mini-UAV/Drone olarak etiketlenirken; çok yüksek sesten hızlı uçan, düz uçmasına rağmen araziye yakın seyreden bir hedef **Seyir Füzesi (Cruise Missile)** olarak klasifiye edilir.
+
+### 2.2 Kalman Filtresi Mekaniği
+Gerçek dünyada radarlar kusursuz sinyal göndermez. Yağmur, bulutlar, kuş sürüleri ve çevresel manyetik parazitler (Clutter) hedefin konumunu hatalı gösterebilir. Bu sorunu şöyle aşıyoruz:
+-   **Durum Vektörü Tahmini (State Prediction):** Bir önceki konum, hız ve ivme matrislerinden yararlanarak hedefin 1 saniye sonraki tahmini konumunu bulur.
+-   **Ölçüm Güncellemesi (Measurement Update):** Radardan gelen "gürültülü" yeni ölçüm ile kendi tahmini arasında "Kalman Kazancı" (Kalman Gain) oranında bir denge kurar. Sonuç: Titremeyen, pürüzsüz ve gerçekçi bir vektörel rota.
 
 ---
 
-## 🔤 3. BÖLÜM: Profesyonel Terimler Ansiklopedisi (A-Z)
+## 🛡️ 3. BÖLÜM: Angajman Döngüsü & Kritik Metrikler
 
-Projeyi teknik derinliğiyle kavrayabilmek için bazı operasyonel doktrin kavramları:
+Bir tehdit tespit edildiğinde, sistem saniyeler içerisinde "Ateşle veya Bekle" (Shoot/No-Shoot) kararını vermelidir. Bu karar mekanizması şu hayati metriklere dayanır:
+
+| Metrik Kısaltması | Operasyonel Tanımı | Sistematik Kural Seti |
+| :--- | :--- | :--- |
+| **CPA (Closest Point of Approach)** | Hedefin yörüngesinin radara/tesise olan en yakın teğet noktası. | Eğer CPA, belirlenen güvenli angajman yarıçapının (örn: 15km) altına inecekse, sistem önleyici füze fırlatmayı **KRİTİK** olarak planlar. |
+| **TTI (Time To Impact)** | Çarpışma veya hedefe varma süresi. | 0 < TTI < 30 saniye ise anında angajman emri verilir. |
+| **Pk (Probability of Kill)** | Tek bir önleyici füzenin hedefini imha etme olasılığı. | Pk düşük hesaplanırsa (hedef çok manevra yapıyorsa), sistem hedefe **Çift Atış (Shoot-Shoot)** doktrinini uygulayarak iki füze kaldırabilir. |
+
+---
+
+## 🌪️ 4. BÖLÜM: Gelişmiş Tehdit Senaryoları (Advanced Threats)
+
+GökKalkan, statik hedefleri vurmak için değil, günümüzün asimetrik ve karmaşık savaş sahası senaryoları için kurgulanmıştır:
+
+### 4.1 Sürü İHA Saldırıları (Drone Swarms)
+-   **Tanım:** Aynı anda 50-100 adet düşük maliyetli kamikaze dronun (Loitering Munition) tek bir hedefe dalış yapması.
+-   **Savunma Yaklaşımı:** GökKalkan, tüm sürü üyelerini tekilleştirmek (Track Splitting) yerine önceliği, formasyon merkezine veya bataryaya en hızlı yaklaşana (Minimum TTI) verir. Satha yönelik hızlı mühimmat tüketimi kontrol edilir.
+
+### 4.2 Balistik Füze (TBM & ICBM) Tespiti
+-   **Tanım:** Atmosfer dışına çıkarak yüksek parabolik bir yörünge izleyen devasa hızlardaki roketler.
+-   **Savunma Yaklaşımı:** Klasik hava hedeflerinden ziyade, yerçekimi ivmesi ve yanma sonu hızı hesaplarına göre çok önceden düşüş noktası projeksiyonu çizmek gerekir. GökKalkan'ın `interceptor` motorunda Exospheric (atmosfer dışı) kinetik önleme konseptleri simüle edilmektedir.
+
+---
+
+## 🔤 5. BÖLÜM: Profesyonel Terimler Ansiklopedisi (A-Z)
+
+Projeyi teknik derinliğiyle kavrayabilmek için askeri jargon:
 
 | Terim | Kategori | Detaylı Tanım |
 | :--- | :--- | :--- |
-| **AESA/PESA** | Donanım | Aktif/Pasif Elektronik Taramalı Dizi Radarlar. Ekstrem hızlı çevresel tarama yaparlar. |
+| **AESA/PESA** | Donanım | Aktif/Pasif Elektronik Taramalı Dizi Radarlar. Ekranı döndürmek yerine elektron demetlerini çevirir, ekstrem hızda tarama yaparlar. |
 | **BVR** | Operasyonel | *Beyond Visual Range*. Görüş ötesi menzil; komuta merkezinin gözle görülmeyen kilometrelerce ötedeki tehdide müdahalesi. |
 | **CEP** | Balistik | *Circular Error Probable*. Önleyici mühimmatın ya da hedefin isabet hassasiyetinin istatistiksel sapma (hata) dairesi. |
 | **Chaff & Flare** | Karşı Tedbir | Düşmanın radarı (Chaff) veya kızılötesi füzeleri (Flare) aldatmak için havaya saçtığı aldatıcı unsurlar. |
@@ -123,7 +152,7 @@ Projeyi teknik derinliğiyle kavrayabilmek için bazı operasyonel doktrin kavra
 
 ---
 
-## 🛣️ GELECEK VİZYONU VE YOL HARİTASI (ROADMAP)
+## 🛣️ 6. BÖLÜM: GELECEK VİZYONU VE YOL HARİTASI (ROADMAP)
 
 GökKalkan AI, durağan bir sistem değil, sürekli gelişen bir organizmadır. Planlanan büyük güncellemeler:
 
@@ -136,7 +165,7 @@ GökKalkan AI, durağan bir sistem değil, sürekli gelişen bir organizmadır. 
 
 ---
 
-## 🤝 KATKIDA BULUNMA (CONTRIBUTING)
+## 🤝 7. BÖLÜM: KATKIDA BULUNMA (CONTRIBUTING)
 
 Açık kaynak savunma yazılımlarına inanan herkesin bu projeye katkı sunmasını teşvik ediyoruz! Sistemi daha iyi hale getirmek için:
 1. Bu repoyu **Fork**'layın.
@@ -163,7 +192,7 @@ cd teknofest_hava_savunma
 
 ### 2) Mühimmat ve Sensör Uyumlandırılması (Dependencies)
 
-GökKalkan AI, yüksek performanslı matris çarpımları ve AI eğitimleri için modern kütüphanelere dayanır:
+GökKalkan AI, yüksek performanslı matris çarpımları ve AI eğitimleri için modern Python kütüphanelerine dayanır:
 ```bash
 # Python 3.10 veya üzeri önerilir.
 pip install -r requirements.txt
@@ -191,8 +220,7 @@ python src/main.py
 ### 👨‍✈️ MİMARİ HEYET VE VİZYON
 
 **Bahattin Yunus Çetin**<br/>
-*Kıdemli Sistem Mimarı | Vatan Savunması Yazılım Mühendisi*<br/>
-📍 *Of / Trabzon'un Dijital Siperlerinden...*<br/><br/>
+*Kıdemli Sistem Mimarı | Vatan Savunması Yazılım Mühendisi*<br/><br/>
 [![GitHub](https://img.shields.io/badge/TEMAS-GITHUB-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/bahattinyunus)
 [![LinkedIn](https://img.shields.io/badge/BA%C4%9ELANTI-LINKEDIN-0077b5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/bahattinyunuscetin)
 

@@ -80,6 +80,7 @@ teknofest_hava_savunma/
 │   └── utils.py            # Aerodinamik Matris Sabitleri, Fonksiyonlar & Çeviriciler
 ├── tests/                  # 💥 Muharebe Öncesi Sanal Atış ve Test Sahası
 │   └── test_simulasyon.py  # Ünit, Yük ve Çarpışma Entegrasyon testleri 
+├── docs/MATH_MODELS.md     # 🧮 Operasyonel Matematik, Diferansiyel Denklem Setleri (YENİ!)
 ├── CODE_OF_CONDUCT.md      # 🛡️ Askeri Disiplin ve Geliştirici Kuralları
 ├── LICENSE                 # ⚖️ MIT Lisansı
 ├── requirements.txt        # 📦 Python Bağımlılık Bildirimi (Ortam İzolasyonu)
@@ -140,7 +141,23 @@ GökKalkan, statik hedefleri vurmak için değil, günümüzün asimetrik ve kar
 
 ---
 
-## 🔤 5. BÖLÜM: Profesyonel Terimler Ansiklopedisi (A-Z)
+## 📡 5. BÖLÜM: Ağ Merkezli Harp (NCW) ve Siber Güvenlik Doktrinleri (C5ISR)
+
+Modern hava savunması, füzelerin ne kadar hızlı uçtuğundan çok, bilginin birimler arasında ne kadar hızlı ve güvenli dolaştığına bağlıdır. GökKalkan AI, askeri standartlarda C5ISR (Command, Control, Computers, Communications, Cyber, Intelligence, Surveillance, and Reconnaissance) mimarisine doğru evrilmektedir:
+
+### 5.1 Sıfır Güven Mimarisi (Zero Trust Architecture)
+Sistem içindeki hiçbir alt donanım (Radar, Atış Kontrol Bilgisayarı, Batarya veya Dış Telemetri Akışı) doğuştan güvenilir kabul edilmez.
+- **Kriptografik İmzalar:** Karar mekanizmasının ürettiği tüm "Launch" (Ateşle) vektörleri asimetrik şifreleme ile onaylanmalıdır. Düşman sızmalarıyla radarda görünen "hayalet uçaklar" veya yanlış ateşleme emirleri (Spoofed Launch Commands) engellenir.
+- **Ağ İzolasyonu (Air Gapping):** V4.0'da geliştirilen WebSockets arayüzü, doğrudan çekirdek sisteme yazı yazamaz (Read-Only State).
+
+### 5.2 Sensör Füzyonu ve Bilişsel Radarlar (Cognitive Radars)
+Sadece Kalman Filtresi değil, yapay zekanın radyo dalgalarıyla doğrudan iletişim kurduğu **Sensör Füzyonu** devrinin kapıları aralanıyor:
+- **RF Zeka (Radio Frequency Intelligence):** Hedefin yalnızca radar yansıması değil, emitör sınıfı (üzerindeki elektronik cihazların frekans salınımı) dinlenerek teşhis edilir (ESM - Elektronik Destek Tedbirleri).
+- **Adaptif Dalga Şekillendirme:** GökKalkan, hedefin hızına göre radar dalga boyunu mikro saniyeler içinde değiştirerek karşı taraftaki tehdidin RWR (Radar Uyarı Alıcısı) sistemlerini aldatmayı hedefler.
+
+---
+
+## 🔤 6. BÖLÜM: Profesyonel Terimler Ansiklopedisi (A-Z)
 
 Projeyi teknik derinliğiyle kavrayabilmek için askeri jargon:
 
@@ -156,7 +173,7 @@ Projeyi teknik derinliğiyle kavrayabilmek için askeri jargon:
 
 ---
 
-## 🛣️ 6. BÖLÜM: GELECEK VİZYONU VE YOL HARİTASI (ROADMAP)
+## 🛣️ 7. BÖLÜM: GELECEK VİZYONU VE YOL HARİTASI (ROADMAP)
 
 GökKalkan AI, durağan bir sistem değil, sürekli gelişen bir organizmadır. Planlanan büyük güncellemeler:
 
@@ -169,7 +186,7 @@ GökKalkan AI, durağan bir sistem değil, sürekli gelişen bir organizmadır. 
 
 ---
 
-## 🤝 7. BÖLÜM: KATKIDA BULUNMA (CONTRIBUTING)
+## 🤝 8. BÖLÜM: KATKIDA BULUNMA (CONTRIBUTING)
 
 Açık kaynak savunma yazılımlarına inanan herkesin bu projeye katkı sunmasını teşvik ediyoruz! Sistemi daha iyi hale getirmek için:
 1. Bu repoyu **Fork**'layın.

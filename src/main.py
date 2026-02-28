@@ -125,16 +125,16 @@ def main():
             while True:
                 radar.guncelle()
                 radar.tara()
-                # Füzeleri güncelle (dt = 1 saniye)
-                vurulan_hedefler = batarya.guncelle(1.0)
+                # Füzeleri güncelle (dt = 1 saniye) ve Splash Damage kontrolü yap
+                vurulan_hedefler = batarya.guncelle(1.0, radar.aktif_hedefler)
                 
-                # Vurulan hedefleri radar ve takipten çıkar
+                # Vurulan hedefleri radar ve takipten çıkar (Alan hasarı dahil hepsi burada gelir)
                 for vh in vurulan_hedefler:
                     if vh in radar.aktif_hedefler:
                         radar.aktif_hedefler.remove(vh)
                         kalman_yoneticisi.hedef_sil(vh.id)
-                        telemetri.olay_kaydet("SUCCESS", f"HEDEF İMHA EDİLDİ: {vh.id}")
-                        live.console.print(f"[bold green][+] HEDEF İMHA EDİLDİ: {vh.id}[/]")
+                        telemetri.olay_kaydet("SUCCESS", f"HEDEF İMHA EDİLDİ (Kinetik/Splash): {vh.id}")
+                        live.console.print(f"[bold green][*] HEDEF İMHA EDİLDİ: {vh.id}[/]")
 
                 current_targets = []
                 for h in list(radar.aktif_hedefler):

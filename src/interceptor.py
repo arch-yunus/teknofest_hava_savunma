@@ -51,10 +51,11 @@ class OnleyiciFuze:
 
 
 class OnleyiciBatarya:
-    def __init__(self, muhimmat: int = 10, hassasiyet_ayarlari: Dict[str, float] = None):
+    def __init__(self, muhimmat: int = 10, hassasiyet_ayarlari: Dict[str, float] = None, patlama_yaricapi_km: float = 1.0):
         self.muhimmat = muhimmat
         self.aktif_fuzeler: List[OnleyiciFuze] = []
         self.fuze_sayaci = 0
+        self.patlama_yaricapi_km = patlama_yaricapi_km # Alan hasarı yarıçapı
 
     def angaje_ol(self, hedef: Hedef) -> bool:
         """Kinetik bir önleyici füze fırlatır."""
@@ -69,18 +70,37 @@ class OnleyiciBatarya:
         # Anında vuruş sonucu dönmüyoruz, füze uçarken takip edilecek
         return True 
     
-    def guncelle(self, dt: float) -> List[Hedef]:
-        """Tüm füzeleri günceller ve vurulan hedefleri döndürür."""
-        vurulan_hedefler = []
+    def guncelle(self, dt: float, aktif_hedefler: List[Hedef] = None) -> List[Hedef]:
+        """Tüm füzeleri günceller ve (Alan Hasarı dahil) vurulan hedefleri döndürür."""
+        if aktif_hedefler is None:
+            aktif_hedefler = []
+            
+        vurulan_hedefler = set() # Aynı hedefi iki kere vurmamak için Set
         silinecek_fuzeler = []
         
         for fuze in self.aktif_fuzeler:
             fuze.guncelle(dt)
             if fuze.vurdu:
-                vurulan_hedefler.append(fuze.hedef)
+                # Füze hedefini kesin vurdu
+                vurulan_hedefler.add(fuze.hedef)
                 silinecek_fuzeler.append(fuze)
+                
+                # --- BLAST SPLASH DAMAGE (Parça Tesirli Savaş Başlığı) ---
+                # Füzenin patladığı (hedefi vurduğu) andaki pozisyonu:
+                px, py, pz = fuze.x, fuze.y, fuze.z
+                
+                # Radardaki diğer hedefleri kontrol et
+                for diger_hedef in aktif_hedefler:
+                    if diger_hedef == fuze.hedef:
+                        continue # Ana hedef zaten vuruldu
+                    
+                    # Mesafe hesapla
+                    mesaf_karesi = (diger_hedef.x - px)**2 + (diger_hedef.y - py)**2 + (diger_hedef.z - pz)**2
+                    if mesaf_karesi <= (self.patlama_yaricapi_km ** 2):
+                        # Alan hasarı içindeki hedef imha oldu!
+                        vurulan_hedefler.add(diger_hedef)
         
         for f in silinecek_fuzeler:
             self.aktif_fuzeler.remove(f)
             
-        return vurulan_hedefler
+        return list(vurulan_hedefler)

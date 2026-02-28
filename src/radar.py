@@ -122,20 +122,46 @@ class RadarSistemi:
             ana_vx = -merkez_x / uzaklik * hiz_mag
             ana_vy = -merkez_y / uzaklik * hiz_mag
             
+            # V-Formasyonu Oluşturma Geometrisi
+            # Lider ortada (0,0), diğerleri (-1, -1), (1, -1), vb. formasyonda
+            formasyon_araligi_km = 0.5 # İHA'lar arası mesafe (km)
+            
+            # Formasyon vektörleri (Lider uçuş yönünde, arkadakiler açılı geride)
+            # İlerleyiş vektörünün tersini bul:
+            hiz_norm = math.sqrt(ana_vx**2 + ana_vy**2)
+            arka_x = -ana_vx / hiz_norm
+            arka_y = -ana_vy / hiz_norm
+            
+            # Dik vektör (kanatlar için)
+            yan_x = -arka_y
+            yan_y = arka_x
+            
             for i in range(adet):
-                # Merkezin etrafında hafif dağılım (Jitter)
-                x = merkez_x + random.uniform(-2.0, 2.0)
-                y = merkez_y + random.uniform(-2.0, 2.0)
-                z = merkez_z + random.uniform(-0.2, 0.2)
+                # V-Formasyon Pozisyonu (0: Lider, 1: Sağ 1, 2: Sol 1, 3: Sağ 2, 4: Sol 2...)
+                if i == 0:
+                    offset_arka = 0
+                    offset_yan = 0
+                else:
+                    kademesi = (i + 1) // 2
+                    yon = 1 if i % 2 == 1 else -1
+                    
+                    # Geride ve Yanda
+                    offset_arka = kademesi * formasyon_araligi_km
+                    offset_yan = yon * kademesi * formasyon_araligi_km
                 
-                # Hızlarda mikro sapmalar
-                vx = ana_vx + random.uniform(-0.02, 0.02)
-                vy = ana_vy + random.uniform(-0.02, 0.02)
-                vz = random.uniform(-0.005, 0.005)
+                # Gerçek uzay pozisyonu
+                x = merkez_x + (arka_x * offset_arka) + (yan_x * offset_yan)
+                y = merkez_y + (arka_y * offset_arka) + (yan_y * offset_yan)
+                z = merkez_z + (random.uniform(-0.1, 0.1)) # İrtifa nispeten aynı
+                
+                # Koordineli hız (Lider ile birebir aynı hız vektörü, jitter yok)
+                vx = ana_vx
+                vy = ana_vy
+                vz = 0.0 # V-formasyonunda sabit irtifa uçağı
                 
                 iha = Hedef(
                     hedef_id=f"SWRM-{random.randint(1000, 9999)}",
-                    x=x, y=y, z=z, vx=vx, vy=vy, vz=vz
+                    x=x, y=y, z=z, vx=vx, vy=vy, vz=vz, rcs=0.01
                 )
                 self.aktif_hedefler.append(iha)
                 suru.append(iha)

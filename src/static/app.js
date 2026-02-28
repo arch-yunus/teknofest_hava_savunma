@@ -87,7 +87,7 @@ window.addEventListener('resize', () => {
 
 // --- Particle Explosion System ---
 function createExplosion(x, y, z) {
-    const particleCount = 50;
+    const particleCount = 200; // Artırılmış partikül sayısı (Splash Damage hissi)
     const particlesGeo = new THREE.BufferGeometry();
     const posArray = new Float32Array(particleCount * 3);
     const velArray = [];
@@ -97,23 +97,37 @@ function createExplosion(x, y, z) {
         posArray[i * 3 + 1] = y;
         posArray[i * 3 + 2] = z;
         velArray.push({
-            x: (Math.random() - 0.5) * 10,
-            y: (Math.random() - 0.5) * 10,
-            z: (Math.random() - 0.5) * 10
+            x: (Math.random() - 0.5) * 15,
+            y: (Math.random() - 0.5) * 15,
+            z: (Math.random() - 0.5) * 15
         });
     }
     particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
 
     const particleMat = new THREE.PointsMaterial({
-        size: 2,
-        color: 0xffaa00,
+        size: 3,
+        color: 0xff4400, // Daha yoğun turuncu/kırmızı
         transparent: true,
-        opacity: 1
+        opacity: 1,
+        blending: THREE.AdditiveBlending // Daha parlak patlama efekti
     });
 
     const particleSystem = new THREE.Points(particlesGeo, particleMat);
     scene.add(particleSystem);
-    explosions.push({ system: particleSystem, velocities: velArray, age: 0 });
+
+    // Splash Damage Şok Dalgası (Genişleyen Küre)
+    const waveGeo = new THREE.SphereGeometry(1, 32, 32);
+    const waveMat = new THREE.MeshBasicMaterial({
+        color: 0xffaa00,
+        transparent: true,
+        opacity: 0.5,
+        wireframe: true
+    });
+    const waveMesh = new THREE.Mesh(waveGeo, waveMat);
+    waveMesh.position.set(x, y, z);
+    scene.add(waveMesh);
+
+    explosions.push({ system: particleSystem, wave: waveMesh, velocities: velArray, age: 0 });
 }
 
 // --- Animation Loop ---
@@ -136,22 +150,31 @@ function animate() {
         }
     }
 
-    // Update Explosions
+    // Update Explosions & Shockwaves
     for (let i = explosions.length - 1; i >= 0; i--) {
         let exp = explosions[i];
-        let positions = exp.system.geometry.attributes.position.array;
 
+        // Partiküller
+        let positions = exp.system.geometry.attributes.position.array;
         for (let j = 0; j < exp.velocities.length; j++) {
             positions[j * 3] += exp.velocities[j].x;
             positions[j * 3 + 1] += exp.velocities[j].y;
             positions[j * 3 + 2] += exp.velocities[j].z;
         }
         exp.system.geometry.attributes.position.needsUpdate = true;
-        exp.system.material.opacity -= 0.02;
+        exp.system.material.opacity -= 0.015;
+
+        // Şok Dalgası (Splash Radius ~ 1km -> UI Scale: 10 birim büyüyecek)
+        exp.wave.scale.x += 1.0;
+        exp.wave.scale.y += 1.0;
+        exp.wave.scale.z += 1.0;
+        exp.wave.material.opacity -= 0.02;
+
         exp.age++;
 
-        if (exp.age > 50) {
+        if (exp.age > 60) {
             scene.remove(exp.system);
+            scene.remove(exp.wave);
             explosions.splice(i, 1);
         }
     }

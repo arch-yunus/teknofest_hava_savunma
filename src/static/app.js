@@ -130,6 +130,65 @@ function createExplosion(x, y, z) {
     explosions.push({ system: particleSystem, wave: waveMesh, velocities: velArray, age: 0 });
 }
 
+// --- Laser Weapon System (CIWS) ---
+const activeLasers = [];
+function createLaserBeam(startX, startY, startZ, endX, endY, endZ) {
+    const material = new THREE.LineBasicMaterial({
+        color: 0x33ff33, // Neon green
+        linewidth: 4,
+        transparent: true,
+        opacity: 1
+    });
+
+    const points = [];
+    points.push(new THREE.Vector3(startX, startY, startZ));
+    points.push(new THREE.Vector3(endX, endY, endZ));
+
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    const line = new THREE.Line(geometry, material);
+    scene.add(line);
+    activeLasers.push({ line: line, age: 0 });
+}
+
+// --- Telemetry Chart.js ---
+const ctx = document.getElementById('telemetryChart').getContext('2d');
+const telemetryChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [{
+            label: 'Tehdit Yoğunluğu',
+            data: [],
+            borderColor: '#0cf50c',
+            backgroundColor: 'rgba(12, 245, 12, 0.2)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 0 }, // Disable animation for performance
+        scales: {
+            x: { display: false },
+            y: {
+                display: true,
+                beginAtZero: true,
+                grid: { color: 'rgba(12, 245, 12, 0.1)' },
+                ticks: { color: '#0cf50c' }
+            }
+        },
+        plugins: {
+            legend: {
+                labels: { color: '#0cf50c', font: { family: "'Share Tech Mono', monospace" } }
+            }
+        }
+    }
+});
+let chartTime = 0;
+
 // --- Animation Loop ---
 function animate() {
     requestAnimationFrame(animate);
@@ -179,6 +238,17 @@ function animate() {
         }
     }
 
+    // Update Lasers
+    for (let i = activeLasers.length - 1; i >= 0; i--) {
+        let laser = activeLasers[i];
+        laser.line.material.opacity -= 0.05; // Fade out fast (20 frames)
+        laser.age++;
+        if (laser.age > 20) {
+            scene.remove(laser.line);
+            activeLasers.splice(i, 1);
+        }
+    }
+
     renderer.render(scene, camera);
 }
 animate();
@@ -195,9 +265,9 @@ function connectWebSocket() {
         const data = JSON.parse(event.data);
         // Previously data was just targets list, now it's { targets:[], interceptors:[] }
         if (data.targets && data.interceptors !== undefined) {
-            updateDashboard(data.targets, data.interceptors);
+            updateDashboard(data.targets, data.interceptors, data.lasers);
         } else {
-            updateDashboard(data, []); // Fallback
+            updateDashboard(data, [], []); // Fallback
         }
     };
     socket.onclose = () => {
@@ -303,6 +373,30 @@ function updateDashboard(targets, interceptors) {
             delete interceptorMeshes[id];
         }
     }
+
+    // --- Process CIWS Lasers ---
+    if (lasers) {
+        lasers.forEach(lz => {
+            const endX = lz.x;
+            const endY = Math.max(lz.z * 10, 0); // lz.z is altitude (km)
+            const endZ = -lz.y;
+
+            // CIWS base is at origin (0, 2, 0)
+            createLaserBeam(0, 2, 0, endX, endY, endZ);
+
+            // Lazer vurduğunda ufak bir patlama da olsun
+            createExplosion(endX, endY, endZ);
+        });
+    }
+
+    // --- Update Chart.js ---
+    telemetryChart.data.labels.push(chartTime++);
+    telemetryChart.data.datasets[0].data.push(targets.length);
+    if (telemetryChart.data.labels.length > 30) {
+        telemetryChart.data.labels.shift();
+        telemetryChart.data.datasets[0].data.shift();
+    }
+    telemetryChart.update();
 }
 
 window.onload = connectWebSocket;

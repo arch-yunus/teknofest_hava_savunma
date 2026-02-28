@@ -207,6 +207,15 @@ body {
     opacity: 0.8;
 }
 
+.chart-container {
+    height: 150px;
+    margin-top: 15px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 10px;
+    position: relative;
+    width: 100%;
+}
+
 /* 2D Tooltips over 3D Canvas */
 #tooltips-container {
     position: absolute;

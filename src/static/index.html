@@ -12,6 +12,8 @@
     <!-- Three.js and OrbitControls via CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Chart.js for Telemetry -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -44,6 +46,10 @@
                 <p>C2 NODE: SECTOR 7 (3D VIEW)</p>
                 <p>WS CONNECTION: <span id="ws-status" style="color:red">DISCONNECTED</span></p>
                 <p class="hint">Use Mouse: Click & Drag to Rotate, Scroll to Zoom</p>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="telemetryChart"></canvas>
             </div>
         </aside>
 

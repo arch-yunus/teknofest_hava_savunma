@@ -104,3 +104,35 @@ class OnleyiciBatarya:
             self.aktif_fuzeler.remove(f)
             
         return list(vurulan_hedefler)
+
+class Lazer_CIWS:
+    """Yakın Alan Savunma Sistemi (Close-In Weapon System) 
+    15km altındaki kritik hedefleri doğrudan enerji silahı ile anında vurur.
+    """
+    def __init__(self, menzil_km: float = 15.0, atis_hizi: int = 5):
+        self.menzil_km = menzil_km
+        self.atis_hizi = atis_hizi # Saniyedeki maksimum hedef vurma sayısı
+        self.aktif_atislar = [] # Son saniyedeki CIWS atışlarının listesi [hedefler]
+        
+    def guncelle(self, dt: float, aktif_hedefler: List[Hedef]) -> List[Hedef]:
+        """İç çembere girenleri anında lazerle avlar."""
+        vurulanlar = set()
+        self.aktif_atislar.clear()
+        
+        ates_sayisi = 0
+        
+        for hedef in aktif_hedefler:
+            if ates_sayisi >= self.atis_hizi:
+                break
+                
+            if hedef.mesafe <= self.menzil_km:
+                vurulanlar.add(hedef)
+                self.aktif_atislar.append({
+                    "id": hedef.id, 
+                    "x": hedef.x, 
+                    "y": hedef.y, 
+                    "z": hedef.z
+                })
+                ates_sayisi += 1
+                
+        return list(vurulanlar)

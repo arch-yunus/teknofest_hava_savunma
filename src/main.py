@@ -12,7 +12,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich import print as rprint
 
 from radar import RadarSistemi, Hedef
-from interceptor import OnleyiciBatarya, MuhimmatYokHatasi
+from interceptor import OnleyiciBatarya, MuhimmatYokHatasi, Lazer_CIWS
 from telemetry import TelemetriSistemi
 from tehdit_siniflandirici import TehditSiniflandirici, TehditOnceligi
 from kalman_takip import KalmanTakipYoneticisi
@@ -84,9 +84,11 @@ def main():
     )
 
     batarya = OnleyiciBatarya(
-        muhimmat=ayarlar.get('batarya', {}).get('muhimmat', 15),
+        muhimmat=ayarlar.get('batarya', {}).get('muhimmat', 50),
         hassasiyet_ayarlari=ayarlar.get('batarya', {}).get('vurus_hassasiyeti')
     )
+    
+    ciws = Lazer_CIWS(menzil_km=15.0, atis_hizi=10)
 
     # Başlangıç Ekranı
     console.clear()
@@ -126,15 +128,26 @@ def main():
                 radar.guncelle()
                 radar.tara()
                 # Füzeleri güncelle (dt = 1 saniye) ve Splash Damage kontrolü yap
-                vurulan_hedefler = batarya.guncelle(1.0, radar.aktif_hedefler)
+                vurulan_hedefler_fuzeler = batarya.guncelle(1.0, radar.aktif_hedefler)
+                
+                # CIWS (Nokta Savunma) güncelle
+                vurulan_hedefler_ciws = ciws.guncelle(1.0, radar.aktif_hedefler)
+                
+                tum_vurulanlar = set(vurulan_hedefler_fuzeler).union(set(vurulan_hedefler_ciws))
                 
                 # Vurulan hedefleri radar ve takipten çıkar (Alan hasarı dahil hepsi burada gelir)
-                for vh in vurulan_hedefler:
+                for vh in tum_vurulanlar:
                     if vh in radar.aktif_hedefler:
                         radar.aktif_hedefler.remove(vh)
                         kalman_yoneticisi.hedef_sil(vh.id)
-                        telemetri.olay_kaydet("SUCCESS", f"HEDEF İMHA EDİLDİ (Kinetik/Splash): {vh.id}")
-                        live.console.print(f"[bold green][*] HEDEF İMHA EDİLDİ: {vh.id}[/]")
+                        
+                        # Kinetik mi CIWS mi ayrımı yapalım
+                        if vh in vurulan_hedefler_ciws:
+                            telemetri.olay_kaydet("SUCCESS", f"CIWS LAZER İLE İMHA: {vh.id}")
+                            live.console.print(f"[bold bright_cyan][⚡] CIWS LAZER KİLİDİ: {vh.id} İMHA EDİLDİ![/]")
+                        else:
+                            telemetri.olay_kaydet("SUCCESS", f"HEDEF İMHA EDİLDİ (Kinetik/Splash): {vh.id}")
+                            live.console.print(f"[bold green][*] HEDEF İMHA EDİLDİ: {vh.id}[/]")
 
                 current_targets = []
                 for h in list(radar.aktif_hedefler):
@@ -196,7 +209,8 @@ def main():
                     "interceptors": [
                         {"id": f.id, "x": f.x, "y": f.y, "z": f.z, "target_id": f.hedef.id}
                         for f in batarya.aktif_fuzeler
-                    ]
+                    ],
+                    "lasers": ciws.aktif_atislar  # Lazer atış listesi
                 }
                 push_data_to_clients(out_data)
                 

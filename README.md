@@ -21,45 +21,40 @@
 
 ---
 
-## 🌍 GLOBAL BAĞLAM: Benzer Yarışmalar ve Kaynak Kodlar
+## 🌍 GLOBAL BAĞLAM: Teknik Rakip Analizi ve Stratejik Kaynaklar
 
-GökKalkan AI, dünya çapında yürütülen savunma ve radar teknolojileri yarışmalarıyla aynı vizyonu paylaşmaktadır. Aşağıda, bu alandaki benzer küresel organizasyonlar ve açık kaynaklı bazı önemli projeler yer almaktadır:
+GökKalkan AI, dünya çapında yürütülen en ileri düzey savunma ve radar teknolojileri projeleriyle aynı teknolojik vizyonu paylaşmaktadır. Aşağıda, bu alandaki küresel organizasyonların teknik derinliği ve projelerinin algoritmik altyapısı analiz edilmiştir:
 
 ### 🏆 Küresel Savunma Yarışmaları (Global Defense Challenges)
 1.  **MAFAT Radar Challenge** (İsrail Savunma Bakanlığı)
-    *   **Konu:** Radar sinyallerini kullanarak insan ve hayvan ayrımı yapabilen derin öğrenme modelleri geliştirilmesi.
+    *   **Teknik Derinlik:** Doppler-pulse radar sistemlerinden gelen ham I/Q (In-phase/Quadrature) sinyallerinin spektral analizi.
+    *   **Metodoloji:** Ham verinin FFT (Fast Fourier Transform) ve Hann pencerleme (windowing) ile işlenmesi; ardından **Ensemble CNN** (ResNet50, DenseNet, EfficientNet) ve **Visual Transformers (ViT)** modelleri ile %96+ doğrulukta insan/hayvan ayrımı.
     *   **Kaynak Kod:** [MAFAT-RADAR-Challenge](https://github.com/expectopatronm/MAFAT-RADAR-Challenge)
 2.  **EUDIS Defence Hackathon** (Avrupa Savunma Fonu)
-    *   **Konu:** "Defending Airspace" temasıyla drone tespiti, izleme ve koruma sistemlerinin geliştirilmesi.
+    *   **Operasyonel Odak:** "Defending Airspace" kapsamında otonom karşı-tedbir sistemleri.
+    *   **Öne Çıkan Çözümler:** **KRÓLIK** (20.000+ örneklemli dağıtık CNN ağı) ve AI destekli kinetik önleme yapan **C-UAS BAVARIA** sistemi.
     *   **Websitesi:** [EUDIS Hackathon](https://eudis-hackathon.eu/)
 3.  **NATO / NCIA Drone Identification Challenge**
-    *   **Konu:** Drone, kuş ve bilinmeyen nesnelerin radar/sensör verileriyle sınıflandırılması.
+    *   **Veri Bilimi:** Sürü İHA'ların mikro-Doppler imzaları üzerinden sınıflandırılması. NATO standartlarında veri füzyonu ve çoklu sensör (radar, akustik, termal) entegrasyonu simülasyonları.
     *   **Detay:** [Kaggle Challenge](https://www.kaggle.com/c/drone-identification-and-tracking)
-4.  **NATO Innovation Hackathon**
-    *   **Konu:** İHA sürüsü tespiti, veri füzyonu ve karar destek sistemleri üzerine yoğunlaşan global bir yarışma.
-    *   **Websitesi:** [NATO Innovation Hub](https://www.innovationhub-act.org/challenge/innovation-hackathon/)
-5.  **IARC (International Aerial Robotics Competition)**
-    *   **Konu:** Otonom hava araçları için en zorlu mühendislik görevlerini (GPS olmayan ortamlar, engel kaçınma) içeren köklü bir yarışma.
-    *   **Websitesi:** [IARC Official](http://www.aerialroboticscompetition.org/)
 
-### 🛠️ Kritik Simülasyon ve Takip Frameworkleri (Core Frameworks)
+### 🛠️ Kritik Takip ve Simülasyon Frameworkleri (Core Frameworks)
 1.  **Stone Soup (Dstl - UK)**
-    *   **Konu:** Hedef takibi ve durum tahmini (Kalman filtreleri, parçacık filtreleri vb.) için dünya standartlarında açık kaynaklı bir framework.
+    *   **Teknik Altyapı:** 5-Eyes ülkeleri savunma laboratuvarları tarafından geliştirilen, modüler hedef takip ve sensör füzyonu platformu.
+    *   **Algoritmalar:** **Cubature Kalman Filter (CKF)**, **Multi-Hypothesis Tracking (MHT)** ve **Global Nearest Neighbour (GNN)** gibi askeri sınıf veri ilişkilendirme motorları.
     *   **GitHub:** [Stone-Soup](https://github.com/dstl/Stone-Soup)
-2.  **SignalRange (Space Electronic Warfare)**
-    *   **Konu:** Uzay tabanlı elektronik harp ve uydu haberleşme karıştırma (jamming) simülasyonu.
-    *   **GitHub:** [SignalRange](https://github.com/thkruz/SignalRange)
-3.  **RadarSimPy**
-    *   **Konu:** İleri düzey radar sinyal işleme, AESA modelleme ve Swerling istatistiksel modelleri kütüphanesi.
+2.  **RadarSimPy (High-Fidelity Radar Simulation)**
+    *   **Performans:** C++ çekirdekli **RadarSimC** motoru ve **CUDA/GPU** hızlandırması ile saniyeler içinde satha yönelik gerçekçi (raw baseband) radar verisi üretimi.
+    *   **Yetenekler:** **Ray Tracing** ile çok yollu yayılım (multi-path) ve karmaşık hedef RCS (Radar Cross Section) Swerling modelleri ile elektromanyetik ortam simülasyonu.
     *   **GitHub:** [RadarSimPy](https://github.com/radarsimx/radarsimpy)
 
-### 🚀 Füze Güdüm ve Otonom Sistem Repoları
+### 🚀 Füze Güdüm ve Stratejik Harp Analizi
 1.  **Proportional Navigation (PropNav) Simulations**
-    *   [pn-guidance](https://github.com/ajfrewin/pn-guidance): Python ile oransal seyrüsefer (PN) algoritmaları ve vuruş simülasyonu.
-    *   [propNav-3DOF](https://github.com/gedeschaines/propNav): 3-serbestlik dereceli füze angajman modelleri.
-2.  **Autonomous Drone Defense**
-    *   [deeprl-counter-uav-swarm](https://github.com/alexpalms/deeprl-counter-uav-swarm): Reinforcement Learning (RL) ile sürü İHA önleme simülasyonu.
-    *   [DroneSwarmTaskAssignment](https://github.com/WenJunGaoCalvin/DroneSwarmTaskAssignment): Sürü savaşlarında karmaşık silah-hedef görev atama algoritmaları.
+    *   **Kinematik:** 3-DOF nokta kütle modeli ve **Lagrange interpolasyonu** ile eksik sensör verilerinden hedef yörünge tahmini. Oransal seyrüsefer (PN) algoritmalarının Python implementasyonları.
+    *   [pn-guidance](https://github.com/ajfrewin/pn-guidance) | [propNav-3DOF](https://github.com/gedeschaines/propNav)
+2.  **Cognitive Electronic Warfare (vCEW)**
+    *   **EW Kapasitesi:** Bilişsel elektronik harp (Cognitive EW) metotları, sahte hedef üretimi (spoofing) ve karşı-karşı tedbir (ECCM) optimizasyonu.
+    *   **GitHub:** [vCEW](https://github.com/youshixun/vCEW)
 
 ---
 

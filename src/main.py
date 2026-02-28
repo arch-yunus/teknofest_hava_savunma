@@ -122,26 +122,43 @@ def main():
     api_thread.start()
     console.print("[bold green]Taktik Web Radar Paneli başlatıldı: http://localhost:8000[/]")
 
+    import api # import api to access frontend_commands
+    
+    # Yeni C2 Kontrol Değişkenleri
+    auto_fire_enabled = True
+
     try:
         with Live(create_status_table([], batarya.muhimmat), refresh_per_second=1) as live:
             while True:
+                # --- ARAYÜZ (FRONTEND) KOMUTLARINI İŞLE ---
+                while len(api.frontend_commands) > 0:
+                    cmd = api.frontend_commands.pop(0)
+                    if cmd == "force_swarm":
+                        radar.tara_suru_saldirisi(merkez_x=180, merkez_y=80, merkez_z=8, adet=6, hiz_mag=600)
+                        telemetri.olay_kaydet("WARNING", "MANUEL KOMUT: Sürü saldırısı başlatıldı!")
+                        live.console.print("[bold red][!] C2 OVERRIDE: Sürü Saldırısı Başlatılıyor...[/]")
+                    elif cmd == "toggle_auto_fire":
+                        auto_fire_enabled = not auto_fire_enabled
+                        durum = "AKTİF" if auto_fire_enabled else "PASİF (MANUEL)"
+                        telemetri.olay_kaydet("INFO", f"OTOMATİK ATIŞ (AI): {durum}")
+                        live.console.print(f"[bold yellow][i] C2 OVERRIDE: Otomatik Atış {durum}[/]")
+                        
                 radar.guncelle()
                 radar.tara()
                 # Füzeleri güncelle (dt = 1 saniye) ve Splash Damage kontrolü yap
                 vurulan_hedefler_fuzeler = batarya.guncelle(1.0, radar.aktif_hedefler)
                 
-                # CIWS (Nokta Savunma) güncelle
+                # CIWS her zaman oto-korumada (son hat savunması)
                 vurulan_hedefler_ciws = ciws.guncelle(1.0, radar.aktif_hedefler)
                 
                 tum_vurulanlar = set(vurulan_hedefler_fuzeler).union(set(vurulan_hedefler_ciws))
                 
-                # Vurulan hedefleri radar ve takipten çıkar (Alan hasarı dahil hepsi burada gelir)
+                # Vurulan hedefleri radar ve takipten çıkar
                 for vh in tum_vurulanlar:
                     if vh in radar.aktif_hedefler:
                         radar.aktif_hedefler.remove(vh)
                         kalman_yoneticisi.hedef_sil(vh.id)
                         
-                        # Kinetik mi CIWS mi ayrımı yapalım
                         if vh in vurulan_hedefler_ciws:
                             telemetri.olay_kaydet("SUCCESS", f"CIWS LAZER İLE İMHA: {vh.id}")
                             live.console.print(f"[bold bright_cyan][⚡] CIWS LAZER KİLİDİ: {vh.id} İMHA EDİLDİ![/]")
@@ -151,37 +168,48 @@ def main():
 
                 current_targets = []
                 for h in list(radar.aktif_hedefler):
-                    # Kalman filtresi güncellemesi
-                    izci = kalman_yoneticisi.hedef_guncelle(
-                        h.id, h.x, h.y, h.z, h.vx, h.vy, h.vz
-                    )
-                    # Filtrelenmiş konum/hız ile hedefi güncelle (opsiyonel)
-                    fx, fy, fz = izci.konum_tahmini()
-
-                    tti = utils.carpisma_suresi_hesapla(h)
-                    cpa = utils.en_yakin_nokta_hesapla(h)
-                    hiz = h.toplam_hiz
-
-                    # Tehdit değerlendirmesi
-                    degerlendirme = siniflandirici.siniflandir(h, cpa, tti)
-
+                    kalman_yoneticisi.guncelle(h.id, h.x, h.y, h.z)
+                    tahmin = kalman_yoneticisi.tahmin_al(h.id)
+                    hiz_km_h = h.hiz * 3600
+                    hiz_vektoru = (h.vx, h.vy, h.vz)
+                    tti = utils.hizli_carpisan_zamani(h.mesafe, hiz_km_h)
+                    cpa_km = utils.en_yakin_yaklasma_noktasi_hesapla((h.x, h.y, h.z), hiz_vektoru)
+                    
+                    hedef_tipi = siniflandirici.hedef_tipi_belirle(hiz_km_h, h.irtifa, h.rcs)
+                    oncelik_seviyesi = siniflandirici.oncelik_degerlendir(h.mesafe, tti, cpa_km, hedef_tipi)
+                    
+                    karar = "İZLENİYOR"
+                    # Otomatik atış modu açıksa ve öncelik uygunsa füze ateşle
+                    if auto_fire_enabled and oncelik_seviyesi in [TehditOnceligi.KRITIK.name, TehditOnceligi.YUKSEK.name] and batarya.muhimmat > 0 and h.mesafe > ciws.menzil_km:
+                        try:
+                            # Aynı hedefe multiple füze atmamak için basit kontrol
+                            hedefte_fuze_var_mi = any(f.hedef.id == h.id for f in batarya.aktif_fuzeler)
+                            if not hedefte_fuze_var_mi:
+                                batarya.angaje_ol(h)
+                                telemetri.olay_kaydet("ACTION", f"KİNETİK ÖNLEME BAŞLATILDI: {h.id}")
+                                live.console.print(f"[bold red][!] ÖNLEME BAŞLATILDI: {h.id}[/]")
+                                karar = "ANGAJE"
+                        except MuhimmatYokHatasi:
+                            karar = "MÜHİMMAT YOK!"
+                    elif not auto_fire_enabled and oncelik_seviyesi in [TehditOnceligi.KRITIK.name]:
+                        karar = "ENGAGEMENT HOLD (MANUEL)"
+                    
                     data = {
                         "id":      h.id,
                         "mesafe":  h.mesafe,
-                        "irtifa":  fz,
-                        "hiz":     hiz,
+                        "irtifa":  tahmin[2], # Kalman'dan gelen irtifa
+                        "hiz":     hiz_km_h,
                         "tti":     tti,
-                        "cpa":     cpa,
-                        "tip":     degerlendirme.tehdit_tipi.name.replace("_", " "),
-                        "oncelik": degerlendirme.oncelik.name,
-                        "karar":   degerlendirme.onerilen_karar,
-                        "skor":    degerlendirme.tehdit_skoru,
+                        "cpa":     cpa_km,
+                        "tip":     hedef_tipi.name.replace("_", " "),
+                        "oncelik": oncelik_seviyesi,
+                        "karar":   karar,
+                        "skor":    siniflandirici.tehdit_skoru_hesapla(h.mesafe, tti, cpa_km, hedef_tipi),
                         "x":       h.x,
                         "y":       h.y
                     }
                     current_targets.append(data)
 
-                    # Otomatik Angajman Mantığı (kritik tehditler için)
                     kritik_cpa = ayarlar.get('tehdit_limitleri', {}).get('kritik_mesafe', 50.0)
                     if (
                         degerlendirme.oncelik == TehditOnceligi.KRİTİK

@@ -399,4 +399,39 @@ function updateDashboard(targets, interceptors) {
     telemetryChart.update();
 }
 
+// --- Interactive C2 UI Controls ---
+function sendCommand(action) {
+    fetch('/api/command', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: action })
+    })
+        .catch(err => console.error("Komut gönderim hatası:", err));
+}
+
+document.getElementById('btn-force-swarm').addEventListener('click', () => {
+    sendCommand('force_swarm');
+    // Görsel geri bildirim
+    const btn = document.getElementById('btn-force-swarm');
+    const originalText = btn.textContent;
+    btn.textContent = ">>> INITIATING SWARM <<<";
+    setTimeout(() => btn.textContent = originalText, 1000);
+});
+
+let autoFire = true;
+document.getElementById('btn-toggle-auto').addEventListener('click', () => {
+    sendCommand('toggle_auto_fire');
+    autoFire = !autoFire;
+    const btn = document.getElementById('btn-toggle-auto');
+    if (autoFire) {
+        btn.textContent = "AUTO-FIRE: ENABLED";
+        btn.className = "btn active";
+    } else {
+        btn.textContent = "AUTO-FIRE: MANUAL OP";
+        btn.className = "btn"; // Varsayılan renk (Mavi)
+    }
+});
+
 window.onload = connectWebSocket;

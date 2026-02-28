@@ -246,3 +246,73 @@ body {
     color: var(--target-red);
     box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
 }
+
+/* C2 Interactive Controls */
+.c2-controls {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    background: rgba(0, 10, 20, 0.8);
+    border: 1px solid var(--radar-cyan);
+    padding: 20px;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    backdrop-filter: blur(10px);
+}
+
+.c2-controls .control-header {
+    color: white;
+    font-size: 1.2em;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 10px;
+    margin-bottom: 5px;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+.btn {
+    background: transparent;
+    border: 1px solid var(--radar-cyan);
+    color: var(--radar-cyan);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.1em;
+    padding: 10px 20px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+    box-shadow: inset 0 0 10px rgba(0, 255, 255, 0.1);
+}
+
+.btn:hover {
+    background: rgba(0, 255, 255, 0.1);
+    box-shadow: inset 0 0 15px rgba(0, 255, 255, 0.3), 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn.active {
+    background: rgba(12, 245, 12, 0.1);
+    border-color: #0cf50c;
+    color: #0cf50c;
+    box-shadow: inset 0 0 10px rgba(12, 245, 12, 0.2);
+}
+
+.btn.active:hover {
+    background: rgba(12, 245, 12, 0.2);
+    box-shadow: inset 0 0 15px rgba(12, 245, 12, 0.4), 0 0 10px rgba(12, 245, 12, 0.4);
+}
+
+.btn.warning {
+    border-color: var(--target-red);
+    color: var(--target-red);
+    box-shadow: inset 0 0 10px rgba(255, 51, 51, 0.1);
+}
+
+.btn.warning:hover {
+    background: rgba(255, 51, 51, 0.1);
+    box-shadow: inset 0 0 15px rgba(255, 51, 51, 0.3), 0 0 10px rgba(255, 51, 51, 0.3);
+}

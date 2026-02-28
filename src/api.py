@@ -2,12 +2,13 @@ import asyncio
 import json
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from threading import Thread
+from pydantic import BaseModel
 import uvicorn
 import os
 
-app = FastAPI(title="GökKalkan AI Command Center")
+app = FastAPI(title="GökKalkan UI Server")
 
 app.add_middleware(
     CORSMiddleware,
@@ -17,45 +18,61 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global set of active websocket connections
-active_connections = set()
+active_connections = []
+
+# Global Command Queue for Python backend to read
+frontend_commands = []
+
+class CommandRequest(BaseModel):
+    action: str
+
+# Serve static files (HTML, JS, CSS)
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+if os.path.exists(STATIC_DIR):
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+@app.get("/")
+async def get_index():
+    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
 
 @app.websocket("/ws/radar")
-async def websocket_radar_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    active_connections.add(websocket)
+    active_connections.append(websocket)
     try:
         while True:
-            # We just keep the connection alive. Data is pushed from the main loop!
-            await websocket.receive_text()
+            await websocket.receive_text() # we don't necessarily expect text from client yet
     except WebSocketDisconnect:
         active_connections.remove(websocket)
 
-async def broadcast_radar_data(data: dict):
-    if not active_connections:
-        return
-    message = json.dumps(data)
-    for connection in list(active_connections):
-        try:
-            await connection.send_text(message)
-        except Exception:
-            active_connections.remove(connection)
+@app.post("/api/command")
+async def receive_command(cmd: CommandRequest):
+    """Frontend'den gelen manuel komutları sıraya ekler."""
+    frontend_commands.append(cmd.action)
+    return {"status": "success", "action_queued": cmd.action}
 
 def push_data_to_clients(data: dict):
-    """
-    Called from main.py's synchronous loop.
-    We create a new event loop or use asyncio.run to ping the broadcast.
-    Because uvicorn runs in its own event loop, we need a thread-safe way.
-    """
+    """Called from main.py thread to push data to all connected ws clients"""
+    if not active_connections:
+        return
+    
+    json_data = json.dumps(data)
+    
+    async def _send():
+        for connection in active_connections:
+            try:
+                await connection.send_text(json_data)
+            except Exception:
+                pass
+                
+    # Create new event loop for this thread if needed, or use existing
     try:
-        # Fast fire-and-forget broadcast via the running loop if possible
         loop = asyncio.get_event_loop()
         if loop.is_running():
-            asyncio.run_coroutine_threadsafe(broadcast_radar_data(data), loop)
+            asyncio.run_coroutine_threadsafe(_send(), loop)
         else:
-            asyncio.run(broadcast_radar_data(data))
+            loop.run_until_complete(_send())
     except RuntimeError:
-        # Get/create a loop if no current loop exists in this thread
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.run_until_complete(broadcast_radar_data(data))

@@ -24,6 +24,36 @@ controls.enableDamping = true;
 controls.dampingFactor = 0.05;
 controls.maxPolarAngle = Math.PI / 2 - 0.05; // Don't allow going below ground
 
+// --- Cyberpunk 3D Terrain (Holo-Map) ---
+const mapSize = 400;
+const segments = 60;
+const terrainGeo = new THREE.PlaneGeometry(mapSize, mapSize, segments, segments);
+
+// Add some random noise to vertices to simulate mountains/valleys
+const vertices = terrainGeo.attributes.position.array;
+for (let i = 0; i < vertices.length; i += 3) {
+    // Modify Z value (which will be Y after rotation)
+    // Create a slight valley in the center, mountains on the edges
+    const x = vertices[i];
+    const y = vertices[i + 1];
+    const distFromCenter = Math.sqrt(x * x + y * y);
+    const noise = Math.random() * 2;
+    // Taller mountains further from center
+    vertices[i + 2] = (distFromCenter / 15) + noise - 5;
+}
+terrainGeo.computeVertexNormals();
+
+const terrainMat = new THREE.MeshBasicMaterial({
+    color: 0x004400, // Koyu yeşil
+    wireframe: true,
+    transparent: true,
+    opacity: 0.3
+});
+const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
+terrainMesh.rotation.x = -Math.PI / 2;
+terrainMesh.position.y = -1; // Ana gridin biraz altında
+scene.add(terrainMesh);
+
 // --- Radar Environment ---
 const gridHelper = new THREE.GridHelper(MAX_RANGE * 2, 40, 0x00ff00, 0x004400);
 gridHelper.position.y = 0;
@@ -238,6 +268,22 @@ function animate() {
         }
     }
 
+    // --- Jamming (Glitch) Efekti ---
+    const jammingWarning = document.getElementById("jamming-warning");
+    if (window.isJammingActive) {
+        if (!jammingWarning) {
+            const warning = document.createElement("div");
+            warning.id = "jamming-warning";
+            warning.className = "jamming-glitch";
+            warning.innerText = "WARNING: EW JAMMING DETECTED";
+            document.body.appendChild(warning);
+        }
+    } else {
+        if (jammingWarning) {
+            jammingWarning.remove();
+        }
+    }
+
     // Update Lasers
     for (let i = activeLasers.length - 1; i >= 0; i--) {
         let laser = activeLasers[i];
@@ -265,8 +311,10 @@ function connectWebSocket() {
         const data = JSON.parse(event.data);
         // Previously data was just targets list, now it's { targets:[], interceptors:[] }
         if (data.targets && data.interceptors !== undefined) {
+            window.isJammingActive = data.jamming; // Update global state
             updateDashboard(data.targets, data.interceptors, data.lasers);
         } else {
+            window.isJammingActive = false;
             updateDashboard(data, [], []); // Fallback
         }
     };
@@ -277,11 +325,15 @@ function connectWebSocket() {
     };
 }
 
-function updateDashboard(targets, interceptors) {
+function updateDashboard(targets, interceptors, lasers) {
     targetListEl.innerHTML = "";
 
     const activeTargetIds = new Set();
     const activeIntIds = new Set();
+
+    // 1. Update Targets (Neon Spheres)
+    const tooltipContainer = document.getElementById('tooltips-container');
+    tooltipContainer.innerHTML = '';
 
     // --- Process Targets ---
     targets.forEach(t => {
@@ -304,13 +356,27 @@ function updateDashboard(targets, interceptors) {
         const posY = Math.max(t.irtifa * 10, 0);
         const posZ = -t.y;
 
+        let targetColorMat = isKritik ? kritikMat : normalMat;
+        if (t.is_jammer) {
+            targetColorMat = new THREE.MeshBasicMaterial({ color: 0xffa500 }); // Turuncu (Jammer)
+        } else if (t.is_ghost) {
+            targetColorMat = new THREE.MeshBasicMaterial({ color: 0xcc00ff }); // Mor/Pembe (Ghost)
+        }
+
         if (targetMeshes[t.id]) {
             targetMeshes[t.id].position.set(posX, posY, posZ);
-            targetMeshes[t.id].material = isKritik ? kritikMat : normalMat;
+            targetMeshes[t.id].material = targetColorMat;
             targetTooltips[t.id].className = `tooltip ${isKritik ? "kritik" : ""}`;
             targetTooltips[t.id].textContent = `${t.id} [${(t.irtifa * 1000).toFixed(0)}m]`;
+
+            // Ghost yanıp sönme (glitch) efekti
+            if (t.is_ghost && Math.random() < 0.2) {
+                targetMeshes[t.id].visible = false;
+            } else {
+                targetMeshes[t.id].visible = true;
+            }
         } else {
-            const mesh = new THREE.Mesh(targetGeo, isKritik ? kritikMat : normalMat);
+            const mesh = new THREE.Mesh(targetGeo, targetColorMat);
             mesh.position.set(posX, posY, posZ);
             scene.add(mesh);
             targetMeshes[t.id] = mesh;

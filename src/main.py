@@ -201,12 +201,15 @@ def main():
                         "hiz":     hiz_km_h,
                         "tti":     tti,
                         "cpa":     cpa_km,
-                        "tip":     hedef_tipi.name.replace("_", " "),
+                        "tip":     "EH JAMMER" if h.is_jammer else ("GHOST" if h.is_ghost else hedef_tipi.name.replace("_", " ")),
                         "oncelik": oncelik_seviyesi,
                         "karar":   karar,
                         "skor":    siniflandirici.tehdit_skoru_hesapla(h.mesafe, tti, cpa_km, hedef_tipi),
                         "x":       h.x,
-                        "y":       h.y
+                        "y":       h.y,
+                        "z":       h.z,
+                        "is_jammer": getattr(h, 'is_jammer', False),
+                        "is_ghost": getattr(h, 'is_ghost', False)
                     }
                     current_targets.append(data)
 
@@ -229,7 +232,11 @@ def main():
                             except MuhimmatYokHatasi as e:
                                 live.console.print(f"[bold red][X] KRİTİK HATA: {e}[/]")
 
-                live.update(create_status_table(current_targets, batarya.muhimmat))
+                # Check if Jamming is currently active (Any ghosts currently on radar)
+                jamming_active = any(t.get("is_ghost", False) for t in current_targets)
+                if jamming_active:
+                    telemetri.olay_kaydet("WARNING", "RADAR JAMMING (EH) TESPİT EDİLDİ!")
+                    live.console.print("[bold magenta][!] ELEKTRONİK HARP - HAYALET HEDEFLER TESPİT EDİLDİ![/]")
                 
                 # Hazırlanan verileri WebSocket üzerinden Web UI'a gönder
                 out_data = {

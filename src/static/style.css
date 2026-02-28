@@ -247,6 +247,60 @@ body {
     box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
 }
 
+/* Jamming Glitch Warning */
+.jamming-glitch {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ff00ff;
+    font-size: 3em;
+    font-weight: bold;
+    font-family: 'Share Tech Mono', monospace;
+    text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff;
+    z-index: 999;
+    animation: glitch-anim 0.2s infinite;
+    pointer-events: none;
+}
+
+@keyframes glitch-anim {
+    0% {
+        transform: translate(-50%, -50%) skew(0deg);
+        opacity: 1;
+        text-shadow: 2px 0 red, -2px 0 blue;
+    }
+
+    20% {
+        transform: translate(-52%, -50%) skew(-5deg);
+        opacity: 0.8;
+        text-shadow: -2px 0 red, 2px 0 blue;
+    }
+
+    40% {
+        transform: translate(-48%, -50%) skew(5deg);
+        opacity: 0.9;
+        text-shadow: 2px 0 red, -2px 0 blue;
+    }
+
+    60% {
+        transform: translate(-50%, -52%) skew(0deg);
+        opacity: 1;
+        text-shadow: -2px 0 red, 2px 0 blue;
+    }
+
+    80% {
+        transform: translate(-50%, -48%) skew(2deg);
+        opacity: 0.8;
+        text-shadow: 2px 0 red, -2px 0 blue;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) skew(0deg);
+        opacity: 1;
+        text-shadow: -2px 0 red, 2px 0 blue;
+    }
+}
+
 /* C2 Interactive Controls */
 .c2-controls {
     position: absolute;

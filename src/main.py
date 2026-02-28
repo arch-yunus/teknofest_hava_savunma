@@ -125,7 +125,16 @@ def main():
             while True:
                 radar.guncelle()
                 radar.tara()
-                radar.tara_suru_saldirisi()  # V4.0 Sürü İHA Tarayıcısı Devrede
+                # Füzeleri güncelle (dt = 1 saniye)
+                vurulan_hedefler = batarya.guncelle(1.0)
+                
+                # Vurulan hedefleri radar ve takipten çıkar
+                for vh in vurulan_hedefler:
+                    if vh in radar.aktif_hedefler:
+                        radar.aktif_hedefler.remove(vh)
+                        kalman_yoneticisi.hedef_sil(vh.id)
+                        telemetri.olay_kaydet("SUCCESS", f"HEDEF İMHA EDİLDİ: {vh.id}")
+                        live.console.print(f"[bold green][+] HEDEF İMHA EDİLDİ: {vh.id}[/]")
 
                 current_targets = []
                 for h in list(radar.aktif_hedefler):
@@ -165,24 +174,32 @@ def main():
                         degerlendirme.oncelik == TehditOnceligi.KRİTİK
                         or cpa < kritik_cpa
                     ):
-                        telemetri.olay_kaydet("WARNING", f"KRİTİK TEHDİT: {h.id}", data)
-                        live.console.print(
-                            f"[bold red]>>> TEHDİT KİLİDİ: {h.id} "
-                            f"({degerlendirme.tehdit_tipi.name}) <<<[/]"
-                        )
-                        try:
-                            if batarya.angaje_ol(h):
-                                live.console.print(f"[bold green][+] İMHA BAŞARILI: {h.id}[/]")
-                                radar.aktif_hedefler.remove(h)
-                                kalman_yoneticisi.hedef_sil(h.id)
-                            else:
-                                live.console.print(f"[bold yellow][-] ISKALAMA: {h.id} takibi sürüyor![/]")
-                        except MuhimmatYokHatasi as e:
-                            live.console.print(f"[bold red][X] KRİTİK HATA: {e}[/]")
+                        # Zaten bu hedefe giden füze var mı kontrolü eklenebilir, şimdilik basit
+                        hedefe_fuze_var_mi = any(f.hedef.id == h.id for f in batarya.aktif_fuzeler)
+                        if not hedefe_fuze_var_mi:
+                            telemetri.olay_kaydet("WARNING", f"KRİTİK TEHDİT: {h.id}", data)
+                            live.console.print(
+                                f"[bold red]>>> TEHDİT KİLİDİ: {h.id} "
+                                f"({degerlendirme.tehdit_tipi.name}) <<<[/]"
+                            )
+                            try:
+                                batarya.angaje_ol(h)
+                                live.console.print(f"[bold yellow][!] FÜZE FIRLATILDI -> Hedef: {h.id}[/]")
+                            except MuhimmatYokHatasi as e:
+                                live.console.print(f"[bold red][X] KRİTİK HATA: {e}[/]")
 
                 live.update(create_status_table(current_targets, batarya.muhimmat))
-                # Broadcast targets to Web GUI
-                push_data_to_clients(current_targets)
+                
+                # Hazırlanan verileri WebSocket üzerinden Web UI'a gönder
+                out_data = {
+                    "targets": current_targets,
+                    "interceptors": [
+                        {"id": f.id, "x": f.x, "y": f.y, "z": f.z, "target_id": f.hedef.id}
+                        for f in batarya.aktif_fuzeler
+                    ]
+                }
+                push_data_to_clients(out_data)
+                
                 time.sleep(1)
 
     except KeyboardInterrupt:

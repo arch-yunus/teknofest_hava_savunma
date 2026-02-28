@@ -44,14 +44,20 @@ class TestGokKalkanV2(unittest.TestCase):
         with self.assertRaises(MuhimmatYokHatasi):
             batarya.angaje_ol(hedef)
 
-    def test_vurus_ihtimali_pn(self):
-        """Vuruş ihtimali hesaplamasının (basitleştirilmiş PN) çalıştığını doğrular."""
+    def test_kinematik_onleyici(self):
+        """Kinetik füze fırlatma ve hedefe ilerleme mantığını doğrular."""
         batarya = OnleyiciBatarya(muhimmat=10)
-        h_yakin = Hedef("Y", 2, 2, 1, -0.1, -0.1, 0) # Yakın ve yavaş
-        # angaje_ol artık boolean döndürür, ancak iç mantığı test etmek için 
-        # mühimmatın düştüğünü kontrol edebiliriz
+        h_yakin = Hedef("Y", 2, 2, 1, 0, 0, 0) # Yakın ve sabit
         batarya.angaje_ol(h_yakin)
         self.assertEqual(batarya.muhimmat, 9)
+        self.assertEqual(len(batarya.aktif_fuzeler), 1)
+        
+        fuze = batarya.aktif_fuzeler[0]
+        eski_mesafe = math.sqrt((h_yakin.x - fuze.x)**2 + (h_yakin.y - fuze.y)**2 + (h_yakin.z - fuze.z)**2)
+        batarya.guncelle(1.0) # 1 saniye uçur
+        yeni_mesafe = math.sqrt((h_yakin.x - fuze.x)**2 + (h_yakin.y - fuze.y)**2 + (h_yakin.z - fuze.z)**2)
+        
+        self.assertLess(yeni_mesafe, eski_mesafe) # Füzemiz hedefe yaklaşmış olmalı
 
     def test_ballistic_utils(self):
         """TTI ve CPA matematiksel fonksiyonlarını doğrular."""

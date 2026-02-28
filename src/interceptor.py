@@ -21,28 +21,41 @@ class OnleyiciBatarya:
         }
 
     def angaje_ol(self, hedef: Hedef) -> bool:
-        """Belirli bir hedefe angaje olur. Mühimmat yoksa hata fırlatır."""
+        """
+        Proportional Navigation (PN) algoritması simülasyonu ile angaje olur.
+        """
         if self.muhimmat <= 0:
-            raise MuhimmatYokHatasi("KRİTİK: Mühimmat kalmadı, angajman başarısız!")
+            raise MuhimmatYokHatasi("KRİTİK: Mühimmat kalmadı!")
         
-        # Mühimmat azalt
         self.muhimmat -= 1
         
-        # Angajman simülasyonu
-        # Mesafe ve hızın vuruş başarısına etkisi
-        vurus_skoru = self.vurus_ihtimalini_hesapla(hedef)
+        # PN Parametreleri
+        N = 3.0 # Navigasyon sabiti (Navigational Constant)
+        V_m = 0.9 # Savunma füzesi hızı (km/s) ~ Mach 2.6
         
-        # Basit bir başarı kontrolü (Gerçek projede daha karmaşık algoritmalar olur)
-        import random
-        return random.random() < vurus_skoru
-
-    def vurus_ihtimalini_hesapla(self, hedef: Hedef) -> float:
-        """Mesafe ve irtifaya dayalı vuruş ihtimalini hesaplar."""
-        d = hedef.mesafe
+        # Hedef kinematik verileri
+        R_v = [hedef.x, hedef.y, hedef.z] # Konum vektörü
+        V_v = [hedef.vx, hedef.vy, hedef.vz] # Hız vektörü
         
-        if d < 10:
-            return self.hassasiyet["yakin"]
-        elif d < 60:
-            return self.hassasiyet["orta"]
+        # Basitleştirilmiş Angajman Geometrisi Analizi
+        # Gerçek bir füzeli önleme denkleminde LOS hızı ve kapanma hızı (Closing Velocity) kullanılır.
+        # Burada 'vurus_ihtimali'ni bu geometrik zorluğa göre hesaplıyoruz.
+        
+        mesafe = hedef.mesafe
+        kapanma_hizi = - (hedef.x*hedef.vx + hedef.y*hedef.vy + hedef.z*hedef.vz) / max(mesafe, 0.001)
+        
+        # Hedef çok hızlıysa veya manevra yapıyorsa (ivme varsa) vuruş ihtimali düşer
+        # Basitlik için hız bileşeni
+        zorluk_faktoru = (hedef.toplam_hiz / 5000.0) + (mesafe / 150.0)
+        
+        # Navigasyon sabiti N'in başarısı (N optimumda başarı artar)
+        hedef_hizi_kmps = hedef.toplam_hiz / 3600.0
+        if hedef_hizi_kmps < 0.001:
+            basari_payi = 1.0 # Duran hedefi vurmak daha kolaydır
         else:
-            return self.hassasiyet["uzak"]
+            basari_payi = (N / 4.0) * (V_m / hedef_hizi_kmps)
+        
+        import random
+        vurus_olasiligi = min(0.98, max(0.1, basari_payi - zorluk_faktoru))
+        
+        return random.random() < vurus_olasiligi

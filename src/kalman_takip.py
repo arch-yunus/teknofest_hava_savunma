@@ -17,24 +17,15 @@ from typing import Optional
 @dataclass
 class KalmanIzci:
     """
-    Tek bir hedef için Kalman filtresi takip nesnesi.
+    Tek bir hedef için 9-Boyutlu Sabit İvme (CA) Kalman filtresi.
 
-    Durum uzayı modeli:
-        x_{k+1} = F * x_k + w_k        (w: süreç gürültüsü)
-        z_k     = H * x_k   + v_k        (v: ölçüm gürültüsü)
-
-    F: Durum geçiş matrisi (sabit hız modeli)
-    H: Ölçüm matrisi (sadece konum gözlemlenir)
-    Q: Süreç gürültüsü kovaryans matrisi
-    R: Ölçüm gürültüsü kovaryans matrisi
-    P: Tahmin hata kovaryans matrisi
+    Durum vektörü: [x, y, z, vx, vy, vz, ax, ay, az]
     """
     hedef_id: str
-    dt: float = 1.0             # Örnekleme aralığı (saniye)
-    sigma_q: float = 0.1        # Süreç gürültüsü (hız bileşeni)
-    sigma_r: float = 2.0        # Ölçüm gürültüsü (konum, km)
+    dt: float = 1.0
+    sigma_a: float = 0.5        # İvme değişim gürültüsü (m/s^3)
+    sigma_r: float = 1.5        # Ölçüm gürültüsü (konum, km)
 
-    # Durum vektörü ve kovaryans (başlatma sonrası dolar)
     x: np.ndarray = field(init=False)
     P: np.ndarray = field(init=False)
     F: np.ndarray = field(init=False)
@@ -46,99 +37,77 @@ class KalmanIzci:
 
     def __post_init__(self):
         dt = self.dt
-        # Sabit hız modeli: x_{k+1} = F * x_k
-        self.F = np.array([
-            [1, 0, 0, dt, 0,  0 ],
-            [0, 1, 0, 0,  dt, 0 ],
-            [0, 0, 1, 0,  0,  dt],
-            [0, 0, 0, 1,  0,  0 ],
-            [0, 0, 0, 0,  1,  0 ],
-            [0, 0, 0, 0,  0,  1 ],
-        ], dtype=float)
+        # Sabit İvme Modeli F matrisi
+        # x = x + v*dt + 0.5*a*dt^2
+        # v = v + a*dt
+        # a = a
+        self.F = np.eye(9, dtype=float)
+        for i in range(3):
+            self.F[i, i+3] = dt
+            self.F[i, i+6] = 0.5 * dt**2
+            self.F[i+3, i+6] = dt
 
-        # Konum ölçümleri: H seçiyor [x, y, z]
-        self.H = np.zeros((3, 6), dtype=float)
+        # Konum ölçümü (x, y, z)
+        self.H = np.zeros((3, 9), dtype=float)
         self.H[0, 0] = 1.0
         self.H[1, 1] = 1.0
         self.H[2, 2] = 1.0
 
-        # Süreç gürültüsü kovaryansı (Basit yaklaşım)
-        q = self.sigma_q ** 2
-        self.Q = q * np.eye(6, dtype=float)
-        self.Q[3, 3] *= 10   # Hız bileşenleri daha belirsiz
-        self.Q[4, 4] *= 10
-        self.Q[5, 5] *= 10
+        # Süreç Gürültüsü (Sürekli Beyaz İvme Gürültüsü Modeli)
+        q_val = self.sigma_a ** 2
+        self.Q = np.zeros((9, 9), dtype=float)
+        # Basit blok diyagonal varsayılan Q
+        for i in range(3):
+            self.Q[i+6, i+6] = q_val 
 
-        # Ölçüm gürültüsü kovaryansı
-        r = self.sigma_r ** 2
-        self.R = r * np.eye(3, dtype=float)
+        # Ölçüm Gürültüsü
+        self.R = (self.sigma_r ** 2) * np.eye(3)
 
-        # Başlangıç durumu ve kovaryansı
-        self.x = np.zeros(6, dtype=float)
-        self.P = np.eye(6, dtype=float) * 100.0   # Büyük başlangıç belirsizliği
+        self.x = np.zeros(9, dtype=float)
+        self.P = np.eye(9) * 100.0
 
     def ilklendir(self, x: float, y: float, z: float,
-                  vx: float = 0.0, vy: float = 0.0, vz: float = 0.0):
-        """Filtreyi bilinen (veya tahmini) başlangıç konum/hız ile ilklendir."""
-        self.x = np.array([x, y, z, vx, vy, vz], dtype=float)
+                   vx: float = 0.0, vy: float = 0.0, vz: float = 0.0,
+                   ax: float = 0.0, ay: float = 0.0, az: float = 0.0):
+        self.x = np.array([x, y, z, vx, vy, vz, ax, ay, az], dtype=float)
         self.baslangic_yapildi = True
 
     def tahmin_et(self) -> np.ndarray:
-        """
-        Öngörü adımı: mevcut durum tahminin bir adım ileriye yayar.
-        Returns: tahmin edilen durum vektörü (6,)
-        """
         if not self.baslangic_yapildi:
-            raise RuntimeError("Kalman filtresi ilklenmedi. ilklendir() çağrısı gerekli.")
+            raise RuntimeError("Filtre ilklendirilmedi.")
         self.x = self.F @ self.x
         self.P = self.F @ self.P @ self.F.T + self.Q
         return self.x.copy()
 
     def guncelle(self, olcum_x: float, olcum_y: float, olcum_z: float) -> np.ndarray:
-        """
-        Güncelleme adımı: yeni radar ölçümünü asimile eder.
-
-        Args:
-            olcum_x, olcum_y, olcum_z: Radar'dan gelen ham konum ölçümleri (km)
-
-        Returns:
-            Güncellenmiş durum tahmini (6,)
-        """
-        z = np.array([olcum_x, olcum_y, olcum_z], dtype=float)
-
-        # Yenilik (artık)
+        z = np.array([olcum_x, olcum_y, olcum_z])
         y = z - self.H @ self.x
-
-        # Yenilik kovaryansı
         S = self.H @ self.P @ self.H.T + self.R
-
-        # Kalman kazancı
         K = self.P @ self.H.T @ np.linalg.inv(S)
-
-        # Durum güncellemesi
+        
         self.x = self.x + K @ y
-
-        # Kovaryans güncellemesi (Joseph formu — sayısal kararlılık)
-        I_KH = np.eye(6) - K @ self.H
-        self.P = I_KH @ self.P @ I_KH.T + K @ self.R @ K.T
-
+        self.P = (np.eye(9) - K @ self.H) @ self.P
+        
         self.guncelleme_sayisi += 1
         return self.x.copy()
 
     def konum_tahmini(self) -> tuple[float, float, float]:
-        """Mevcut en iyi konum tahminini döndür (km)."""
         return float(self.x[0]), float(self.x[1]), float(self.x[2])
 
     def hiz_tahmini(self) -> tuple[float, float, float]:
-        """Mevcut en iyi hız tahminini döndür (km/s)."""
         return float(self.x[3]), float(self.x[4]), float(self.x[5])
 
+    def ivme_tahmini(self) -> tuple[float, float, float]:
+        """Anlık ivme vektörü tahmini (km/s^2)."""
+        return float(self.x[6]), float(self.x[7]), float(self.x[8])
+
     def ilerideki_konum(self, adim: int = 5) -> tuple[float, float, float]:
-        """
-        `adim` saniye sonraki tahmini konumu döndür (basit doğrusal ekstrapolasyon).
-        """
-        x_iler = self.F_adim(adim) @ self.x
-        return float(x_iler[0]), float(x_iler[1]), float(x_iler[2])
+        """n saniye sonrası için 2. derece yörünge tahmini."""
+        dt = self.dt * adim
+        x_pred = self.x[0] + self.x[3]*dt + 0.5*self.x[6]*dt**2
+        y_pred = self.x[1] + self.x[4]*dt + 0.5*self.x[7]*dt**2
+        z_pred = self.x[2] + self.x[5]*dt + 0.5*self.x[8]*dt**2
+        return float(x_pred), float(y_pred), float(z_pred)
 
     def F_adim(self, n: int) -> np.ndarray:
         """n adım için durum geçiş matrisini hesapla."""
@@ -164,7 +133,8 @@ class KalmanTakipYoneticisi:
         self,
         hedef_id: str,
         x: float, y: float, z: float,
-        vx: float = 0.0, vy: float = 0.0, vz: float = 0.0
+        vx: float = 0.0, vy: float = 0.0, vz: float = 0.0,
+        ax: float = 0.0, ay: float = 0.0, az: float = 0.0
     ) -> KalmanIzci:
         """
         Radardan gelen ham ölçümler ile Kalman filtresini günceller.
@@ -172,7 +142,7 @@ class KalmanTakipYoneticisi:
         """
         if hedef_id not in self._izciler:
             izci = KalmanIzci(hedef_id=hedef_id, dt=self.dt)
-            izci.ilklendir(x, y, z, vx, vy, vz)
+            izci.ilklendir(x, y, z, vx, vy, vz, ax, ay, az)
             self._izciler[hedef_id] = izci
         else:
             izci = self._izciler[hedef_id]

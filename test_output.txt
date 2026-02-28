@@ -1,0 +1,25 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.9, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\bahat\AppData\Local\Programs\Python\Python311\python.exe
+cachedir: .pytest_cache
+rootdir: G:\Di­er bilgisayarlar\Diz³st³ Bilgisayar²m\github repolar²m\teknofest_hava_savunma
+configfile: pyproject.toml
+plugins: anyio-4.12.1, langsmith-0.6.8
+collecting ... collected 15 items
+
+tests/test_simulasyon.py::TestGokKalkanV2::test_ballistic_utils PASSED   [  6%]
+tests/test_simulasyon.py::TestGokKalkanV2::test_gelismis_onleyici_ve_istisna PASSED [ 13%]
+tests/test_simulasyon.py::TestGokKalkanV2::test_hedef_matematigi PASSED  [ 20%]
+tests/test_simulasyon.py::TestGokKalkanV2::test_radar_3b_tespit PASSED   [ 26%]
+tests/test_simulasyon.py::TestGokKalkanV2::test_vurus_ihtimali_pn PASSED [ 33%]
+tests/test_simulasyon.py::TestTehditSiniflandirici::test_balistik_her_zaman_kritik PASSED [ 40%]
+tests/test_simulasyon.py::TestTehditSiniflandirici::test_balistik_siniflandirma PASSED [ 46%]
+tests/test_simulasyon.py::TestTehditSiniflandirici::test_iha_siniflandirma PASSED [ 53%]
+tests/test_simulasyon.py::TestTehditSiniflandirici::test_seyir_fuze_siniflandirma PASSED [ 60%]
+tests/test_simulasyon.py::TestTehditSiniflandirici::test_skor_aralik_kontrolu PASSED [ 66%]
+tests/test_simulasyon.py::TestKalmanTakip::test_guncelleme_kovaryans_azalmasi PASSED [ 73%]
+tests/test_simulasyon.py::TestKalmanTakip::test_ilerideki_konum_dogrusal PASSED [ 80%]
+tests/test_simulasyon.py::TestKalmanTakip::test_ilklenme_ve_konum PASSED [ 86%]
+tests/test_simulasyon.py::TestKalmanTakip::test_tahmin_adimi PASSED      [ 93%]
+tests/test_simulasyon.py::TestKalmanTakip::test_yonetici_izci_havuzu PASSED [100%]
+
+============================= 15 passed in 0.26s ==============================

@@ -21,6 +21,48 @@
 
 ---
 
+## 🌍 GLOBAL BAĞLAM: Benzer Yarışmalar ve Kaynak Kodlar
+
+GökKalkan AI, dünya çapında yürütülen savunma ve radar teknolojileri yarışmalarıyla aynı vizyonu paylaşmaktadır. Aşağıda, bu alandaki benzer küresel organizasyonlar ve açık kaynaklı bazı önemli projeler yer almaktadır:
+
+### 🏆 Küresel Savunma Yarışmaları (Global Defense Challenges)
+1.  **MAFAT Radar Challenge** (İsrail Savunma Bakanlığı)
+    *   **Konu:** Radar sinyallerini kullanarak insan ve hayvan ayrımı yapabilen derin öğrenme modelleri geliştirilmesi.
+    *   **Kaynak Kod:** [MAFAT-RADAR-Challenge](https://github.com/expectopatronm/MAFAT-RADAR-Challenge)
+2.  **EUDIS Defence Hackathon** (Avrupa Savunma Fonu)
+    *   **Konu:** "Defending Airspace" temasıyla drone tespiti, izleme ve koruma sistemlerinin geliştirilmesi.
+    *   **Websitesi:** [EUDIS Hackathon](https://eudis-hackathon.eu/)
+3.  **NATO / NCIA Drone Identification Challenge**
+    *   **Konu:** Drone, kuş ve bilinmeyen nesnelerin radar/sensör verileriyle sınıflandırılması.
+    *   **Detay:** [Kaggle Challenge](https://www.kaggle.com/c/drone-identification-and-tracking)
+4.  **NATO Innovation Hackathon**
+    *   **Konu:** İHA sürüsü tespiti, veri füzyonu ve karar destek sistemleri üzerine yoğunlaşan global bir yarışma.
+    *   **Websitesi:** [NATO Innovation Hub](https://www.innovationhub-act.org/challenge/innovation-hackathon/)
+5.  **IARC (International Aerial Robotics Competition)**
+    *   **Konu:** Otonom hava araçları için en zorlu mühendislik görevlerini (GPS olmayan ortamlar, engel kaçınma) içeren köklü bir yarışma.
+    *   **Websitesi:** [IARC Official](http://www.aerialroboticscompetition.org/)
+
+### 🛠️ Kritik Simülasyon ve Takip Frameworkleri (Core Frameworks)
+1.  **Stone Soup (Dstl - UK)**
+    *   **Konu:** Hedef takibi ve durum tahmini (Kalman filtreleri, parçacık filtreleri vb.) için dünya standartlarında açık kaynaklı bir framework.
+    *   **GitHub:** [Stone-Soup](https://github.com/dstl/Stone-Soup)
+2.  **SignalRange (Space Electronic Warfare)**
+    *   **Konu:** Uzay tabanlı elektronik harp ve uydu haberleşme karıştırma (jamming) simülasyonu.
+    *   **GitHub:** [SignalRange](https://github.com/thkruz/SignalRange)
+3.  **RadarSimPy**
+    *   **Konu:** İleri düzey radar sinyal işleme, AESA modelleme ve Swerling istatistiksel modelleri kütüphanesi.
+    *   **GitHub:** [RadarSimPy](https://github.com/radarsimx/radarsimpy)
+
+### 🚀 Füze Güdüm ve Otonom Sistem Repoları
+1.  **Proportional Navigation (PropNav) Simulations**
+    *   [pn-guidance](https://github.com/ajfrewin/pn-guidance): Python ile oransal seyrüsefer (PN) algoritmaları ve vuruş simülasyonu.
+    *   [propNav-3DOF](https://github.com/gedeschaines/propNav): 3-serbestlik dereceli füze angajman modelleri.
+2.  **Autonomous Drone Defense**
+    *   [deeprl-counter-uav-swarm](https://github.com/alexpalms/deeprl-counter-uav-swarm): Reinforcement Learning (RL) ile sürü İHA önleme simülasyonu.
+    *   [DroneSwarmTaskAssignment](https://github.com/WenJunGaoCalvin/DroneSwarmTaskAssignment): Sürü savaşlarında karmaşık silah-hedef görev atama algoritmaları.
+
+---
+
 ## 🚀 PROJE VİZYONU: Modern Hava Harbinin Dijital Kalesi
 
 **GökKalkan AI**, hava savunma disiplinini bir bilgisayar simülasyonundan çok daha ötesine taşıyan, tarihsel, teknik ve stratejik boyutlarıyla ele alan **yaşayan bir yapay zeka ansiklopedisidir.** TEKNOFEST vizyonunu akademik bir derinlikle birleştirerek, savunma sanayii meraklıları ve mühendisleri için uçtan uca, askeri sınıf (military-grade) bir komuta kontrol rehberi ve simülasyon iskeleti sunar.

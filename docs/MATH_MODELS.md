@@ -1,63 +1,85 @@
-# 🧮 GökKalkan: Operasyonel Matematik ve Fiziksel Modeller (MATH_MODELS)
+# 🧮 GökKalkan: Operasyonel Matematik Modelleri (MATH_MODELS)
 
-Bu belge, GökKalkan YZ Hava Savunma Sistemi'nin arkasında yatan matematiksel donanımı, kuadratik ve diferansiyel denklemler üzerinden askeri mühendislik standartlarında açıklamaktadır. 
+Bu doküman, GökKalkan AI sisteminin çekirdeğinde (Core Engine) saniyede binlerce kez işletilen fizik, diferansiyel denklem ve istatistiksel olasılık algoritmalarının matematiksel izdüşümüdür.
 
----
+## 1. Kalman Filtresi: Özyineli Durum Tahmini (Recursive State Estimation)
 
-## 🚀 1. Zaman-İmha (Time-To-Impact / TTI) Projeksiyonu
+Radardan gelen ölçümler her zaman "clutter" (çevresel gürültü) içerir. GökKalkan, `kalman_takip.py` modülü ile hedefin *gerçek* uzay koordinatlarını $X_k$ şu denklemlerle bulur:
 
-Radarlarımız sadece X, Y, Z konumunu değil, aynı zamanda hedefin vektörel hızını $\vec{v}_t$ ve ivmesini $\vec{a}_t$ hesaplar. Radardan gelen ham veri, basit bir doğrusal denklemden ziyade 3 boyutlu bir kuadratik denkleme dökülür.
+### Durum Tahmini (Zaman Güncellemesi / Time Update)
+Hedefin bir sonraki $(k+1)$ anındaki durumu, mevcut bilgi ve fizik kuralları çerçevesinde tahmin edilir:
 
-### 1.1 Çarpışma Süresi Diferansiyeli
-Eğer mühimmatın $\vec{v}_m$ hız vektörü ve hedefin hareket vektörü arasındaki kinematik kapanış hızı $v_{close}$ olarak tanımlanırsa:
+$$ \hat{x}_{k+1|k} = F \cdot \hat{x}_{k|k} + B \cdot u_k $$
+$$ P_{k+1|k} = F \cdot P_{k|k} \cdot F^T + Q $$
 
-$$ t_{impact} = \frac{- (\vec{r}_t \cdot \vec{v}_{rel}) \pm \sqrt{(\vec{r}_t \cdot \vec{v}_{rel})^2 - |\vec{v}_{rel}|^2 (|\vec{r}_t|^2 - R_{kill}^2)} }{|\vec{v}_{rel}|^2} $$
+* $\hat{x}$: Durum Vektörü $[x, y, z, v_x, v_y, v_z]^T$
+* $F$: Durum Geçiş Matrisi (Kinematik hareket modeli)
+* $P$: Hata Kovaryans Matrisi (Tahminimize ne kadar güvendiğimiz)
+* $Q$: Süreç Gürültüsü (Rüzgar vb. tahmin edilemeyen dış kuvvetler)
 
-*Burada:*
-- $\vec{r}_t$: Hedefin anlık 3D vektörel konumu
-- $\vec{v}_{rel}$: Önleyici mühimmat ile hedef arasındaki bağıl hız vektörü ($v_t - v_m$)
-- $R_{kill}$: Proximity Fuze (Yaklaşma Tapası) ölümcül şarapnel patlama yarıçapıdır.
+### Ölçüm Güncellemesi (Measurement Update)
+Radardan alınan yeni ölçüm ($z_k$) ile yapılan tahmin "Kalman Kazancı" ($K$) oranında harmanlanır:
 
----
+$$ K_k = P_{k|k-1} \cdot H^T \cdot (H \cdot P_{k|k-1} \cdot H^T + R)^{-1} $$
+$$ \hat{x}_{k|k} = \hat{x}_{k|k-1} + K_k \cdot (z_k - H \cdot \hat{x}_{k|k-1}) $$
+$$ P_{k|k} = (I - K_k \cdot H) \cdot P_{k|k-1} $$
 
-## 🎯 2. Genişletilmiş Kalman Filtresi (Extended Kalman Filter - EKF)
-
-Dünya yuvarlaktır, füzeler ise kavisli parabolik yörüngeler izler. Doğrusal Kalman filtresi atmosferik sürtünme değişkenlikleri karşısında çuvallar, bu yüzden füzelerin takip algoritmalarında doğrusal olmayan (Non-linear) izleme sistemleri kullanılır.
-
-### 2.1 Durum Vektörü Güncellemesi (State Update)
-Durum vektörü $\hat{x}_k$ şu şekilde hesaplanır:
-
-$$ \hat{x}_{k|k-1} = f(\hat{x}_{k-1|k-1}, u_k) $$
-$$ P_{k|k-1} = F_k P_{k-1|k-1} F_k^T + Q_k $$
-
-- $F_k$: Sistemin Jacobian (Türev) matrisi. Füzelerin dönüş ivmelerini hesaplar.
-- $Q_k$: Süreç (Process) Gürültüsü. Hedefin rastgele kaçış manevrası yapma ihtimalinin varyansı. Sürü İHA'larda bu değer çok yüksektir.
-
-### 2.2 Çevresel Gürültü ve İnovasyon (Kalman Kazancı)
-Radar verisi $z_k$ ekrana düştüğünde sistem o veriye hemen inanmaz. Radar yansıması ile hesaplanan nokta arasındaki fark (İnovasyon) alınır:
-
-$$ y_k = z_k - h(\hat{x}_{k|k-1}) $$
-$$ S_k = H_k P_{k|k-1} H_k^T + R_k $$
-$$ K_k = P_{k|k-1} H_k^T S_k^{-1} $$
-
-Eğer $R_k$ (Sensör Paraziti) çok yüksekse (düşman Jammer açtıysa), Kalman Kazancı ($K_k$) sıfıra yaklaşır. Sistem körü körüne radara inanmak yerine fiziksel momentum hesaplarına (Dead Reckoning) güvenmeye başlar.
+* $K_k$: Kalman Kazancı (Ölçüme mi, tahmine mi daha çok güvenileceği)
+* $R$: Ölçüm Gürültü Kovaryansı (Radarın donanım hatası)
+* $z_k - H \hat{x}$: İnovasyon (Beklenen ile ölçülen arasındaki fark)
 
 ---
 
-## 🌪️ 3. Proportional Navigation (PN) Güdüm Yasası
+## 2. AESA Radar Menzil Denklemi (The Radar Equation)
 
-GökKalkan Önleyicileri hedefin olduğu yere gitmez; **hedefin olacağı yere** gider. Füzelerimiz hedefi arkasından kovalamaz, ona yandan çarpmak için *Oransal Seyrüsefer* (Proportional Navigation) algoritması uygular.
+GökKalkan `radar.py` içerisinde bir Sinyal-Gürültü Oranı (SNR) filtresi kullanır. Hedefin tespiti, radar kesit alanına ($\sigma$) ve mesafeye ($R$) bağlı dördüncü dereceden ters orantılı bir fonksiyondur:
 
-$$ \vec{a}_m = N \cdot V_c \cdot \dot{\lambda} \cdot \vec{n} $$
+$$ SNR = \frac{P_t \cdot G^2 \cdot \lambda^2 \cdot \sigma}{(4\pi)^3 \cdot R^4 \cdot k \cdot T_s \cdot B \cdot L} $$
 
-*Açıklama:*
-- $\vec{a}_m$: Mühimmatın (Füzenin) üretmesi gereken manevra ivmesi (G-kuvveti)
-- $N$: Navigasyon Sabiti (Genellikle 3 ile 5 arasıdır). Füzemizin ne kadar agresif döneceğini belirler.
-- $V_c$: Kapanış Hızı (Mühimmat + Hedef)
-- $\dot{\lambda}$: Görüş Hattı (Line of Sight - LOS) açısının değişim oranı.
-- $\vec{n}$: Dönüş düzlemine dik birim vektör.
+* $P_t$: Verici Gücü (Watt)
+* $G$: Anten Kazancı
+* $\lambda$: Dalga Boyu ($c / f$)
+* $\sigma$: Hedefin Radar Kesit Alanı (RCS, $m^2$)
+* $R$: Radara olan mesafe
+* $k$: Boltzmann Sabiti ($1.38 \times 10^{-23}$)
+* $T_s$: Sistem Gürültü Sıcaklığı (Kelvin)
+* $B$: Bant Genişliği (Hz)
+* $L$: Sistem Kayıpları
 
-**Doktrinsel Kural:** Eğer Görüş Hattı açısı değişmiyorsa ($\dot{\lambda} = 0$), hedef vizörde sabit kalmış ve sadece büyüyorsa, füzemiz hedefle KESİN ÇARPIŞMA (Collision Course) rotasında demektir. GökKalkan'ın `interceptor.py` dosyası tam olarak bu sıfıra yaklaşma ilkesini kodlar.
+Eğer hesaplanan $SNR > SNR_{min\_esik\_db}$ ise, hedef (Blip) ekrana yansıtılır.
+
+### Swerling Hedef Modelleri (RCS Dalgalanması)
+GökKalkan, hedefin sabit bir demir parçası değil, dönen türbinleri ve manevra yapan kanatları olduğunu varsayar (Swerling I/III). RCS dalgalanması Exponential (Rayleigh) veya Gamma dağılımlarıyla modellenir:
+
+$$ p(\sigma) = \frac{1}{\sigma_{avg}} e^{-\sigma/\sigma_{avg}} \quad \text{(Swerling 1)} $$
 
 ---
-*Gök vatanımızı koruyan matematik tesadüflere yer bırakmaz.*
+
+## 3. Oransal Seyrüsefer (Proportional Navigation - PN)
+
+`interceptor.py` içerisindeki füzelerimiz, hedeflerini kovalamazlar, hedeflerinin *olacakları yere* uçarlar. Görüş Hattı (Line-of-Sight, LOS) açısının değişim oranı kullanılarak en ideal ivme vektörü çıkarılır:
+
+$$ a_m = N \cdot V_c \cdot \dot{\lambda} $$
+
+* $a_m$: Füzenin uygulanması gereken yanal ivmesi (Commanded Acceleration)
+* $N$: Navigasyon Sabiti (Genellikle 3.0 ile 5.0 arası)
+* $V_c$: Kapanma Hızı (Closing Velocity, Füze ve hedefin göreli hızı)
+* $\dot{\lambda}$: LOS (Görüş Hattı) Açısının Değişim Hızı (Türev)
+
+Eğer $\dot{\lambda} = 0$ ise, füze hedeflerle mükemmel bir çarpışma rotasındadır.
+
+---
+
+## 4. Time To Impact (TTI) ve Closest Point of Approach (CPA)
+
+Tehdit Sınıflandırıcımız (AI) sadece kimliğe değil, **geometriye** de bakar.
+
+**TTI (Çarpışma Süresi):**
+$$ TTI = - \frac{||\vec{r}_{hedef} - \vec{r}_{radar}||}{||\vec{v}_{hedef} \cdot \hat{u}_r||} $$
+
+**CPA (En Yakın Geçiş Noktası):**
+$$ t_{CPA} = - \frac{\vec{r}_{hedef} \cdot \vec{v}_{hedef}}{||\vec{v}_{hedef}||^2} $$
+$$ \vec{P}_{CPA} = \vec{r}_{hedef} + \vec{v}_{hedef} \cdot t_{CPA} $$
+$$ CPA_{Mesafe} = ||\vec{P}_{CPA}|| $$
+
+*GökKalkan bu denklemleri harmanlayarak, "hangi hedefin saniyeler içinde başımıza dert açacağını" mekanik bir soğukkanlılıkla bulur.*

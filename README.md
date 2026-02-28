@@ -1,5 +1,14 @@
 # 🛡️ GökKalkan AI: Üstün Hava Savunma Doktrini ve Global Harp Ansiklopedisi
 
+```console
+[SYSTEM BOOT] Initiating GökKalkan AI Core...
+[SYSTEM BOOT] Loading Tactical Knowledge Base (LORE.md) ... OK
+[SYSTEM BOOT] Calibrating Kalman Matrices (MATH_MODELS.md) ... OK
+[SYSTEM BOOT] Powering up 3D Phased Array Radars ... OK
+[SYSTEM BOOT] EW Jammer Counter-Measures ... ONLINE
+[SYSTEM BOOT] ...
+[SYSTEM BOOT] GÖKKALKAN AI v3.0 ULTIMATE STANDING BY.
+```
 <div align="center">
 
 ![GökKalkan AI Banner](docs/banner.png)
@@ -15,7 +24,9 @@
 <i>"Bilginin sınırları, gökyüzünün sınırları gibidir; her ikisi de sadece ufuk çizgisine kadar değil, sonsuzluğa kadar uzanır."</i>
 <br><br>
 
-**[Teknik Mimari (TEKNIK_MIMARI.md)](docs/TEKNIK_MIMARI.md)** 🔸 **[Milli Teknoloji Manifestosu (MANIFESTO.md)](docs/MANIFESTO.md)**
+**[⚔️ Taktik Zemin: Projenin Doğuş Hikayesi (LORE.md)](docs/LORE.md)** <br>
+**[🧮 Çekirdek Fizik: Operasyonel Matematik (MATH_MODELS.md)](docs/MATH_MODELS.md)** <br>
+**[⚙️ Teknik Mimari (TEKNIK_MIMARI.md)](docs/TEKNIK_MIMARI.md)** 🔸 **[Milli Teknoloji Manifestosu (MANIFESTO.md)](docs/MANIFESTO.md)**
 
 </div>
 
@@ -102,7 +113,8 @@ Sistem mimarisi, monolitik yapılardan uzak durularak tamamen modüler ve mikro-
 teknofest_hava_savunma/
 ├── docs/                   # 📚 Doktrinler, Ansiklopediler, Mimari Notlar
 │   ├── TEKNIK_MIMARI.md    # Matematiksel sensör modelleri ve formüller
-│   ├── LORE.md             # Sistemin Felsefesi ve Harp Tarihçesi (YENİ!)
+│   ├── MATH_MODELS.md      # 🧮 Kalman, SNR ve PN Formülleri (LaTeX)
+│   ├── LORE.md             # 🌌 Sistemin Felsefesi ve Harp Tarihçesi
 │   ├── banner.png          # GökKalkan Görsel Sancağı
 │   └── MANIFESTO.md        # Sistemin felsefesi ve hedef kitlesi
 ├── src/                    # 🧠 GökKalkan AI Çekirdek Kodları
@@ -113,11 +125,11 @@ teknofest_hava_savunma/
 │   ├── interceptor.py      # Güdüm, TTI (Time-to-Impact) ve Önleme Matrisleri
 │   ├── telemetry.py        # Canlı Operasyonel Veri Kaydı ve Kara Kutu (Blackbox)
 │   ├── api.py              # 🌐 V4.0: FastAPI & WebSocket C2 İletişim Sunucusu  
-│   ├── static/             # 🌐 V4.0: C2 Radar Dashboard HTML/CSS/JS Assets
+│   ├── static/             # 🌐 V4.0: C2 WebGL 3D Radar Dashboard (app.js, vb.)
 │   └── utils.py            # Aerodinamik Matris Sabitleri, Fonksiyonlar & Çeviriciler
 ├── tests/                  # 💥 Muharebe Öncesi Sanal Atış ve Test Sahası
-│   └── test_simulasyon.py  # Ünit, Yük ve Çarpışma Entegrasyon testleri 
-├── docs/MATH_MODELS.md     # 🧮 Operasyonel Matematik, Diferansiyel Denklem Setleri (YENİ!)
+│   └── test_simulasyon.py  # Ünit, Yük ve Çarpışma Entegrasyon testleri (pytest)
+├── .github/workflows/      # ⚙️ Military-Grade CI/CD Code Analysis (Linting)
 ├── CODE_OF_CONDUCT.md      # 🛡️ Askeri Disiplin ve Geliştirici Kuralları
 ├── LICENSE                 # ⚖️ MIT Lisansı
 ├── requirements.txt        # 📦 Python Bağımlılık Bildirimi (Ortam İzolasyonu)
@@ -175,6 +187,14 @@ GökKalkan, statik hedefleri vurmak için değil, günümüzün asimetrik ve kar
 ### 4.2 Balistik Füze (TBM & ICBM) Tespiti
 -   **Tanım:** Atmosfer dışına çıkarak yüksek parabolik bir yörünge izleyen devasa hızlardaki roketler.
 -   **Savunma Yaklaşımı:** Klasik hava hedeflerinden ziyade, yerçekimi ivmesi ve yanma sonu hızı hesaplarına göre çok önceden düşüş noktası projeksiyonu çizmek gerekir. GökKalkan'ın `interceptor` motorunda Exospheric (atmosfer dışı) kinetik önleme konseptleri simüle edilmektedir.
+
+### 4.3 Elektronik Harp (Jamming) & Sinyal Karıştırıcılar
+-   **Tanım:** Özel modifiye edilmiş savaş uçaklarının hedefe radar "hayaletleri" yansıtması (`is_ghost`).
+-   **Savunma Yaklaşımı:** GökKalkan'ın radar modülü bunu anında tespit eder, ekranda siberpunk bir uyarı fırlatır (`WARNING: EW JAMMING DETECTED`) ve "Glitching" efektiyle komutanı, hedefin sahte olabileceğine karşı uyarır.
+
+### 4.4 Lazer Nokta Savunma (CIWS)
+-   **Tanım:** Kinetik füzelerin tükendiği veya aşırı yakına giren hedefler için 15km menzilli Işık Hızı silahları.
+-   **Savunma Yaklaşımı:** BVR (Görüş Ötesi) çarpışmalar yeterli olmadığında GökKalkan, 3D Taktik Sahada yeşil `THREE.Line` lazerlerini ateşleyerek hedefi anında imha eder. Füzeler tükense de lazer jeneratörü ateş etmeye devam eder.
 
 ---
 

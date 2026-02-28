@@ -4,7 +4,7 @@ from typing import List, Dict, Optional, Any
 
 class Hedef:
     """Hava sahasındaki bir hedefi (İHA, Füze, Uçak) temsil eder."""
-    def __init__(self, hedef_id: str, x: float, y: float, z: float, vx: float, vy: float, vz: float):
+    def __init__(self, hedef_id: str, x: float, y: float, z: float, vx: float, vy: float, vz: float, rcs: float = 1.0):
         self.id = hedef_id
         self.x = x  # Doğu-Batı (km)
         self.y = y  # Kuzey-Güney (km)
@@ -12,6 +12,8 @@ class Hedef:
         self.vx = vx # Hız X (km/s)
         self.vy = vy # Hız Y (km/s)
         self.vz = vz # Hız Z (km/s)
+        self.rcs_base = rcs # Temel RCS (m^2)
+        self.swerling_type = random.choice([1, 3]) # Rastgele Swerling tipi ataması
 
     @property
     def mesafe(self) -> float:
@@ -31,11 +33,46 @@ class Hedef:
         self.z += self.vz * dt
         if self.z < 0: self.z = 0
 
+    def get_instant_rcs(self) -> float:
+        """Swerling modellerine göre anlık RCS dalgalanması hesaplar."""
+        if self.swerling_type == 1:
+            # Swerling 1: Rayleigh dağılımı (Exponential in Power)
+            return -self.rcs_base * math.log(max(random.random(), 1e-6))
+        else:
+            # Swerling 3: Chi-square 4-DOF
+            return self.rcs_base * random.gammavariate(2, 0.5)
+
 class RadarSistemi:
     def __init__(self, menzil_km: float = 150.0, tespit_olasiligi: float = 0.4):
         self.menzil_km = menzil_km
         self.tespit_olasiligi = tespit_olasiligi
         self.aktif_hedefler: List[Hedef] = []
+
+        # İleri Fiziksel Radar Parametreleri (X-Band)
+        self.P_t = 50000.0  # Verici Gücü (Watt)
+        self.G_db = 45.0    # Anten Kazancı (dB)
+        self.f_hz = 9.5e9   # 9.5 GHz X-Band
+        self.snr_min_db = 13.0 # Minimum Tespit Eşiği (dB)
+        self.L_db = 5.0     # Sistem Kayıpları (dB)
+
+    def _snr_hesapla(self, hedef: Hedef) -> float:
+        """Radar Menzil Denklemi ile anlık SNR hesaplar."""
+        R = max(hedef.mesafe * 1000.0, 1.0) # Metre cinsinden mesafe
+        rcs = hedef.get_instant_rcs()
+        c = 3e8
+        lam = c / self.f_hz
+        G = 10**(self.G_db / 10.0)
+        L = 10**(self.L_db / 10.0)
+        k_bolt = 1.38e-23
+        T = 290.0 # Gürültü sıcaklığı (K)
+        B = 1e6   # Bant genişliği (Hz)
+
+        # SNR = (Pt * G^2 * lam^2 * sigma) / ((4pi)^3 * R^4 * k * T * B * L)
+        pay = self.P_t * (G**2) * (lam**2) * rcs
+        payda = ((4 * math.pi)**3) * (R**4) * k_bolt * T * B * L
+        
+        snr_linear = pay / payda
+        return 10 * math.log10(max(snr_linear, 1e-15))
         
     def tara(self) -> Optional[Hedef]:
         """Radar taraması yapar ve yeni bir hedef tespit edilirse döndürür."""
@@ -57,10 +94,14 @@ class RadarSistemi:
             yeni_hedef = Hedef(
                 hedef_id=f"HDF-{random.randint(100, 999)}",
                 x=x, y=y, z=z,
-                vx=vx, vy=vy, vz=vz
+                vx=vx, vy=vy, vz=vz,
+                rcs=random.choice([0.01, 0.1, 1.0, 5.0, 10.0]) # İHA, Füze, Uçak RCS'leri
             )
-            self.aktif_hedefler.append(yeni_hedef)
-            return yeni_hedef
+            
+            # SNR Filtresi Uygula
+            if self._snr_hesapla(yeni_hedef) >= self.snr_min_db:
+                self.aktif_hedefler.append(yeni_hedef)
+                return yeni_hedef
         return None
 
     def tara_suru_saldirisi(self) -> List[Hedef]:

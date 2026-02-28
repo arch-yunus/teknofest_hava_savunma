@@ -18,6 +18,7 @@ class TehditTipi(Enum):
     """Tanımlanmış hava tehdit kategorileri."""
     BALISTIK_FUZZE    = auto()   # Yüksek hız, dik profil, yüksek tehdit
     SEYIR_FUZE        = auto()   # Orta hız, alçak uçuş
+    HIPERSONIK_FUZE   = auto()   # Mach 5+ hızlar, manevra kabiliyeti yüksek
     SABIT_KANAT_UCAK  = auto()   # Orta-yüksek hız, sabit irtifa
     INSANSIZ_HAVA     = auto()   # Düşük hız, değişken irtifa
     BILINMEYEN        = auto()   # Sınıflandırılamayan
@@ -61,6 +62,7 @@ class TehditSiniflandirici:
     """
 
     # Sınıflandırma eşik değerleri (km/h)
+    HIPERSONIK_HIZ_ESIGI= 6125.0   # > 6125 km/h (Mach 5+)
     BALISTIK_HIZ_ESIGI  = 3000.0   # > 3000 km/h → Balistik füze şüphesi
     SEYIR_HIZ_UST       = 1200.0   # 600-1200 km/h arası → Seyir füzesi
     SEYIR_HIZ_ALT       = 600.0
@@ -109,8 +111,10 @@ class TehditSiniflandirici:
     # ------------------------------------------------------------------ #
 
     def _tip_belirle(self, hiz: float, irtifa: float) -> Tuple[TehditTipi, str]:
+        if hiz >= self.HIPERSONIK_HIZ_ESIGI:
+            return TehditTipi.HIPERSONIK_FUZE, "Mach 5+ Hipersonik Tehdit! Kritik önleme penceresi."
         if hiz >= self.BALISTIK_HIZ_ESIGI:
-            return TehditTipi.BALISTIK_FUZZE, "Yüksek hızlı balistik/hipersonik tehdit"
+            return TehditTipi.BALISTIK_FUZZE, "Yüksek hızlı balistik tehdit"
         if self.SEYIR_HIZ_ALT <= hiz < self.SEYIR_HIZ_UST and irtifa < self.ALCAK_IRTIFA_UST:
             return TehditTipi.SEYIR_FUZE, "Alçak uçuşlu seyir füzesi"
         if self.UCAK_HIZ_ALT <= hiz < self.UCAK_HIZ_UST:
@@ -139,7 +143,8 @@ class TehditSiniflandirici:
 
         # Bileşen 3: Tehdit tipi ağırlığı
         tip_agirlik = {
-            TehditTipi.BALISTIK_FUZZE:    1.0,
+            TehditTipi.HIPERSONIK_FUZE:   1.0,
+            TehditTipi.BALISTIK_FUZZE:    0.95,
             TehditTipi.SEYIR_FUZE:        0.85,
             TehditTipi.SABIT_KANAT_UCAK:  0.60,
             TehditTipi.INSANSIZ_HAVA:     0.40,

@@ -103,9 +103,31 @@ const kritikMat = new THREE.MeshBasicMaterial({ color: 0xff3333 }); // Red
 const targetGeo = new THREE.SphereGeometry(3, 16, 16);
 
 // Missile geometry (Neon Blue)
-const missileGeo = new THREE.ConeGeometry(1.5, 6, 8);
+const missileGeo = new THREE.CylinderGeometry(0.5, 0.5, 4, 8); // Silindir gövde
 missileGeo.rotateX(Math.PI / 2); // Point forward along Z
-const missileMat = new THREE.MeshBasicMaterial({ color: 0x00ffff }); // Cyan
+const missileMat = new THREE.MeshBasicMaterial({ color: 0xcccccc }); // Gri gövde
+
+// --- Rain Particle System ---
+const rainCount = 15000;
+const rainGeo = new THREE.BufferGeometry();
+const rainArray = new Float32Array(rainCount * 3);
+for (let i = 0; i < rainCount; i++) {
+    rainArray[i * 3] = Math.random() * 400 - 200;
+    rainArray[i * 3 + 1] = Math.random() * 200; // Yükseklik
+    rainArray[i * 3 + 2] = Math.random() * 400 - 200;
+}
+rainGeo.setAttribute('position', new THREE.BufferAttribute(rainArray, 3));
+const rainMaterial = new THREE.LineBasicMaterial({
+    color: 0xaaaaaa,
+    transparent: true,
+    opacity: 0.1
+});
+// Using Points for rain is faster than Lines for thousands of particles
+const rainSystem = new THREE.Points(rainGeo, new THREE.PointsMaterial({
+    color: 0xaaaaaa, size: 0.5, transparent: true, opacity: 0.2
+}));
+scene.add(rainSystem);
+rainSystem.visible = false; // Kapalı başla
 
 
 // --- Window Resize ---
@@ -249,6 +271,9 @@ const SFX = {
     laser: () => playTone(300, 'sawtooth', 0.15, 0.1),
     empBlast: () => playTone(50, 'square', 3.0, 0.5),
     missileTargetHit: () => playTone(150, 'triangle', 0.5, 0.3),
+    rainLoop: () => {
+        if (window.isWeatherRain) playTone(400, 'lowpass', 0.1, 0.01) // White noise simulation 
+    }
 };
 
 // --- Animation Loop ---
@@ -269,6 +294,21 @@ function animate() {
             tooltip.style.top = `${y}px`;
             tooltip.style.display = pos.z > 1 ? 'none' : 'block';
         }
+    }
+
+    // Animate Rain
+    if (window.isWeatherRain && rainSystem.visible) {
+        const positions = rainSystem.geometry.attributes.position.array;
+        for (let i = 0; i < rainCount; i++) {
+            positions[i * 3 + 1] -= 3.0; // Düşüş hızı
+            positions[i * 3] -= 0.5; // Rüzgar
+            if (positions[i * 3 + 1] < 0) {
+                positions[i * 3 + 1] = 200; // Yukarıdan tekrar başlat
+                positions[i * 3] = Math.random() * 400 - 200;
+            }
+        }
+        rainSystem.geometry.attributes.position.needsUpdate = true;
+        if (Math.random() < 0.1) SFX.rainLoop();
     }
 
     // Update Explosions & Shockwaves & Smoke
@@ -357,9 +397,14 @@ function connectWebSocket() {
         // Previously data was just targets list, now it's { targets:[], interceptors:[] }
         if (data.targets && data.interceptors !== undefined) {
             window.isJammingActive = data.jamming; // Update global state
+            window.isWeatherRain = data.weather === 'RAIN';
+            rainSystem.visible = window.isWeatherRain;
+
             updateDashboard(data.targets, data.interceptors, data.lasers, data.jamming, data.emp);
         } else {
             window.isJammingActive = false;
+            window.isWeatherRain = false;
+            rainSystem.visible = false;
             updateDashboard(data, [], [], false, false); // Fallback
         }
     };
@@ -563,6 +608,21 @@ document.getElementById('btn-trigger-emp').addEventListener('click', () => {
     // If audio context is suspended (browser policy), resume it on first click
     if (audioCtx.state === 'suspended') audioCtx.resume();
     sendCommand('trigger_emp');
+});
+
+document.getElementById('btn-toggle-weather').addEventListener('click', () => {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    sendCommand('toggle_weather');
+    const btn = document.getElementById('btn-toggle-weather');
+    if (btn.classList.contains('info')) {
+        btn.classList.remove('info');
+        btn.classList.add('warning'); // Change color to yellow to indicate storm
+        btn.textContent = "WEATHER: TROPICAL STORM";
+    } else {
+        btn.classList.remove('warning');
+        btn.classList.add('info');
+        btn.textContent = "TOGGLE RAIN STORM";
+    }
 });
 
 let autoFire = true;

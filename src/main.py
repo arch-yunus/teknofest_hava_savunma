@@ -11,7 +11,7 @@ from rich.live import Live
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich import print as rprint
 
-from radar import RadarSistemi, Hedef
+from radar import RadarSistemi, Hedef, HavaDurumu
 from interceptor import OnleyiciBatarya, MuhimmatYokHatasi, Lazer_CIWS
 from telemetry import TelemetriSistemi
 from tehdit_siniflandirici import TehditSiniflandirici, TehditOnceligi
@@ -151,6 +151,15 @@ def main():
                         live.console.print("[bold white on red][⚡] C2 OVERRIDE: EMP PATLAMASI! TÜM ELEKTRONİKLER KAVRULDU![/]")
                         emp_blast_active = True
                         emp_timer = 3 # holds the effect for 3 loops
+                    elif cmd == "toggle_weather":
+                        if radar.hava_durumu == HavaDurumu.CLEAR:
+                            radar.hava_durumu = HavaDurumu.RAIN
+                            live.console.print("[bold blue][☁️] C2 OVERRIDE: TROPİKAL FIRTINA BAŞLADI (RADAR SNR DÜŞÜYOR)[/]")
+                            telemetri.olay_kaydet("WARNING", "Hava Şartları Bozuldu: YAĞMUR")
+                        else:
+                            radar.hava_durumu = HavaDurumu.CLEAR
+                            live.console.print("[bold yellow][☀️] C2 OVERRIDE: HAVA AÇIK (RADAR SNR OPTİMAL)[/]")
+                            telemetri.olay_kaydet("INFO", "Hava Şartları Düzeldi: AÇIK")
                         
                 radar.guncelle()
                 radar.tara()
@@ -263,7 +272,8 @@ def main():
                     ],
                     "lasers": ciws.aktif_atislar,  # Lazer atış listesi
                     "jamming": jamming_active,
-                    "emp": emp_blast_active
+                    "emp": emp_blast_active,
+                    "weather": radar.hava_durumu.name # CLEAR or RAIN
                 }
                 push_data_to_clients(out_data)
                 

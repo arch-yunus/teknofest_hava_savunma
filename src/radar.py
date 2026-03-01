@@ -1,6 +1,11 @@
 import random
 import math
 from typing import List, Dict, Optional, Any
+from enum import Enum
+
+class HavaDurumu(Enum):
+    CLEAR = 0
+    RAIN = 1
 
 class Hedef:
     """Hava sahasındaki bir hedefi (İHA, Füze, Uçak) temsil eder."""
@@ -37,6 +42,78 @@ class Hedef:
         self.z += self.vz * dt
         if self.z < 0: self.z = 0
 
+    def boids_guncelle(self, suru: List['Hedef'], dt: float):
+        """Boids (Flocking) Algoritması: Ayrılma, Hizalanma, Birleşme kuralları."""
+        # Yalnızca hedefin is_suru özelliği varsa aktif olacak (basitlik için sürü flag'i eklenebilir veya ID'den kontrol edilebilir)
+        if not self.id.startswith("SWRM-"): return
+        
+        algilama_yaricapi = 2.0 # km
+        ayrilma_mesafesi = 0.5 # km
+        
+        cohesion_x = cohesion_y = cohesion_z = 0.0
+        align_vx = align_vy = align_vz = 0.0
+        sep_x = sep_y = sep_z = 0.0
+        komsular = 0
+        
+        for diger in suru:
+            if diger.id == self.id or not diger.id.startswith("SWRM-"): continue
+            
+            dx = diger.x - self.x
+            dy = diger.y - self.y
+            dz = diger.z - self.z
+            mesafe = math.sqrt(dx**2 + dy**2 + dz**2)
+            
+            if 0 < mesafe < algilama_yaricapi:
+                komsular += 1
+                
+                # Cohesion (Birleşme)
+                cohesion_x += diger.x
+                cohesion_y += diger.y
+                cohesion_z += diger.z
+                
+                # Alignment (Hizalanma)
+                align_vx += diger.vx
+                align_vy += diger.vy
+                align_vz += diger.vz
+                
+                # Separation (Ayrılma)
+                if mesafe < ayrilma_mesafesi:
+                    sep_x -= (dx / mesafe)
+                    sep_y -= (dy / mesafe)
+                    sep_z -= (dz / mesafe)
+                    
+        if komsular > 0:
+            # Ortalamaları al
+            cohesion_x /= komsular
+            cohesion_y /= komsular
+            cohesion_z /= komsular
+            
+            # Merkeze doğru vektör
+            cx = cohesion_x - self.x
+            cy = cohesion_y - self.y
+            cz = cohesion_z - self.z
+            
+            align_vx /= komsular
+            align_vy /= komsular
+            align_vz /= komsular
+            
+            # Ağırlıklar
+            w_c = 0.01  # Cohesion weight
+            w_a = 0.05  # Alignment weight
+            w_s = 0.1   # Separation weight
+            
+            self.vx += (cx * w_c) + ((align_vx - self.vx) * w_a) + (sep_x * w_s)
+            self.vy += (cy * w_c) + ((align_vy - self.vy) * w_a) + (sep_y * w_s)
+            self.vz += (cz * w_c) + ((align_vz - self.vz) * w_a) + (sep_z * w_s)
+            
+            # Hız limitleme (Sürünün aşırı hızlanmasını önle)
+            max_hiz_kmps = 600 / 3600.0 # max 600 km/h
+            hiz_mag = math.sqrt(self.vx**2 + self.vy**2 + self.vz**2)
+            if hiz_mag > max_hiz_kmps:
+                self.vx = (self.vx / hiz_mag) * max_hiz_kmps
+                self.vy = (self.vy / hiz_mag) * max_hiz_kmps
+                self.vz = (self.vz / hiz_mag) * max_hiz_kmps
+
     def get_instant_rcs(self) -> float:
         """Swerling modellerine göre anlık RCS dalgalanması hesaplar."""
         # Radar gürültüsü ve Swerling modeli ...lerine göre anlık RCS dalgalanması hesaplar."""
@@ -59,6 +136,9 @@ class RadarSistemi:
         self.f_hz = 9.5e9   # 9.5 GHz X-Band
         self.snr_min_db = 13.0 # Minimum Tespit Eşiği (dB)
         self.L_db = 5.0     # Sistem Kayıpları (dB)
+        
+        # Aşama 8 - Çevre Faktörleri
+        self.hava_durumu = HavaDurumu.CLEAR
 
     def _snr_hesapla(self, hedef: Hedef) -> float:
         """Radar Menzil Denklemi ile anlık SNR hesaplar."""
@@ -72,9 +152,18 @@ class RadarSistemi:
         T = 290.0 # Gürültü sıcaklığı (K)
         B = 1e6   # Bant genişliği (Hz)
 
+        # Weather Attenuation (Yağmur/Bulut Zayıflatması)
+        attenuation_db_per_km = 0.0
+        if self.hava_durumu == HavaDurumu.RAIN:
+            # X-Band (9.5GHz) radar için ağır yağmur zayıflatması ~ 0.2 dB/km (tek yön)
+            attenuation_db_per_km = 0.4 # Gidiş-Dönüş (Two-way)
+            
+        total_atten_db = attenuation_db_per_km * (hedef.mesafe)
+        L_total = L * (10**(total_atten_db / 10.0)) # Toplam kayıba lineer olarak ekle
+
         # SNR = (Pt * G^2 * lam^2 * sigma) / ((4pi)^3 * R^4 * k * T * B * L)
         pay = self.P_t * (G**2) * (lam**2) * rcs
-        payda = ((4 * math.pi)**3) * (R**4) * k_bolt * T * B * L
+        payda = ((4 * math.pi)**3) * (R**4) * k_bolt * T * B * L_total
         
         snr_linear = pay / payda
         return 10 * math.log10(max(snr_linear, 1e-15))
@@ -230,7 +319,10 @@ class RadarSistemi:
 
     def guncelle(self):
         """Tüm hedeflerin konumlarını günceller."""
+        suru_hedefleri = [h for h in self.aktif_hedefler if h.id.startswith("SWRM-")]
+        
         for h in self.aktif_hedefler:
-            h.ilerle()
+            h.boids_guncelle(suru_hedefleri, 1.0) # Boids alg. (SWRM etiketiyse çalışır)
+            h.ilerle(1.0)
             if h.mesafe > self.menzil_km * 1.2: # Menzili çok aşanı sil
                 self.aktif_hedefler.remove(h)

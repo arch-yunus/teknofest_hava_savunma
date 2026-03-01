@@ -203,6 +203,14 @@ GökKalkan, statik hedefleri vurmak için değil, günümüzün asimetrik ve kar
 ### 4.6 Web Audio API ile Prosedürel Ses Sentezi (SFX)
 - Statik mp3 dosyaları yerine, doğrudan kod ile osilatör titreşimleri (Sine, Square, Sawtooth dalgaları) yaratılarak **Radar Taraması**, **Gelecek Kritik Füze Alarmları** ve **Lazer Atışları** anlık olarak seslendirilir.
 
+### 4.7 Dinamik Hava Durumu (Weather Attenuation) Sistemi
+-   **Tanım:** Gerçek dünya meteorolojik şartlarının donanıma olan fiziksel etkisinin simüle edilmesi.
+-   **Taktik Etki:** C2 paneline eklenen "TROPICAL STORM" butonu ile hava bozduğunda, Yağmur partikül motoru anında WebGL'de görselleşir. Yağmur, X-Band radar frekanslarında havada 0.4 dB/km **Sinyal Karartması (Attenuation)** yaratarak hedef tespit menzilini ciddi ölçüde düşürür. Kör uçuş başlar, hedefler ekranda yanıp sönmeye başlar.
+
+### 4.8 Çoklu Ajan Boids Algoritması (Zeki İHA Sürüsü)
+-   **Tanım:** Geleneksel rotalı İHA'lar yerine biyo-ilhamlı (Bio-inspired) zeki sürü otonomisi.
+-   **Gelişmiş Yapay Zeka:** C2'den Sürü saldırısı tetiklendiğinde düşman birimleri merkeze dümdüz uçmaz. Kuş sürüleri (Flocking) gibi kendi aralarında **Ayrılma (Separation)**, **Hizalanma (Alignment)** ve **Birleşme (Cohesion)** vektörel kurallarına uyarak otonom kıvrak manevralar yaparlar.
+
 ---
 
 ## 📡 5. BÖLÜM: Ağ Merkezli Harp (NCW) ve Siber Güvenlik Doktrinleri (C5ISR)

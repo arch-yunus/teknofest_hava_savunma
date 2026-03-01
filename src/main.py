@@ -160,8 +160,27 @@ def main():
                             radar.hava_durumu = HavaDurumu.CLEAR
                             live.console.print("[bold yellow][☀️] C2 OVERRIDE: HAVA AÇIK (RADAR SNR OPTİMAL)[/]")
                             telemetri.olay_kaydet("INFO", "Hava Şartları Düzeldi: AÇIK")
+                    elif cmd == "toggle_radar_emission":
+                        radar.emisyon_aktif = not radar.emisyon_aktif
+                        if radar.emisyon_aktif:
+                            live.console.print("[bold green][📡] C2 OVERRIDE: RADAR EMİSYONU AKTİF. GÖZLER AÇIK.[/]")
+                            telemetri.olay_kaydet("INFO", "Radar Yayını Başladı")
+                        else:
+                            live.console.print("[bold magenta][🔇] C2 OVERRIDE: RADAR SUSTURULDU (BLINK). TAM SESSİZLİK.[/]")
+                            telemetri.olay_kaydet("WARNING", "Radar Yayını Kesildi! (ARM Savunması)")
                         
                 radar.guncelle()
+                
+                # ARM (Anti-Radyasyon) füzesi radarı (merkezi 0,0,0) vurdu mu kontrolü
+                for h in list(radar.aktif_hedefler):
+                    if getattr(h, 'is_arm', False) and h.mesafe < 0.5:
+                        live.console.print("[bold white on red][💥] KRİTİK: ANTİ-RADYASYON FÜZESİ (ARM) RADARI VURDU![/]")
+                        telemetri.olay_kaydet("CRITICAL", "RADAR İMHA EDİLDİ - SİSTEM ÇÖKTÜ")
+                        emp_blast_active = True # Ekranı sallamak için EMP görsel efektini tetikle
+                        emp_timer = 5
+                        radar.emisyon_aktif = False # Radar mecburen kapanır
+                        radar.aktif_hedefler.remove(h)
+                        break
                 radar.tara()
                 # Füzeleri güncelle (dt = 1 saniye) ve Splash Damage kontrolü yap
                 vurulan_hedefler_fuzeler = batarya.guncelle(1.0, radar.aktif_hedefler)
@@ -227,7 +246,9 @@ def main():
                         "y":       h.y,
                         "z":       h.z,
                         "is_jammer": getattr(h, 'is_jammer', False),
-                        "is_ghost": getattr(h, 'is_ghost', False)
+                        "is_ghost": getattr(h, 'is_ghost', False),
+                        "is_arm": getattr(h, 'is_arm', False),
+                        "chaff_deployed": getattr(h, 'chaff_deployed', False)
                     }
                     current_targets.append(data)
 
@@ -273,7 +294,8 @@ def main():
                     "lasers": ciws.aktif_atislar,  # Lazer atış listesi
                     "jamming": jamming_active,
                     "emp": emp_blast_active,
-                    "weather": radar.hava_durumu.name # CLEAR or RAIN
+                    "weather": radar.hava_durumu.name, # CLEAR or RAIN
+                    "emission": radar.emisyon_aktif
                 }
                 push_data_to_clients(out_data)
                 

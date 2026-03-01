@@ -182,6 +182,37 @@ function createExplosion(x, y, z) {
     explosions.push({ system: particleSystem, wave: waveMesh, velocities: velArray, age: 0 });
 }
 
+function createChaffEffect(x, y, z) {
+    const particleCount = 400;
+    const particlesGeo = new THREE.BufferGeometry();
+    const posArray = new Float32Array(particleCount * 3);
+    const velArray = [];
+
+    for (let i = 0; i < particleCount; i++) {
+        posArray[i * 3] = x;
+        posArray[i * 3 + 1] = y;
+        posArray[i * 3 + 2] = z;
+        velArray.push({
+            x: (Math.random() - 0.5) * 6,
+            y: (Math.random() - 0.5) * 6, // Yavaş düşüş yayılımı
+            z: (Math.random() - 0.5) * 6
+        });
+    }
+    particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+    const particleMat = new THREE.PointsMaterial({
+        size: 2,
+        color: 0xffffff, // Silver/White for Chaff
+        transparent: true,
+        opacity: 0.9,
+        blending: THREE.AdditiveBlending
+    });
+
+    const particleSystem = new THREE.Points(particlesGeo, particleMat);
+    scene.add(particleSystem);
+    explosions.push({ system: particleSystem, wave: null, velocities: velArray, age: 0, isChaff: true });
+}
+
 // --- Laser Weapon System (CIWS) ---
 const activeLasers = [];
 function createLaserBeam(startX, startY, startZ, endX, endY, endZ) {
@@ -328,6 +359,24 @@ function animate() {
             continue;
         }
 
+        if (exp.isChaff) {
+            // Chaff Particle Animation
+            exp.age += 1;
+            let positions = exp.system.geometry.attributes.position.array;
+            for (let j = 0; j < exp.velocities.length; j++) {
+                positions[j * 3] += exp.velocities[j].x;
+                positions[j * 3 + 1] += exp.velocities[j].y - 0.5; // Gravity effect
+                positions[j * 3 + 2] += exp.velocities[j].z;
+            }
+            exp.system.geometry.attributes.position.needsUpdate = true;
+            exp.system.material.opacity -= 0.009; // Yavaşça kaybolur
+            if (exp.age > 100) {
+                scene.remove(exp.system);
+                explosions.splice(i, 1);
+            }
+            continue;
+        }
+
         // Partiküller
         let positions = exp.system.geometry.attributes.position.array;
         for (let j = 0; j < exp.velocities.length; j++) {
@@ -415,11 +464,29 @@ function connectWebSocket() {
     };
 }
 
-function updateDashboard(targets, interceptors, lasers, jammingActive, empActive) {
+function updateDashboard(targets, interceptors, lasers, jammingActive, empActive, emissionActive) {
     targetListEl.innerHTML = "";
 
     const activeTargetIds = new Set();
     const activeIntIds = new Set();
+
+    // Emission UI Update
+    const btnEmission = document.getElementById('btn-toggle-emission');
+    if (emissionActive === false) {
+        if (!btnEmission.classList.contains('danger')) {
+            btnEmission.classList.remove('active');
+            btnEmission.classList.add('danger');
+            btnEmission.textContent = "RADAR EMISSION: SILENT";
+            gridHelper.material.opacity = 0.05; // Radar kapalı, ortam loş
+        }
+    } else {
+        if (!btnEmission.classList.contains('active')) {
+            btnEmission.classList.remove('danger');
+            btnEmission.classList.add('active');
+            btnEmission.textContent = "RADAR EMISSION: ON";
+            gridHelper.material.opacity = 0.3;
+        }
+    }
 
     // EMP Effect logic
     const bodyEl = document.body;
@@ -460,11 +527,19 @@ function updateDashboard(targets, interceptors, lasers, jammingActive, empActive
         const posZ = -t.y;
 
         let targetColorMat = isKritik ? kritikMat : normalMat;
-        if (t.is_jammer) {
+        if (t.is_arm) {
+            targetColorMat = new THREE.MeshBasicMaterial({ color: 0xff00ff }); // Magenta/Mor (ARM Füzesi)
+        } else if (t.is_jammer) {
             targetColorMat = new THREE.MeshBasicMaterial({ color: 0xffa500 }); // Turuncu (Jammer)
         } else if (t.is_ghost) {
             targetColorMat = new THREE.MeshBasicMaterial({ color: 0xcc00ff }); // Mor/Pembe (Ghost)
         }
+
+        if (typeof window.previousTargetStates === 'undefined') window.previousTargetStates = {};
+        if (t.chaff_deployed && !window.previousTargetStates[t.id]?.chaff_deployed) {
+            createChaffEffect(posX, posY, posZ);
+        }
+        window.previousTargetStates[t.id] = { chaff_deployed: t.chaff_deployed };
 
         if (targetMeshes[t.id]) {
             targetMeshes[t.id].position.set(posX, posY, posZ);
@@ -594,6 +669,11 @@ function sendCommand(action) {
     })
         .catch(err => console.error("Komut gönderim hatası:", err));
 }
+
+document.getElementById('btn-toggle-emission').addEventListener('click', () => {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    sendCommand('toggle_radar_emission');
+});
 
 document.getElementById('btn-force-swarm').addEventListener('click', () => {
     sendCommand('force_swarm');

@@ -211,6 +211,11 @@ GökKalkan, statik hedefleri vurmak için değil, günümüzün asimetrik ve kar
 -   **Tanım:** Geleneksel rotalı İHA'lar yerine biyo-ilhamlı (Bio-inspired) zeki sürü otonomisi.
 -   **Gelişmiş Yapay Zeka:** C2'den Sürü saldırısı tetiklendiğinde düşman birimleri merkeze dümdüz uçmaz. Kuş sürüleri (Flocking) gibi kendi aralarında **Ayrılma (Separation)**, **Hizalanma (Alignment)** ve **Birleşme (Cohesion)** vektörel kurallarına uyarak otonom kıvrak manevralar yaparlar.
 
+### 4.9 "Kör Ebe" (Blindman's Buff) EW Taktikleri
+-   **Anti-Radyasyon Füzeleri (ARM):** EH platformları radara çok yaklaştığında hedefe (merkeze) inanılmaz hızlarda hipersonik Anti-Radyasyon Füzeleri ateşler. ARM'ler 3D ekranda mor renkte belirir ve radarı vurursa sistemi çökertir (Kritik EMP).
+-   **Radar Susturma (Emission Control):** ARM saldırılarından korunmak için C2 panelindeki `RADAR EMISSION` butonuna basılarak radar anlık olarak susturulabilir. Bu sırada ARM'ler hedefini kaybedip boşa uçar, ancak radar tüm hava sahasına KÖR olur. Savaş alanının en büyük taktik hamlesi!
+-   **Chaff (Aldatıcı) Sistemleri:** Füze düşman HSS'lerine 15 km yaklaştığında, hedefler %30 ihtimalle arkalarında otonom **Parlak Gümüş Chaff Partikül Bulutu** bırakır. Önleyici füze bu Chaff'a kilitlenip havada boş yere patlayabilir. Gerçek bir teknoloji harikası.
+
 ---
 
 ## 📡 5. BÖLÜM: Ağ Merkezli Harp (NCW) ve Siber Güvenlik Doktrinleri (C5ISR)

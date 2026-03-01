@@ -79,6 +79,22 @@ class OnleyiciBatarya:
         silinecek_fuzeler = []
         
         for fuze in self.aktif_fuzeler:
+            if fuze.aktif and fuze.hedef:
+                import random
+                # Aşama-9: Chaff/Flare Aldatıcı Sistemleri
+                if not getattr(fuze.hedef, 'is_arm', False) and not getattr(fuze.hedef, 'chaff_deployed', False):
+                    dx = fuze.hedef.x - fuze.x
+                    dy = fuze.hedef.y - fuze.y
+                    dz = fuze.hedef.z - fuze.z
+                    mesafe = math.sqrt(dx**2 + dy**2 + dz**2)
+                    
+                    if mesafe < 15.0: # Füze 15km yaklaştığında kedi-fare oyunu başlar
+                        if random.random() < 0.3: # %30 Chaff atma şansı (EH Yeteneği)
+                            fuze.hedef.chaff_deployed = True
+                            if random.random() < 0.5: # %50 ihtimalle önleyici füze Chaff'a kilitlenir
+                                fuze.hedef = None
+                                fuze.aktif = False
+                                
             fuze.guncelle(dt)
             if fuze.vurdu:
                 # Füze hedefini kesin vurdu
@@ -99,9 +115,13 @@ class OnleyiciBatarya:
                     if mesaf_karesi <= (self.patlama_yaricapi_km ** 2):
                         # Alan hasarı içindeki hedef imha oldu!
                         vurulan_hedefler.add(diger_hedef)
+            elif not fuze.aktif and not fuze.vurdu:
+                # Füze hedefini kaybetti (Chaff yedi veya menzilden çıktı/hedef kayboldu)
+                silinecek_fuzeler.append(fuze)
         
-        for f in silinecek_fuzeler:
-            self.aktif_fuzeler.remove(f)
+        for f in set(silinecek_fuzeler):
+            if f in self.aktif_fuzeler:
+                self.aktif_fuzeler.remove(f)
             
         return list(vurulan_hedefler)
 

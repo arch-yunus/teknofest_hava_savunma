@@ -23,6 +23,11 @@ class Hedef:
         # Aşama-5 EH Özellikleri
         self.is_jammer = is_jammer
         self.is_ghost = is_ghost
+        
+        # Aşama-9 ARM ve Chaff
+        self.is_arm = False  # Anti-Radyasyon Füzesi
+        self.has_fired_arm = False
+        self.chaff_deployed = False
 
     @property
     def mesafe(self) -> float:
@@ -137,8 +142,9 @@ class RadarSistemi:
         self.snr_min_db = 13.0 # Minimum Tespit Eşiği (dB)
         self.L_db = 5.0     # Sistem Kayıpları (dB)
         
-        # Aşama 8 - Çevre Faktörleri
+        # Aşama 8 & 9 - Çevre Faktörleri ve Taktik Emisyon
         self.hava_durumu = HavaDurumu.CLEAR
+        self.emisyon_aktif = True  # Radar yayını yapıyor mu?
 
     def _snr_hesapla(self, hedef: Hedef) -> float:
         """Radar Menzil Denklemi ile anlık SNR hesaplar."""
@@ -209,6 +215,9 @@ class RadarSistemi:
 
     def tara(self) -> List[Hedef]:
         """Radar taraması yapar ve tespit edilen hedefleri döndürür."""
+        if not self.emisyon_aktif:
+            return [] # Radar sussturulduğunda tamamen kör oluruz
+
         tespit_edilenler = []
         jami_etkisinde_mi = False
         
@@ -255,6 +264,9 @@ class RadarSistemi:
 
     def tara_suru_saldirisi(self) -> List[Hedef]:
         """Aynı vektörden gelen 5 ile 12 arasında İHA (Swarm) üretir."""
+        if not self.emisyon_aktif: 
+            return [] # Radar kapalıyken sürü tespit edilemez/üretim event'i tetiklenmez
+            
         if random.random() < (self.tespit_olasiligi * 0.1): # Sürü saldırısı nadirdir
             suru = []
             adet = random.randint(5, 12)
@@ -323,6 +335,35 @@ class RadarSistemi:
         
         for h in self.aktif_hedefler:
             h.boids_guncelle(suru_hedefleri, 1.0) # Boids alg. (SWRM etiketiyse çalışır)
+            
+            # ARM Davranışı (Anti-Radyasyon)
+            if h.is_arm and getattr(h, 'is_ghost', False) == False:
+                if not self.emisyon_aktif:
+                    # Radar kapalıysa hedefini kaybeder ve rastgele sapar
+                    h.vx += random.uniform(-0.1, 0.1)
+                    h.vy += random.uniform(-0.1, 0.1)
+                elif h.mesafe < 0.5:
+                    # Radar vuruldu! (Main loop'ta yakalanacak)
+                    pass
+            
+            # Jammer uçakları radar açıksa ARM ateşleyebilir
+            if h.is_jammer and getattr(h, 'is_ghost', False) == False and not h.has_fired_arm and self.emisyon_aktif:
+                if h.mesafe < 120 and random.random() < 0.05: # %5 ihtimalle ARM ateşler
+                    h.has_fired_arm = True
+                    # Hipersonik ARM füzesi merkeze doğru (Mach 4+)
+                    hiz_mps = 1500 / 3.6 
+                    vx = -(h.x / h.mesafe) * hiz_mps
+                    vy = -(h.y / h.mesafe) * hiz_mps
+                    arm = Hedef(
+                        hedef_id=f"ARM-{random.randint(100,999)}",
+                        x=h.x, y=h.y, z=h.z,
+                        vx=vx, vy=vy, vz=0,
+                        rcs=0.1
+                    )
+                    arm.is_arm = True
+                    self.aktif_hedefler.append(arm)
+            
             h.ilerle(1.0)
-            if h.mesafe > self.menzil_km * 1.2: # Menzili çok aşanı sil
-                self.aktif_hedefler.remove(h)
+            if h.mesafe > self.menzil_km * 1.5: # Menzili çok aşanı sil
+                if h in self.aktif_hedefler:
+                    self.aktif_hedefler.remove(h)

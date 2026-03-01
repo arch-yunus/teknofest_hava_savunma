@@ -48,8 +48,10 @@ async def websocket_endpoint(websocket: WebSocket):
 @app.post("/api/command")
 async def receive_command(cmd: CommandRequest):
     """Frontend'den gelen manuel komutları sıraya ekler."""
-    frontend_commands.append(cmd.action)
-    return {"status": "success", "action_queued": cmd.action}
+    if cmd.action in ["force_swarm", "toggle_auto_fire", "trigger_emp"]:
+        frontend_commands.append(cmd.action)
+        return {"status": "success", "action_queued": cmd.action}
+    return {"status": "error", "message": "Unknown command"}
 
 def push_data_to_clients(data: dict):
     """Called from main.py thread to push data to all connected ws clients"""

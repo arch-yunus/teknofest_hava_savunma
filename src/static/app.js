@@ -217,7 +217,39 @@ const telemetryChart = new Chart(ctx, {
         }
     }
 });
-let chartTime = 0;
+// --- Web Audio API (Procedural SFX Engine) ---
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+const audioCtx = new AudioContext();
+
+function playTone(freq, type, duration, vol) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    const filter = audioCtx.createBiquadFilter();
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+    filter.type = 'lowpass';
+    filter.frequency.value = 2000;
+
+    gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+
+    osc.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+}
+
+const SFX = {
+    radarSweep: () => playTone(800, 'sine', 0.1, 0.05),
+    alarm: () => playTone(400, 'square', 0.3, 0.1),
+    laser: () => playTone(300, 'sawtooth', 0.15, 0.1),
+    empBlast: () => playTone(50, 'square', 3.0, 0.5),
+    missileTargetHit: () => playTone(150, 'triangle', 0.5, 0.3),
+};
 
 // --- Animation Loop ---
 function animate() {
@@ -239,9 +271,22 @@ function animate() {
         }
     }
 
-    // Update Explosions & Shockwaves
+    // Update Explosions & Shockwaves & Smoke
     for (let i = explosions.length - 1; i >= 0; i--) {
         let exp = explosions[i];
+
+        if (exp.isSmoke) {
+            // Smoke Trail Animation
+            exp.age += 1;
+            exp.system.position.y += 0.05;
+            exp.system.material.opacity -= 0.02;
+            exp.system.scale.set(1 + exp.age * 0.1, 1 + exp.age * 0.1, 1 + exp.age * 0.1);
+            if (exp.system.material.opacity <= 0 || exp.age > 40) {
+                scene.remove(exp.system);
+                explosions.splice(i, 1);
+            }
+            continue;
+        }
 
         // Partiküller
         let positions = exp.system.geometry.attributes.position.array;
@@ -312,10 +357,10 @@ function connectWebSocket() {
         // Previously data was just targets list, now it's { targets:[], interceptors:[] }
         if (data.targets && data.interceptors !== undefined) {
             window.isJammingActive = data.jamming; // Update global state
-            updateDashboard(data.targets, data.interceptors, data.lasers);
+            updateDashboard(data.targets, data.interceptors, data.lasers, data.jamming, data.emp);
         } else {
             window.isJammingActive = false;
-            updateDashboard(data, [], []); // Fallback
+            updateDashboard(data, [], [], false, false); // Fallback
         }
     };
     socket.onclose = () => {
@@ -325,11 +370,23 @@ function connectWebSocket() {
     };
 }
 
-function updateDashboard(targets, interceptors, lasers) {
+function updateDashboard(targets, interceptors, lasers, jammingActive, empActive) {
     targetListEl.innerHTML = "";
 
     const activeTargetIds = new Set();
     const activeIntIds = new Set();
+
+    // EMP Effect logic
+    const bodyEl = document.body;
+    if (empActive && !bodyEl.classList.contains('emp-active')) {
+        bodyEl.classList.add('emp-active');
+        SFX.empBlast();
+    } else if (!empActive) {
+        bodyEl.classList.remove('emp-active');
+    }
+
+    if (targets.length > 0) SFX.radarSweep();
+    let hasCritical = false;
 
     // 1. Update Targets (Neon Spheres)
     const tooltipContainer = document.getElementById('tooltips-container');
@@ -339,6 +396,7 @@ function updateDashboard(targets, interceptors, lasers) {
     targets.forEach(t => {
         activeTargetIds.add(t.id);
         const isKritik = t.oncelik === "KRİTİK";
+        if (isKritik) hasCritical = true;
 
         // Sidebar Card
         const card = document.createElement("div");
@@ -416,6 +474,16 @@ function updateDashboard(targets, interceptors, lasers) {
             scene.add(mesh);
             interceptorMeshes[int.id] = mesh;
         }
+
+        // Spawn Smoke Trail Particle behind missile
+        if (Math.random() > 0.3) {
+            const smokeGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+            const smokeMat = new THREE.MeshBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.8 });
+            const smoke = new THREE.Mesh(smokeGeo, smokeMat);
+            smoke.position.copy(mesh.position);
+            scene.add(smoke);
+            explosions.push({ system: smoke, wave: null, velocities: [], isSmoke: true, age: 0 });
+        }
     });
 
     // --- Cleanup & Explosions ---
@@ -424,6 +492,7 @@ function updateDashboard(targets, interceptors, lasers) {
             // Target disappeared. If it was being tracked by an interceptor that also disappeared, 
             // or just simply, if we remove it, create a small explosion!
             createExplosion(targetMeshes[id].position.x, targetMeshes[id].position.y, targetMeshes[id].position.z);
+            SFX.missileTargetHit();
             scene.remove(targetMeshes[id]);
             delete targetMeshes[id];
             if (targetTooltips[id]) {
@@ -453,6 +522,10 @@ function updateDashboard(targets, interceptors, lasers) {
             // Lazer vurduğunda ufak bir patlama da olsun
             createExplosion(endX, endY, endZ);
         });
+
+        if (lasers.length > 0) {
+            SFX.laser();
+        }
     }
 
     // --- Update Chart.js ---
@@ -484,6 +557,12 @@ document.getElementById('btn-force-swarm').addEventListener('click', () => {
     const originalText = btn.textContent;
     btn.textContent = ">>> INITIATING SWARM <<<";
     setTimeout(() => btn.textContent = originalText, 1000);
+});
+
+document.getElementById('btn-trigger-emp').addEventListener('click', () => {
+    // If audio context is suspended (browser policy), resume it on first click
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    sendCommand('trigger_emp');
 });
 
 let autoFire = true;

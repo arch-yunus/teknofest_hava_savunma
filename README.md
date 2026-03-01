@@ -196,6 +196,13 @@ GökKalkan, statik hedefleri vurmak için değil, günümüzün asimetrik ve kar
 -   **Tanım:** Kinetik füzelerin tükendiği veya aşırı yakına giren hedefler için 15km menzilli Işık Hızı silahları.
 -   **Savunma Yaklaşımı:** BVR (Görüş Ötesi) çarpışmalar yeterli olmadığında GökKalkan, 3D Taktik Sahada yeşil `THREE.Line` lazerlerini ateşleyerek hedefi anında imha eder. Füzeler tükense de lazer jeneratörü ateş etmeye devam eder.
 
+### 4.5 Elektromanyetik Darbe (EMP) Silahı
+-   **Tanım:** Kritik üs savunmasının çöktüğü anlarda başvurulan devasa bir taktiksel enerji darbesi.
+-   **Savunma Yaklaşımı:** Komuta merkezindeki C2 butonundan EMP tetiklendiğinde, radar hava sahasındaki tüm elektronik hedefler anında kavrulur. Taktik ekran muazzam bir flaşla (Whiteout) sarsılır ve ağır bir bas frekans (SFX) yayılır.
+
+### 4.6 Web Audio API ile Prosedürel Ses Sentezi (SFX)
+- Statik mp3 dosyaları yerine, doğrudan kod ile osilatör titreşimleri (Sine, Square, Sawtooth dalgaları) yaratılarak **Radar Taraması**, **Gelecek Kritik Füze Alarmları** ve **Lazer Atışları** anlık olarak seslendirilir.
+
 ---
 
 ## 📡 5. BÖLÜM: Ağ Merkezli Harp (NCW) ve Siber Güvenlik Doktrinleri (C5ISR)

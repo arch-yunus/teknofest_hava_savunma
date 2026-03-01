@@ -126,7 +126,9 @@ def main():
     
     # Yeni C2 Kontrol Değişkenleri
     auto_fire_enabled = True
-
+    emp_blast_active = False
+    emp_timer = 0
+    
     try:
         with Live(create_status_table([], batarya.muhimmat), refresh_per_second=1) as live:
             while True:
@@ -142,6 +144,13 @@ def main():
                         durum = "AKTİF" if auto_fire_enabled else "PASİF (MANUEL)"
                         telemetri.olay_kaydet("INFO", f"OTOMATİK ATIŞ (AI): {durum}")
                         live.console.print(f"[bold yellow][i] C2 OVERRIDE: Otomatik Atış {durum}[/]")
+                    elif cmd == "trigger_emp":
+                        radar.aktif_hedefler.clear()
+                        kalman_yoneticisi = KalmanTakipYoneticisi(dt=1.0) # Reset tracks
+                        telemetri.olay_kaydet("CRITICAL", "MANUEL KOMUT: EMP PATLAMASI TETİKLENDİ!")
+                        live.console.print("[bold white on red][⚡] C2 OVERRIDE: EMP PATLAMASI! TÜM ELEKTRONİKLER KAVRULDU![/]")
+                        emp_blast_active = True
+                        emp_timer = 3 # holds the effect for 3 loops
                         
                 radar.guncelle()
                 radar.tara()
@@ -239,13 +248,22 @@ def main():
                     live.console.print("[bold magenta][!] ELEKTRONİK HARP - HAYALET HEDEFLER TESPİT EDİLDİ![/]")
                 
                 # Hazırlanan verileri WebSocket üzerinden Web UI'a gönder
+                
+                # Manage EMP visual effect duration
+                if emp_blast_active:
+                    emp_timer -= 1
+                    if emp_timer <= 0:
+                        emp_blast_active = False
+
                 out_data = {
                     "targets": current_targets,
                     "interceptors": [
                         {"id": f.id, "x": f.x, "y": f.y, "z": f.z, "target_id": f.hedef.id}
                         for f in batarya.aktif_fuzeler
                     ],
-                    "lasers": ciws.aktif_atislar  # Lazer atış listesi
+                    "lasers": ciws.aktif_atislar,  # Lazer atış listesi
+                    "jamming": jamming_active,
+                    "emp": emp_blast_active
                 }
                 push_data_to_clients(out_data)
                 

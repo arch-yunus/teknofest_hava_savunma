@@ -60,11 +60,24 @@
         <!-- C2 Interactive Control Panel -->
         <div class="c2-controls">
             <div class="control-header">C2 OVERRIDE PROTOCOLS</div>
-            <button id="btn-force-swarm" class="btn warning">FORCE SWARM ATTACK</button>
-            <button id="btn-toggle-auto" class="btn active">AUTO-FIRE: ENABLED</button>
-            <button id="btn-toggle-weather" class="btn info">TOGGLE RAIN STORM</button>
-            <button id="btn-toggle-emission" class="btn active">RADAR EMISSION: ON</button>
-            <button id="btn-trigger-emp" class="btn danger">INITIATE EMP BLAST</button>
+
+            <div class="control-group">
+                <button id="btn-stage-1" class="btn active">STAGE-1 (MANUAL)</button>
+                <button id="btn-stage-2" class="btn active">STAGE-2 (SWARM)</button>
+                <button id="btn-stage-3" class="btn active">STAGE-3 (LAYERED)</button>
+            </div>
+
+            <div class="control-group">
+                <button id="btn-toggle-auto" class="btn active">AUTO-FIRE: ENABLED</button>
+                <button id="btn-toggle-weather" class="btn info">TOGGLE RAIN STORM</button>
+                <button id="btn-toggle-emission" class="btn active">RADAR EMISSION: ON</button>
+            </div>
+
+            <div class="control-group center">
+                <button id="btn-estop" class="btn danger e-stop">EMERGENCY STOP</button>
+                <button id="btn-force-swarm" class="btn warning">FORCE SWARM ATTACK</button>
+                <button id="btn-trigger-emp" class="btn danger">INITIATE EMP BLAST</button>
+            </div>
         </div>
     </div>
 

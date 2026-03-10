@@ -29,6 +29,11 @@ class Hedef:
         self.has_fired_arm = False
         self.chaff_deployed = False
 
+        # TEKNOFEST 2026 Özel İsterler
+        self.is_dost = False # Dost/Düşman ayrımı (Aşama-3)
+        self.etiket = "Bilinmeyen" # F16, Helikopter, Mini IHA, Balistik Fuze
+        self.dondu = False # E-Stop için hareket durdurma bayrağı
+
     @property
     def mesafe(self) -> float:
         """Merkeze (Radara) olan öklid mesafesi."""
@@ -42,6 +47,7 @@ class Hedef:
 
     def ilerle(self, dt: float = 1.0):
         """Hedefi hız vektörü yönünde dt süresi kadar hareket ettirir."""
+        if self.dondu: return # E-Stop aktifse hareket yok
         self.x += self.vx * dt
         self.y += self.vy * dt
         self.z += self.vz * dt
@@ -212,6 +218,88 @@ class RadarSistemi:
             is_jammer=is_jammer
         )
         self.aktif_hedefler.append(yeni_hedef)
+
+    def hedef_uret_asama1(self) -> None:
+        """TEKNOFEST Aşama-1: Fiziksel Parkur (5m, 10m, 15m) sabit hedefler."""
+        self.aktif_hedefler.clear()
+        
+        hedefler = [
+            ("Balistik Fuze", 0.005), # 5m
+            ("Helikopter", 0.010),    # 10m
+            ("Savas Ucagi (F16)", 0.015), # 15m
+            ("Mini/Micro IHA", 0.010)  # 10m (farklı vektör)
+        ]
+        
+        for i, (label, dist) in enumerate(hedefler):
+            angle = (i * math.pi / 2) + random.uniform(-0.1, 0.1)
+            x = dist * math.cos(angle)
+            y = dist * math.sin(angle)
+            z = random.uniform(0.001, 0.002) # 1-2 metre yükseklik
+            
+            h = Hedef(f"STG1-{i}", x, y, z, 0, 0, 0, rcs=0.5)
+            h.etiket = label
+            self.aktif_hedefler.append(h)
+
+    def hedef_uret_asama2(self) -> List[Hedef]:
+        """TEKNOFEST Aşama-2: Sürü Saldırı (3 koldan, parkur içi: 0-15m)."""
+        self.aktif_hedefler.clear()
+        suru = []
+        
+        # PDF: "3 farklı koldan hedeflerin önceden tanımlı bir yol üzerinde yaklaşması"
+        # 3 kol için 3 ana açı
+        kollar = [0, 2*math.pi/3, 4*math.pi/3]
+        labels = ["Balistik Fuze", "Mini/Micro IHA", "Mini/Micro IHA"]
+        
+        for i, angle in enumerate(kollar):
+            dist = 0.015 # 15m'den başlar (Parkur sınırı)
+            x = dist * math.cos(angle)
+            y = dist * math.sin(angle)
+            z = 0.001 # 1m irtifa
+            
+            # Hız: PDF "A noktasından B noktasına gitmeleri" -> yavaş progresyon
+            hiz_mps = 0.5 / 1000 # 0.5 m/s -> km/s
+            vx = -x / dist * hiz_mps
+            vy = -y / dist * hiz_mps
+            
+            h = Hedef(f"SWRM-{i}", x, y, z, vx, vy, 0, rcs=0.1)
+            h.etiket = labels[i]
+            self.aktif_hedefler.append(h)
+            suru.append(h)
+        return suru
+
+    def hedef_uret_asama3(self) -> None:
+        """TEKNOFEST Aşama-3: Katmanlı (1 Düşman, 2 Dost maket)."""
+        self.aktif_hedefler.clear()
+        
+        # 1 Düşman Hedef (Rastgele tip: F16, Helikopter, IHA)
+        type_choice = random.choice([
+            ("Savas Ucagi (F16)", 0.015), 
+            ("Helikopter", 0.010),
+            ("Mini/Micro IHA", 0.005)
+        ])
+        
+        # Düşman
+        ang1 = random.uniform(0, 2*math.pi)
+        x1, y1 = type_choice[1] * math.cos(ang1), type_choice[1] * math.sin(ang1)
+        h_dusman = Hedef("STG3-ENEMY", x1, y1, 0.002, 0, 0, 0, rcs=0.5)
+        h_dusman.etiket = type_choice[0]
+        h_dusman.is_dost = False
+        self.aktif_hedefler.append(h_dusman)
+        
+        # 2 Dost Unsur
+        for i in range(2):
+            ang = ang1 + (i+1) * (math.pi/2)
+            dist = random.choice([0.005, 0.010, 0.015])
+            x, y = dist * math.cos(ang), dist * math.sin(ang)
+            h_dost = Hedef(f"STG3-FRIEND-{i}", x, y, 0.002, 0, 0, 0, rcs=0.5)
+            h_dost.etiket = random.choice(["F16 (Dost)", "IHA (Dost)"])
+            h_dost.is_dost = True
+            self.aktif_hedefler.append(h_dost)
+
+    def e_stop_tetikle(self, aktif: bool):
+        """Tüm hedefleri dondurur veya çözer."""
+        for h in self.aktif_hedefler:
+            h.dondu = aktif
 
     def tara(self) -> List[Hedef]:
         """Radar taraması yapar ve tespit edilen hedefleri döndürür."""

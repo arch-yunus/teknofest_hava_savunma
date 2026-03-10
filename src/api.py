@@ -48,7 +48,14 @@ async def websocket_endpoint(websocket: WebSocket):
 @app.post("/api/command")
 async def receive_command(cmd: CommandRequest):
     """Frontend'den gelen manuel komutları sıraya ekler."""
-    if cmd.action in ["force_swarm", "toggle_auto_fire", "trigger_emp", "toggle_weather", "toggle_radar_emission"]:
+    allowed = [
+        "force_swarm", "toggle_auto_fire", "trigger_emp", 
+        "toggle_weather", "toggle_radar_emission",
+        "set_stage_1", "set_stage_2", "set_stage_3", # TEKNOFEST Stages
+        "trigger_estop", "release_estop",            # E-Stop
+        "toggle_manual_mode"                         # Mode Switch
+    ]
+    if cmd.action in allowed:
         frontend_commands.append(cmd.action)
         return {"status": "success", "action_queued": cmd.action}
     return {"status": "error", "message": "Unknown command"}

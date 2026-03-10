@@ -97,9 +97,9 @@ const targetTooltips = {};
 const interceptorMeshes = {};
 const explosions = []; // For particle effects
 
-// --- Materials & Geometries ---
 const normalMat = new THREE.MeshBasicMaterial({ color: 0xffff00 }); // Yellow
 const kritikMat = new THREE.MeshBasicMaterial({ color: 0xff3333 }); // Red
+const friendMat = new THREE.MeshBasicMaterial({ color: 0x00f2ff }); // Cyan
 const targetGeo = new THREE.SphereGeometry(3, 16, 16);
 
 // Missile geometry (Neon Blue)
@@ -511,12 +511,18 @@ function updateDashboard(targets, interceptors, lasers, jammingActive, empActive
         if (isKritik) hasCritical = true;
 
         // Sidebar Card
+        const isDost = t.is_dost;
         const card = document.createElement("div");
-        card.className = `target-card ${isKritik ? "kritik" : ""}`;
+        card.className = `target-card ${isKritik ? "kritik" : ""} ${isDost ? "friend" : ""}`;
+
+        // Convert distance to meters for realism in 2026 parkour
+        const distMeters = (t.mesafe * 1000).toFixed(1);
+        const altMeters = (t.irtifa * 1000).toFixed(1);
+
         card.innerHTML = `
-            <div><strong class="id-badge">ID: ${t.id}</strong> [${t.tip}]</div>
-            <div>RNG: ${parseFloat(t.mesafe).toFixed(1)} km | ALT: ${(parseFloat(t.irtifa) * 1000).toFixed(0)} m</div>
-            <div>SPD: ${parseFloat(t.hiz).toFixed(0)} km/h | TTI: ${t.tti !== null ? parseFloat(t.tti).toFixed(1) : "N/A"}s</div>
+            <div><strong class="id-badge">${isDost ? "DOST" : "DUSMAN"}: ${t.id}</strong> [${t.etiket || t.tip}]</div>
+            <div>RNG: ${distMeters} m | ALT: ${altMeters} m</div>
+            <div>SPD: ${parseFloat(t.hiz).toFixed(1)} km/h | TTI: ${t.tti !== null ? parseFloat(t.tti).toFixed(1) : "N/A"}s</div>
             <div>PRIO: ${t.oncelik} | ACT: ${t.karar}</div>
         `;
         targetListEl.appendChild(card);
@@ -526,7 +532,7 @@ function updateDashboard(targets, interceptors, lasers, jammingActive, empActive
         const posY = Math.max(t.irtifa * 10, 0);
         const posZ = -t.y;
 
-        let targetColorMat = isKritik ? kritikMat : normalMat;
+        let targetColorMat = isKritik ? kritikMat : (isDost ? friendMat : normalMat);
         if (t.is_arm) {
             targetColorMat = new THREE.MeshBasicMaterial({ color: 0xff00ff }); // Magenta/Mor (ARM Füzesi)
         } else if (t.is_jammer) {
@@ -544,8 +550,8 @@ function updateDashboard(targets, interceptors, lasers, jammingActive, empActive
         if (targetMeshes[t.id]) {
             targetMeshes[t.id].position.set(posX, posY, posZ);
             targetMeshes[t.id].material = targetColorMat;
-            targetTooltips[t.id].className = `tooltip ${isKritik ? "kritik" : ""}`;
-            targetTooltips[t.id].textContent = `${t.id} [${(t.irtifa * 1000).toFixed(0)}m]`;
+            targetTooltips[t.id].className = `tooltip ${isKritik ? "kritik" : ""} ${isDost ? "friend" : ""}`;
+            targetTooltips[t.id].textContent = `${t.etiket || t.id} [${distMeters}m]`;
 
             // Ghost yanıp sönme (glitch) efekti
             if (t.is_ghost && Math.random() < 0.2) {
@@ -705,18 +711,23 @@ document.getElementById('btn-toggle-weather').addEventListener('click', () => {
     }
 });
 
-let autoFire = true;
-document.getElementById('btn-toggle-auto').addEventListener('click', () => {
-    sendCommand('toggle_auto_fire');
-    autoFire = !autoFire;
-    const btn = document.getElementById('btn-toggle-auto');
-    if (autoFire) {
-        btn.textContent = "AUTO-FIRE: ENABLED";
-        btn.className = "btn active";
+let isEStopActive = false;
+document.getElementById('btn-estop').addEventListener('click', () => {
+    isEStopActive = !isEStopActive;
+    const btn = document.getElementById('btn-estop');
+    if (isEStopActive) {
+        sendCommand('trigger_estop');
+        btn.textContent = "RELEASE E-STOP";
+        btn.classList.add('active');
     } else {
-        btn.textContent = "AUTO-FIRE: MANUAL OP";
-        btn.className = "btn"; // Varsayılan renk (Mavi)
+        sendCommand('release_estop');
+        btn.textContent = "EMERGENCY STOP";
+        btn.classList.remove('active');
     }
 });
+
+document.getElementById('btn-stage-1').addEventListener('click', () => sendCommand('set_stage_1'));
+document.getElementById('btn-stage-2').addEventListener('click', () => sendCommand('set_stage_2'));
+document.getElementById('btn-stage-3').addEventListener('click', () => sendCommand('set_stage_3'));
 
 window.onload = connectWebSocket;

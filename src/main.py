@@ -168,6 +168,36 @@ def main():
                         else:
                             live.console.print("[bold magenta][🔇] C2 OVERRIDE: RADAR SUSTURULDU (BLINK). TAM SESSİZLİK.[/]")
                             telemetri.olay_kaydet("WARNING", "Radar Yayını Kesildi! (ARM Savunması)")
+                    
+                    # --- TEKNOFEST 2026 SPECIAL COMMANDS ---
+                    elif cmd == "set_stage_1":
+                        radar.hedef_uret_asama1()
+                        auto_fire_enabled = False # Stage 1 is MANUEL as per PDF
+                        live.console.print("[bold cyan][1️⃣] TEKNOFEST: AŞAMA-1 (DURAN HEDEFLER) YÜKLENDİ. MOD: MANUEL.[/]")
+                        telemetri.olay_kaydet("INFO", "Yarışma Başlatıldı: Aşama-1")
+                    elif cmd == "set_stage_2":
+                        radar.hedef_uret_asama2()
+                        auto_fire_enabled = True # Stage 2 is OTONOM
+                        live.console.print("[bold cyan][2️⃣] TEKNOFEST: AŞAMA-2 (SÜRÜ SALDIRISI) YÜKLENDİ. MOD: OTONOM.[/]")
+                        telemetri.olay_kaydet("INFO", "Yarışma Başlatıldı: Aşama-2")
+                    elif cmd == "set_stage_3":
+                        radar.hedef_uret_asama3()
+                        auto_fire_enabled = True # Stage 3 is OTONOM
+                        live.console.print("[bold cyan][3️⃣] TEKNOFEST: AŞAMA-3 (KATMANLI SAVUNMA) YÜKLENDİ. MOD: OTONOM.[/]")
+                        telemetri.olay_kaydet("INFO", "Yarışma Başlatıldı: Aşama-3")
+                    elif cmd == "trigger_estop":
+                        radar.e_stop_tetikle(True)
+                        live.console.print("[bold white on red][🛑] ACİL DURDURMA (E-STOP) AKTİF! SİSTEM DONDURULDU![/]")
+                        telemetri.olay_kaydet("CRITICAL", "ACİL DURDURMA TETİKLENDİ")
+                    elif cmd == "release_estop":
+                        radar.e_stop_tetikle(False)
+                        live.console.print("[bold green][▶️] ACİL DURDURMA KALDIRILDI. OPERASYON DEVAM EDİYOR.[/]")
+                        telemetri.olay_kaydet("INFO", "Acil Durdurma Kaldırıldı")
+                    elif cmd == "toggle_manual_mode":
+                        auto_fire_enabled = not auto_fire_enabled
+                        mod_str = "OTONOM" if auto_fire_enabled else "MANUEL"
+                        live.console.print(f"[bold yellow][🕹️] MOD DEĞİŞİMİ: {mod_str}[/]")
+                        telemetri.olay_kaydet("INFO", f"Kontrol Modu Değişti: {mod_str}")
                         
                 radar.guncelle()
                 
@@ -245,6 +275,8 @@ def main():
                         "x":       h.x,
                         "y":       h.y,
                         "z":       h.z,
+                        "etiket":  getattr(h, 'etiket', "Bilinmeyen"),
+                        "is_dost": getattr(h, 'is_dost', False),
                         "is_jammer": getattr(h, 'is_jammer', False),
                         "is_ghost": getattr(h, 'is_ghost', False),
                         "is_arm": getattr(h, 'is_arm', False),

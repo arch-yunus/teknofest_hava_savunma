@@ -24,6 +24,7 @@
 <i>"Bilginin sınırları, gökyüzünün sınırları gibidir; her ikisi de sadece ufuk çizgisine kadar değil, sonsuzluğa kadar uzanır."</i>
 <br><br>
 
+**[🏆 TEKNOFEST 2026 Çelikkubbe HSS Yarışması Uyum Raporu](docs/SARTNAME_2026.md)** <br>
 **[⚔️ Taktik Zemin: Projenin Doğuş Hikayesi (LORE.md)](docs/LORE.md)** <br>
 **[🧮 Çekirdek Fizik: Operasyonel Matematik (MATH_MODELS.md)](docs/MATH_MODELS.md)** <br>
 **[⚙️ Teknik Mimari (TEKNIK_MIMARI.md)](docs/TEKNIK_MIMARI.md)** 🔸 **[Milli Teknoloji Manifestosu (MANIFESTO.md)](docs/MANIFESTO.md)**

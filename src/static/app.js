@@ -2,7 +2,8 @@ const wsStatusEl = document.getElementById('ws-status');
 const targetListEl = document.getElementById('target-list');
 const tooltipsContainer = document.getElementById('tooltips-container');
 
-const MAX_RANGE = 200.0; // Same as Python simulation
+let MAX_RANGE = 200.0; // Default simulation range
+let COMP_MODE = false; // Competition scale mode (15m)
 
 // --- Three.js Setup ---
 const canvasContainer = document.getElementById('canvas-container');
@@ -62,14 +63,24 @@ gridHelper.material.transparent = true;
 scene.add(gridHelper);
 
 const circleMaterial = new THREE.LineBasicMaterial({ color: 0x0cf50c, transparent: true, opacity: 0.2 });
-for (let i = 1; i <= 4; i++) {
-    const radius = Math.floor(MAX_RANGE / 4) * i;
-    const geometry = new THREE.CircleGeometry(radius, 64);
-    geometry.vertices.shift();
-    const circle = new THREE.LineLoop(geometry, circleMaterial);
-    circle.rotation.x = -Math.PI / 2;
-    scene.add(circle);
+const radarCircles = [];
+function createRadarCircles() {
+    // Remove old circles
+    radarCircles.forEach(c => scene.remove(c));
+    radarCircles.length = 0;
+
+    const circles = COMP_MODE ? [5, 10, 15] : [50, 100, 150, 200];
+    circles.forEach(radius => {
+        const geometry = new THREE.CircleGeometry(radius, 64);
+        const points = geometry.getPoints();
+        const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+        const circle = new THREE.LineLoop(lineGeo, circleMaterial);
+        circle.rotation.x = -Math.PI / 2;
+        scene.add(circle);
+        radarCircles.push(circle);
+    });
 }
+createRadarCircles();
 
 const baseGeo = new THREE.CylinderGeometry(5, 5, 2, 16);
 const baseMat = new THREE.MeshBasicMaterial({ color: 0x0cf50c, wireframe: true });
@@ -436,10 +447,14 @@ animate();
 // --- WebSocket ---
 let socket;
 function connectWebSocket() {
-    socket = new WebSocket("ws://localhost:8000/ws/radar");
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.host;
+    socket = new WebSocket(`${protocol}//${host}/ws/radar`);
+
     socket.onopen = () => {
-        wsStatusEl.textContent = "CONNECTED - SECURE";
+        wsStatusEl.textContent = "SECURE LINK ESTABLISHED";
         wsStatusEl.style.color = "#0cf50c";
+        wsStatusEl.style.textShadow = "0 0 10px #0cf50c";
     };
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -462,6 +477,21 @@ function connectWebSocket() {
         wsStatusEl.style.color = "red";
         setTimeout(connectWebSocket, 2000);
     };
+}
+
+const hudEl = document.getElementById('comp-hud');
+const hudStageEl = document.getElementById('hud-stage');
+const hudModeEl = document.getElementById('hud-mode');
+
+function updateHUD(stage, isAuto) {
+    if (stage) {
+        hudEl.classList.remove('hidden');
+        hudStageEl.textContent = stage.toUpperCase();
+        hudModeEl.textContent = isAuto ? "OTONOM" : "MANUEL";
+        hudModeEl.style.color = isAuto ? "var(--radar-green)" : "orange";
+    } else {
+        hudEl.classList.add('hidden');
+    }
 }
 
 function updateDashboard(targets, interceptors, lasers, jammingActive, empActive, emissionActive) {
@@ -726,8 +756,34 @@ document.getElementById('btn-estop').addEventListener('click', () => {
     }
 });
 
-document.getElementById('btn-stage-1').addEventListener('click', () => sendCommand('set_stage_1'));
-document.getElementById('btn-stage-2').addEventListener('click', () => sendCommand('set_stage_2'));
-document.getElementById('btn-stage-3').addEventListener('click', () => sendCommand('set_stage_3'));
+document.getElementById('btn-stage-1').addEventListener('click', () => {
+    sendCommand('set_stage_1');
+    COMP_MODE = true;
+    MAX_RANGE = 15;
+    createRadarCircles();
+    updateHUD("Phase 1", false);
+    controls.target.set(0, 0, 0);
+    camera.position.set(20, 30, 40);
+});
+
+document.getElementById('btn-stage-2').addEventListener('click', () => {
+    sendCommand('set_stage_2');
+    COMP_MODE = true;
+    MAX_RANGE = 15;
+    createRadarCircles();
+    updateHUD("Phase 2", true);
+    controls.target.set(0, 0, 0);
+    camera.position.set(20, 30, 40);
+});
+
+document.getElementById('btn-stage-3').addEventListener('click', () => {
+    sendCommand('set_stage_3');
+    COMP_MODE = true;
+    MAX_RANGE = 15;
+    createRadarCircles();
+    updateHUD("Phase 3", true);
+    controls.target.set(0, 0, 0);
+    camera.position.set(20, 30, 40);
+});
 
 window.onload = connectWebSocket;

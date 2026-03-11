@@ -4,9 +4,10 @@
     --radar-cyan: #00e5ff;
     --target-red: #ff3333;
     --text-color: #88ff88;
-    --panel-bg: rgba(2, 10, 15, 0.75);
+    --panel-bg: rgba(2, 10, 15, 0.85);
     --border-color: rgba(12, 245, 12, 0.4);
-    --glass-blur: 15px;
+    --glass-blur: 20px;
+    --hud-bg: rgba(0, 40, 60, 0.4);
 }
 
 * {
@@ -214,6 +215,89 @@ body {
     padding-top: 10px;
     position: relative;
     width: 100%;
+}
+
+/* System Health Metrics */
+.system-health {
+    margin-top: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.health-item {
+    font-size: 0.75em;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.health-item span {
+    color: var(--radar-cyan);
+    letter-spacing: 1px;
+}
+
+.bar-container {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.bar {
+    height: 100%;
+    transition: width 0.5s ease-in-out;
+}
+
+.bar.green {
+    background: var(--radar-green);
+    box-shadow: 0 0 10px var(--radar-green);
+}
+
+.bar.cyan {
+    background: var(--radar-cyan);
+    box-shadow: 0 0 10px var(--radar-cyan);
+}
+
+/* Competition HUD Overlay */
+.comp-hud {
+    position: absolute;
+    top: 15px;
+    left: 20%;
+    display: flex;
+    gap: 40px;
+    z-index: 1000;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, var(--hud-bg), transparent);
+    padding: 10px 60px;
+    border-radius: 5px;
+    backdrop-filter: blur(5px);
+}
+
+.comp-hud.hidden {
+    display: none;
+}
+
+.hud-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.hud-label {
+    font-size: 0.8em;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 5px;
+}
+
+.hud-value {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: var(--radar-green);
+    text-shadow: 0 0 15px var(--radar-green);
+    letter-spacing: 3px;
 }
 
 /* 2D Tooltips over 3D Canvas */

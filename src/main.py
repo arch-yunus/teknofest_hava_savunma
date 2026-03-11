@@ -242,12 +242,11 @@ def main():
                     tti = utils.hizli_carpisan_zamani(h.mesafe, hiz_km_h)
                     cpa_km = utils.en_yakin_yaklasma_noktasi_hesapla((h.x, h.y, h.z), hiz_vektoru)
                     
-                    hedef_tipi = siniflandirici.hedef_tipi_belirle(hiz_km_h, h.irtifa, h.rcs)
-                    oncelik_seviyesi = siniflandirici.oncelik_degerlendir(h.mesafe, tti, cpa_km, hedef_tipi)
+                    degerlendirme = siniflandirici.siniflandir(h, cpa_km, tti)
                     
                     karar = "İZLENİYOR"
                     # Otomatik atış modu açıksa ve öncelik uygunsa füze ateşle
-                    if auto_fire_enabled and oncelik_seviyesi in [TehditOnceligi.KRITIK.name, TehditOnceligi.YUKSEK.name] and batarya.muhimmat > 0 and h.mesafe > ciws.menzil_km:
+                    if auto_fire_enabled and degerlendirme.oncelik in [TehditOnceligi.KRİTİK, TehditOnceligi.YUKSEK] and batarya.muhimmat > 0 and h.mesafe > ciws.menzil_km:
                         try:
                             # Aynı hedefe multiple füze atmamak için basit kontrol
                             hedefte_fuze_var_mi = any(f.hedef.id == h.id for f in batarya.aktif_fuzeler)
@@ -258,7 +257,7 @@ def main():
                                 karar = "ANGAJE"
                         except MuhimmatYokHatasi:
                             karar = "MÜHİMMAT YOK!"
-                    elif not auto_fire_enabled and oncelik_seviyesi in [TehditOnceligi.KRITIK.name]:
+                    elif not auto_fire_enabled and degerlendirme.oncelik in [TehditOnceligi.KRİTİK]:
                         karar = "ENGAGEMENT HOLD (MANUEL)"
                     
                     data = {
@@ -268,10 +267,10 @@ def main():
                         "hiz":     hiz_km_h,
                         "tti":     tti,
                         "cpa":     cpa_km,
-                        "tip":     "EH JAMMER" if h.is_jammer else ("GHOST" if h.is_ghost else hedef_tipi.name.replace("_", " ")),
-                        "oncelik": oncelik_seviyesi,
+                        "tip":     "EH JAMMER" if h.is_jammer else ("GHOST" if h.is_ghost else degerlendirme.tehdit_tipi.name.replace("_", " ")),
+                        "oncelik": degerlendirme.oncelik.name,
                         "karar":   karar,
-                        "skor":    siniflandirici.tehdit_skoru_hesapla(h.mesafe, tti, cpa_km, hedef_tipi),
+                        "skor":    degerlendirme.tehdit_skoru,
                         "x":       h.x,
                         "y":       h.y,
                         "z":       h.z,
@@ -287,7 +286,7 @@ def main():
                     kritik_cpa = ayarlar.get('tehdit_limitleri', {}).get('kritik_mesafe', 50.0)
                     if (
                         degerlendirme.oncelik == TehditOnceligi.KRİTİK
-                        or cpa < kritik_cpa
+                        or cpa_km < kritik_cpa
                     ):
                         # Zaten bu hedefe giden füze var mı kontrolü eklenebilir, şimdilik basit
                         hedefe_fuze_var_mi = any(f.hedef.id == h.id for f in batarya.aktif_fuzeler)

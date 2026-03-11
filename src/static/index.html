@@ -24,6 +24,17 @@
     <div class="crt-overlay"></div>
     <div class="emp-whiteout"></div>
 
+    <div id="comp-hud" class="comp-hud hidden">
+        <div class="hud-box">
+            <span class="hud-label">CURRENT PHASE</span>
+            <span id="hud-stage" class="hud-value">STANDBY</span>
+        </div>
+        <div class="hud-box">
+            <span class="hud-label">ENGAGEMENT MODE</span>
+            <span id="hud-mode" class="hud-value">OTONOM</span>
+        </div>
+    </div>
+
     <div class="ui-layer">
         <!-- Sidebar for Telemetry -->
         <aside class="sidebar">
@@ -33,6 +44,27 @@
                 <div class="status-indicator">
                     <div class="led green"></div>
                     <span>SYSTEM ONLINE</span>
+                </div>
+            </div>
+
+            <div class="system-health">
+                <div class="health-item">
+                    <span>BATTERY</span>
+                    <div class="bar-container">
+                        <div id="battery-bar" class="bar green" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div class="health-item">
+                    <span>PROCESSOR</span>
+                    <div class="bar-container">
+                        <div id="cpu-bar" class="bar cyan" style="width: 15%"></div>
+                    </div>
+                </div>
+                <div class="health-item">
+                    <span>SIGNAL SNR</span>
+                    <div class="bar-container">
+                        <div id="snr-bar" class="bar green" style="width: 95%"></div>
+                    </div>
                 </div>
             </div>
 

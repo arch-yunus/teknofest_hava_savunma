@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { AlertCircle, Zap, Target, Radar, AlertTriangle } from 'lucide-react';
+import { trpc } from '@/lib/trpc';
 
 /**
  * GökKalkan AI Komuta Kontrol Merkezi
@@ -11,6 +12,7 @@ import { AlertCircle, Zap, Target, Radar, AlertTriangle } from 'lucide-react';
  * - Neon yeşil (#00ff88) ve elektrik mavisi (#00d4ff) aksentler
  * - Koyu arka plan (#0a0e27) profesyonel görünüm
  * - Gerçek zamanlı telemetri ve sistem kontrolleri
+ * - Simulasyona bağlı veri akışı
  */
 
 interface Target {
@@ -19,6 +21,11 @@ interface Target {
   range: number;
   threat: 'LOW' | 'MEDIUM' | 'HIGH';
   status: 'DETECTED' | 'LOCKED' | 'ENGAGED' | 'DESTROYED';
+  x?: number;
+  y?: number;
+  z?: number;
+  hiz?: number;
+  irtifa?: number;
 }
 
 interface SystemMetrics {
@@ -50,43 +57,110 @@ export default function CommandCenter() {
     interceptorsReady: 12,
   });
 
-  // Simüle et sistem metriklerini
+  // tRPC hooks
+  const simulationData = trpc.simulation.getLatestData.useQuery();
+  const sendCommand = trpc.simulation.sendCommand.useMutation();
+
+  // Simulasyon verilerini güncelle
+  useEffect(() => {
+    if (simulationData.data) {
+      const data = simulationData.data;
+      
+      // Hedefleri güncelle
+      if (data.targets && data.targets.length > 0) {
+        const mappedTargets: Target[] = data.targets.map((t: any) => ({
+          id: t.id,
+          type: t.tip === 'STATIONARY' ? 'STATIONARY' : t.tip === 'SWARM' ? 'SWARM' : 'LAYERED',
+          range: Math.round(t.mesafe),
+          threat: t.oncelik === 'KRİTİK' ? 'HIGH' : t.oncelik === 'YUKSEK' ? 'HIGH' : t.oncelik === 'ORTA' ? 'MEDIUM' : 'LOW',
+          status: t.karar === 'DESTROYED' ? 'DESTROYED' : t.karar === 'ENGAGED' ? 'ENGAGED' : t.karar === 'LOCKED' ? 'LOCKED' : 'DETECTED',
+          x: t.x,
+          y: t.y,
+          z: t.z,
+          hiz: t.hiz,
+          irtifa: t.irtifa,
+        }));
+        setTargets(mappedTargets);
+      }
+
+      // Sistem sağlığını güncelle
+      if (data.system_health) {
+        setMetrics({
+          battery: data.system_health.battery,
+          cpu: data.system_health.cpu,
+          snr: data.system_health.snr,
+          temperature: data.system_health.temperature,
+          interceptorsReady: data.system_health.interceptorsReady,
+        });
+      }
+
+      // Sistem durumunu güncelle
+      setCurrentStage(data.current_stage as 1 | 2 | 3);
+      setAutoFire(data.auto_fire_enabled);
+      setRadarEmission(data.radar_emission);
+      setWeatherActive(data.weather === 'RAIN');
+    }
+  }, [simulationData.data]);
+
+  // Simulasyon verilerini periyodik olarak yenile
   useEffect(() => {
     const interval = setInterval(() => {
-      setMetrics(prev => ({
-        battery: Math.max(prev.battery - 0.1, 0),
-        cpu: Math.random() * 40 + 10,
-        snr: Math.random() * 10 + 85,
-        temperature: Math.random() * 15 + 35,
-        interceptorsReady: Math.floor(Math.random() * 3) + 10,
-      }));
+      simulationData.refetch();
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [simulationData]);
 
-  const handleStageChange = (stage: 1 | 2 | 3) => {
+  const handleStageChange = async (stage: 1 | 2 | 3) => {
     setCurrentStage(stage);
-    // Aşamaya göre hedefleri güncelle
-    if (stage === 1) {
-      setTargets([
-        { id: 'T001', type: 'STATIONARY', range: 5, threat: 'MEDIUM', status: 'DETECTED' },
-        { id: 'T002', type: 'STATIONARY', range: 10, threat: 'HIGH', status: 'LOCKED' },
-        { id: 'T003', type: 'STATIONARY', range: 15, threat: 'MEDIUM', status: 'DETECTED' },
-      ]);
-    } else if (stage === 2) {
-      setTargets([
-        { id: 'S001', type: 'SWARM', range: 8, threat: 'HIGH', status: 'DETECTED' },
-        { id: 'S002', type: 'SWARM', range: 10, threat: 'HIGH', status: 'LOCKED' },
-        { id: 'S003', type: 'SWARM', range: 12, threat: 'HIGH', status: 'DETECTED' },
-        { id: 'S004', type: 'SWARM', range: 14, threat: 'MEDIUM', status: 'DETECTED' },
-      ]);
-    } else {
-      setTargets([
-        { id: 'L001', type: 'LAYERED', range: 3, threat: 'HIGH', status: 'LOCKED' },
-        { id: 'L002', type: 'LAYERED', range: 8, threat: 'MEDIUM', status: 'DETECTED' },
-        { id: 'L003', type: 'LAYERED', range: 15, threat: 'HIGH', status: 'DETECTED' },
-      ]);
-    }
+    const actionMap = {
+      1: 'set_stage_1',
+      2: 'set_stage_2',
+      3: 'set_stage_3',
+    };
+    await sendCommand.mutateAsync({
+      action: actionMap[stage] as any,
+    });
+  };
+
+  const handleToggleAutoFire = async () => {
+    await sendCommand.mutateAsync({
+      action: 'toggle_auto_fire',
+    });
+    setAutoFire(!autoFire);
+  };
+
+  const handleToggleRadarEmission = async () => {
+    await sendCommand.mutateAsync({
+      action: 'toggle_radar_emission',
+    });
+    setRadarEmission(!radarEmission);
+  };
+
+  const handleToggleWeather = async () => {
+    await sendCommand.mutateAsync({
+      action: 'toggle_weather',
+    });
+    setWeatherActive(!weatherActive);
+  };
+
+  const handleManualFire = async () => {
+    const lockedTarget = targets.find(t => t.status === 'LOCKED');
+    await sendCommand.mutateAsync({
+      action: 'manual_fire',
+      target_id: lockedTarget?.id,
+    });
+  };
+
+  const handleForceSwarm = async () => {
+    await sendCommand.mutateAsync({
+      action: 'force_swarm',
+    });
+  };
+
+  const handleEmergencyStop = async () => {
+    await sendCommand.mutateAsync({
+      action: 'trigger_estop',
+    });
   };
 
   const getThreatColor = (threat: string) => {
@@ -123,7 +197,7 @@ export default function CommandCenter() {
             <Radar className="w-8 h-8 text-primary animate-pulse" />
             <div>
               <h1 className="text-2xl font-bold text-primary">GÖKKALKAN AI</h1>
-              <p className="text-xs text-muted-foreground">V5.0 3D TACTICAL COMMAND CENTER</p>
+              <p className="text-xs text-muted-foreground">V5.0 3D TACTICAL COMMAND CENTER - SIMULATION LINKED</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -181,6 +255,12 @@ export default function CommandCenter() {
                   />
                 </div>
               </div>
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-muted-foreground">TEMPERATURE</span>
+                  <span className="text-yellow-500">{metrics.temperature.toFixed(1)}°C</span>
+                </div>
+              </div>
             </div>
           </Card>
 
@@ -203,6 +283,7 @@ export default function CommandCenter() {
                     <div>TYPE: {target.type}</div>
                     <div className={getThreatColor(target.threat)}>THREAT: {target.threat}</div>
                     <div>RANGE: {target.range}m</div>
+                    {target.hiz && <div>SPEED: {target.hiz.toFixed(0)} km/h</div>}
                   </div>
                 </div>
               ))}
@@ -214,6 +295,7 @@ export default function CommandCenter() {
             <p>C2 NODE: SECTOR 7</p>
             <p>INTERCEPTORS: {metrics.interceptorsReady} READY</p>
             <p>TEMP: {metrics.temperature.toFixed(1)}°C</p>
+            <p className="mt-2 text-primary">SIMULATION ACTIVE</p>
           </Card>
         </aside>
 
@@ -301,21 +383,21 @@ export default function CommandCenter() {
             <h2 className="text-sm font-bold text-primary mb-4">C2 OVERRIDE PROTOCOLS</h2>
             <div className="space-y-3">
               <Button 
-                onClick={() => setAutoFire(!autoFire)}
+                onClick={handleToggleAutoFire}
                 variant={autoFire ? 'default' : 'outline'}
                 className="w-full text-xs"
               >
                 AUTO-FIRE: {autoFire ? 'ENABLED' : 'DISABLED'}
               </Button>
               <Button 
-                onClick={() => setRadarEmission(!radarEmission)}
+                onClick={handleToggleRadarEmission}
                 variant={radarEmission ? 'default' : 'outline'}
                 className="w-full text-xs"
               >
                 RADAR EMISSION: {radarEmission ? 'ON' : 'OFF'}
               </Button>
               <Button 
-                onClick={() => setWeatherActive(!weatherActive)}
+                onClick={handleToggleWeather}
                 variant={weatherActive ? 'default' : 'outline'}
                 className="w-full text-xs"
               >
@@ -328,18 +410,21 @@ export default function CommandCenter() {
           <Card className="bg-card border-border p-4">
             <div className="space-y-3">
               <Button 
+                onClick={handleManualFire}
                 variant="default"
                 className="w-full text-xs bg-yellow-900 hover:bg-yellow-800 text-yellow-300"
               >
                 MANUAL FIRE OVERRIDE
               </Button>
               <Button 
+                onClick={handleForceSwarm}
                 variant="default"
                 className="w-full text-xs bg-orange-900 hover:bg-orange-800 text-orange-300"
               >
                 FORCE SWARM ATTACK
               </Button>
               <Button 
+                onClick={handleEmergencyStop}
                 variant="default"
                 className="w-full text-xs bg-red-900 hover:bg-red-800 text-red-300 font-bold"
               >
@@ -362,7 +447,7 @@ export default function CommandCenter() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">ENGAGEMENT MODE:</span>
-                <span className="text-secondary font-mono">AUTONOMOUS</span>
+                <span className="text-secondary font-mono">{autoFire ? 'AUTONOMOUS' : 'MANUAL'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">TARGETS LOCKED:</span>
@@ -373,6 +458,10 @@ export default function CommandCenter() {
                 <span className={systemOnline ? 'text-primary' : 'text-destructive'}>
                   {systemOnline ? 'OPERATIONAL' : 'OFFLINE'}
                 </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">SIMULATION:</span>
+                <span className="text-primary">CONNECTED</span>
               </div>
             </div>
           </Card>

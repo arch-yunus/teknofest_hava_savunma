@@ -23,8 +23,11 @@ active_connections = []
 # Global Command Queue for Python backend to read
 frontend_commands = []
 
+from typing import Optional
+
 class CommandRequest(BaseModel):
     action: str
+    target_id: Optional[str] = None
 
 # Serve static files (HTML, JS, CSS)
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
@@ -56,7 +59,7 @@ async def receive_command(cmd: CommandRequest):
         "toggle_manual_mode"                         # Mode Switch
     ]
     if cmd.action in allowed:
-        frontend_commands.append(cmd.action)
+        frontend_commands.append({"action": cmd.action, "target_id": cmd.target_id})
         return {"status": "success", "action_queued": cmd.action}
     return {"status": "error", "message": "Unknown command"}
 
@@ -84,7 +87,7 @@ def push_data_to_clients(data: dict):
     except RuntimeError:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        loop.run_until_complete(broadcast_radar_data(data))
+        loop.run_until_complete(_send())
 
 def start_server(host="0.0.0.0", port=8000):
     """

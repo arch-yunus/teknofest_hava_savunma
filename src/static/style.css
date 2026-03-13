@@ -1,13 +1,14 @@
 :root {
-    --bg-dark: #020508;
-    --radar-green: #0cf50c;
-    --radar-cyan: #00e5ff;
-    --target-red: #ff3333;
-    --text-color: #88ff88;
-    --panel-bg: rgba(2, 10, 15, 0.85);
-    --border-color: rgba(12, 245, 12, 0.4);
-    --glass-blur: 20px;
-    --hud-bg: rgba(0, 40, 60, 0.4);
+    --bg-dark: #010810;
+    --radar-green: #00ff66;
+    --radar-cyan: #00f2ff;
+    --target-red: #ff3344;
+    --text-color: #e0faff;
+    --panel-bg: rgba(5, 15, 25, 0.75);
+    --border-color: rgba(0, 242, 255, 0.3);
+    --glass-blur: 25px;
+    --hud-bg: rgba(0, 20, 40, 0.6);
+    --accent-gold: #ffcc00;
 }
 
 * {
@@ -86,16 +87,19 @@ body {
 }
 
 .logo-box h1 {
-    font-size: 2.5em;
+    font-size: 2.2em;
     color: var(--radar-cyan);
-    text-shadow: 0 0 15px var(--radar-cyan), 0 0 30px var(--radar-cyan);
-    letter-spacing: 2px;
+    text-shadow: 0 0 15px var(--radar-cyan);
+    letter-spacing: 4px;
+    font-weight: 800;
 }
 
 .logo-box p {
-    font-size: 1em;
-    color: var(--radar-green);
-    letter-spacing: 5px;
+    font-size: 0.8em;
+    color: var(--text-color);
+    letter-spacing: 3px;
+    opacity: 0.7;
+    margin-top: -5px;
 }
 
 .status-indicator {

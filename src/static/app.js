@@ -25,6 +25,24 @@ controls.enableDamping = true;
 controls.dampingFactor = 0.05;
 controls.maxPolarAngle = Math.PI / 2 - 0.05; // Don't allow going below ground
 
+let selectedTargetId = null;
+
+function autoZoom(targets) {
+    if (!targets || targets.length === 0) return;
+    
+    // Find highest priority target
+    const criticalTarget = targets.find(t => t.oncelik === "KRİTİK") || targets[0];
+    
+    if (criticalTarget) {
+        const posX = criticalTarget.x;
+        const posY = Math.max(criticalTarget.irtifa * 10, 0);
+        const posZ = -criticalTarget.y;
+        
+        // Smoothly move controls target towards critical target
+        controls.target.lerp(new THREE.Vector3(posX, posY, posZ), 0.05);
+    }
+}
+
 // --- Cyberpunk 3D Terrain (Holo-Map) ---
 const mapSize = 400;
 const segments = 60;
@@ -452,9 +470,9 @@ function connectWebSocket() {
     socket = new WebSocket(`${protocol}//${host}/ws/radar`);
 
     socket.onopen = () => {
-        wsStatusEl.textContent = "SECURE LINK ESTABLISHED";
-        wsStatusEl.style.color = "#0cf50c";
-        wsStatusEl.style.textShadow = "0 0 10px #0cf50c";
+        wsStatusEl.textContent = "GÜVENLİ BAĞLANTI KURULDU";
+        wsStatusEl.style.color = "#00ff66";
+        wsStatusEl.style.textShadow = "0 0 10px #00ff66";
     };
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -465,6 +483,7 @@ function connectWebSocket() {
             rainSystem.visible = window.isWeatherRain;
 
             updateDashboard(data.targets, data.interceptors, data.lasers, data.jamming, data.emp);
+            autoZoom(data.targets);
         } else {
             window.isJammingActive = false;
             window.isWeatherRain = false;
@@ -473,7 +492,7 @@ function connectWebSocket() {
         }
     };
     socket.onclose = () => {
-        wsStatusEl.textContent = "DISCONNECTED - RECONNECTING...";
+        wsStatusEl.textContent = "BAĞLANTI KESİLDİ - YENİLENİYOR...";
         wsStatusEl.style.color = "red";
         setTimeout(connectWebSocket, 2000);
     };
@@ -488,7 +507,7 @@ function updateHUD(stage, isAuto) {
         hudEl.classList.remove('hidden');
         hudStageEl.textContent = stage.toUpperCase();
         hudModeEl.textContent = isAuto ? "OTONOM" : "MANUEL";
-        hudModeEl.style.color = isAuto ? "var(--radar-green)" : "orange";
+        hudModeEl.style.color = isAuto ? "var(--radar-green)" : "var(--accent-gold)";
     } else {
         hudEl.classList.add('hidden');
     }
@@ -506,14 +525,14 @@ function updateDashboard(targets, interceptors, lasers, jammingActive, empActive
         if (!btnEmission.classList.contains('danger')) {
             btnEmission.classList.remove('active');
             btnEmission.classList.add('danger');
-            btnEmission.textContent = "RADAR EMISSION: SILENT";
+            btnEmission.textContent = "RADAR YAYINI: PASİF";
             gridHelper.material.opacity = 0.05; // Radar kapalı, ortam loş
         }
     } else {
         if (!btnEmission.classList.contains('active')) {
             btnEmission.classList.remove('danger');
             btnEmission.classList.add('active');
-            btnEmission.textContent = "RADAR EMISSION: ON";
+            btnEmission.textContent = "RADAR YAYINI: AÇIK";
             gridHelper.material.opacity = 0.3;
         }
     }
@@ -550,10 +569,10 @@ function updateDashboard(targets, interceptors, lasers, jammingActive, empActive
         const altMeters = (t.irtifa * 1000).toFixed(1);
 
         card.innerHTML = `
-            <div><strong class="id-badge">${isDost ? "DOST" : "DUSMAN"}: ${t.id}</strong> [${t.etiket || t.tip}]</div>
-            <div>RNG: ${distMeters} m | ALT: ${altMeters} m</div>
-            <div>SPD: ${parseFloat(t.hiz).toFixed(1)} km/h | TTI: ${t.tti !== null ? parseFloat(t.tti).toFixed(1) : "N/A"}s</div>
-            <div>PRIO: ${t.oncelik} | ACT: ${t.karar}</div>
+            <div><strong class="id-badge">${isDost ? "DOST" : "DÜŞMAN"}: ${t.id}</strong> [${t.etiket || t.tip}]</div>
+            <div>MES: ${distMeters} m | İRT: ${altMeters} m</div>
+            <div>HIZ: ${parseFloat(t.hiz).toFixed(1)} km/h | TTI: ${t.tti !== null ? parseFloat(t.tti).toFixed(1) : "N/A"}s</div>
+            <div>ÖNCL: ${t.oncelik} | DURUM: ${t.karar}</div>
         `;
         targetListEl.appendChild(card);
 
@@ -786,4 +805,38 @@ document.getElementById('btn-stage-3').addEventListener('click', () => {
     camera.position.set(20, 30, 40);
 });
 
-window.onload = connectWebSocket;
+function startBootSequence() {
+    const bootOverlay = document.getElementById('boot-overlay');
+    const logs = [
+        "> INITIALIZING ÇELİKKUBBE C2 KERNEL...",
+        "> LOADING RADAR MODULES [OK]",
+        "> CONNECTING TO SATCOM LINK [OK]",
+        "> ESTABLISHING GÖKVATAN DEFENSE GRID...",
+        "> AI THREAT CLASSIFIER ONLINE",
+        "> KALMAN TACTICAL TRACKER READY",
+        "> SYSTEM INTEGRITY CHECK: 100%",
+        "> WELCOME COMMANDER."
+    ];
+    
+    let i = 0;
+    const interval = setInterval(() => {
+        if (i < logs.length) {
+            const p = document.createElement('p');
+            p.className = 'boot-text';
+            p.textContent = logs[i];
+            bootOverlay.appendChild(p);
+            i++;
+        } else {
+            clearInterval(interval);
+            setTimeout(() => {
+                bootOverlay.classList.add('boot-finished');
+                setTimeout(() => bootOverlay.style.display = 'none', 1000);
+            }, 500);
+        }
+    }, 200);
+}
+
+window.onload = () => {
+    connectWebSocket();
+    startBootSequence();
+};

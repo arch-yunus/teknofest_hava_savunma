@@ -1,0 +1,19 @@
+{
+    "exclude": [
+        "**/node_modules",
+        "**/__pycache__",
+        ".git"
+    ],
+    "include": [
+        "src",
+        "*.py"
+    ],
+    "extraPaths": [
+        "src"
+    ],
+    "typeCheckingMode": "basic",
+    "pythonVersion": "3.12",
+    "pythonPlatform": "Windows",
+    "reportMissingImports": true,
+    "reportMissingTypeStubs": false
+}

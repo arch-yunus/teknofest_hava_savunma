@@ -10,8 +10,8 @@ const canvasContainer = document.getElementById('canvas-container');
 const scene = new THREE.Scene();
 
 // Camera
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 150, 200); // Look from an angle
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
+camera.position.set(200, 250, 300); // Cinematic starting position
 
 // Renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -80,7 +80,7 @@ gridHelper.material.opacity = 0.3;
 gridHelper.material.transparent = true;
 scene.add(gridHelper);
 
-const circleMaterial = new THREE.LineBasicMaterial({ color: 0x0cf50c, transparent: true, opacity: 0.2 });
+const circleMaterial = new THREE.LineBasicMaterial({ color: 0x00f2ff, transparent: true, opacity: 0.15 });
 const radarCircles = [];
 function createRadarCircles() {
     // Remove old circles
@@ -470,25 +470,35 @@ function connectWebSocket() {
     socket = new WebSocket(`${protocol}//${host}/ws/radar`);
 
     socket.onopen = () => {
-        wsStatusEl.textContent = "GÜVENLİ BAĞLANTI KURULDU";
-        wsStatusEl.style.color = "#00ff66";
-        wsStatusEl.style.textShadow = "0 0 10px #00ff66";
+        wsStatusEl.textContent = "BAĞLANTI AKTİF";
+        wsStatusEl.className = "status-online";
     };
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        // Previously data was just targets list, now it's { targets:[], interceptors:[] }
-        if (data.targets && data.interceptors !== undefined) {
-            window.isJammingActive = data.jamming; // Update global state
-            window.isWeatherRain = data.weather === 'RAIN';
-            rainSystem.visible = window.isWeatherRain;
+        
+        // Sync Engine State
+        if (data.ammo !== undefined) {
+            const batteryBar = document.getElementById('battery-bar');
+            if (batteryBar) batteryBar.style.width = `${data.ammo}%`;
+        }
+        
+        if (data.auto_fire !== undefined) {
+            updateHUD(data.stage ? `AŞAMA ${data.stage}` : "", data.auto_fire);
+            const btnAuto = document.getElementById('btn-toggle-auto');
+            if (btnAuto) {
+                btnAuto.textContent = `OTONOM MOD: ${data.auto_fire ? 'AÇIK' : 'KAPALI'}`;
+                if (data.auto_fire) btnAuto.classList.add('active');
+                else btnAuto.classList.remove('active');
+            }
+        }
 
-            updateDashboard(data.targets, data.interceptors, data.lasers, data.jamming, data.emp);
-            autoZoom(data.targets);
-        } else {
-            window.isJammingActive = false;
-            window.isWeatherRain = false;
-            rainSystem.visible = false;
-            updateDashboard(data, [], [], false, false); // Fallback
+        // Radar Update
+        updateRadar(data.targets || [], data.interceptors || [], data.lasers || []);
+        updateTargetList(data.targets || []);
+        
+        if (data.emp) {
+            document.body.classList.add('emp-active');
+            setTimeout(() => document.body.classList.remove('emp-active'), 2000);
         }
     };
     socket.onclose = () => {
@@ -507,7 +517,7 @@ function updateHUD(stage, isAuto) {
         hudEl.classList.remove('hidden');
         hudStageEl.textContent = stage.toUpperCase();
         hudModeEl.textContent = isAuto ? "OTONOM" : "MANUEL";
-        hudModeEl.style.color = isAuto ? "var(--radar-green)" : "var(--accent-gold)";
+        hudModeEl.style.color = isAuto ? "var(--primary-green)" : "var(--warning-gold)";
     } else {
         hudEl.classList.add('hidden');
     }
@@ -580,15 +590,21 @@ function updateDashboard(targets, interceptors, lasers, jammingActive, empActive
         const card = document.createElement("div");
         card.className = `target-card ${isKritik ? "kritik" : ""} ${isDost ? "friend" : ""}`;
 
-        // Convert distance to meters for realism in 2026 parkour
-        const distMeters = (t.mesafe * 1000).toFixed(1);
-        const altMeters = (t.irtifa * 1000).toFixed(1);
+        const distMeters = (t.mesafe * 1000).toFixed(0);
+        const altMeters = (t.irtifa * 1000).toFixed(0);
 
         card.innerHTML = `
-            <div><strong class="id-badge">${isDost ? "DOST" : "DÜŞMAN"}: ${t.id}</strong> [${t.etiket || t.tip}]</div>
-            <div>MES: ${distMeters} m | İRT: ${altMeters} m</div>
-            <div>HIZ: ${parseFloat(t.hiz).toFixed(1)} km/h | TTI: ${t.tti !== null ? parseFloat(t.tti).toFixed(1) : "N/A"}s</div>
-            <div>ÖNCL: ${t.oncelik} | DURUM: ${t.karar}</div>
+            <div class="card-header">
+                <strong class="id-badge">${isDost ? "D" : "TEH"}: ${t.id}</strong> 
+                <span class="type-tag">${t.etiket || t.tip}</span>
+            </div>
+            <div class="card-stats">
+                <span>RNG: ${distMeters}m</span>
+                <span>ALT: ${altMeters}m</span>
+            </div>
+            <div class="card-footer">
+                ÖNC: ${t.oncelik} | DURUM: ${t.karar || "TAKİP"}
+            </div>
         `;
         targetListEl.appendChild(card);
 
@@ -853,14 +869,14 @@ document.getElementById('btn-stage-3').addEventListener('click', () => {
 function startBootSequence() {
     const bootOverlay = document.getElementById('boot-overlay');
     const logs = [
-        "> INITIALIZING ÇELİKKUBBE C2 KERNEL...",
-        "> LOADING RADAR MODULES [OK]",
-        "> CONNECTING TO SATCOM LINK [OK]",
-        "> ESTABLISHING GÖKVATAN DEFENSE GRID...",
-        "> AI THREAT CLASSIFIER ONLINE",
-        "> KALMAN TACTICAL TRACKER READY",
-        "> SYSTEM INTEGRITY CHECK: 100%",
-        "> WELCOME COMMANDER."
+        "> GÖKKALKAN C2 KERNEL BAŞLATILIYOR...",
+        "> RADAR MODÜLLERİ YÜKLENİYOR [TAMAM]",
+        "> SATCOM BAĞLANTISI KURULUYOR [TAMAM]",
+        "> GÖKVATAN SAVUNMA AĞI AKTİF EDİLİYOR...",
+        "> YAPAY ZEKA TEHDİT SINIFLANDIRICI ÇEVRİMİÇİ",
+        "> KALMAN TAKTİK TAKİP SİSTEMİ HAZIR",
+        "> SİSTEM BÜTÜNLÜK KONTROLÜ: %100",
+        "> HOŞ GELDİNİZ, KOMUTAN."
     ];
     
     let i = 0;
@@ -880,6 +896,46 @@ function startBootSequence() {
         }
     }, 200);
 }
+
+window.addEventListener('keydown', (e) => {
+    // Handling multiple key naming conventions for maximum compatibility
+    const key = e.key.toUpperCase();
+    const code = e.code;
+    
+    console.log(`[KEY] Pressed: ${key} (${code})`);
+
+    const actions = {
+        'Digit1': 'btn-stage-1',
+        'Digit2': 'btn-stage-2',
+        'Digit3': 'btn-stage-3',
+        'Key1': 'btn-stage-1', // Fallback
+        'Key2': 'btn-stage-2',
+        'Key3': 'btn-stage-3',
+        'KeyA': 'btn-toggle-auto',
+        'KeyF': 'btn-manual-fire'
+    };
+
+    // Also support raw keys
+    const keyActions = {
+        '1': 'btn-stage-1',
+        '2': 'btn-stage-2',
+        '3': 'btn-stage-3',
+        'A': 'btn-toggle-auto',
+        'F': 'btn-manual-fire'
+    };
+
+    const targetId = actions[code] || keyActions[key];
+    if (targetId) {
+        const btn = document.getElementById(targetId);
+        if (btn) {
+            console.log(`[C2] Triggering ${targetId}`);
+            btn.click();
+            // Visual feedback for keyboard press
+            btn.style.filter = 'brightness(2)';
+            setTimeout(() => btn.style.filter = '', 100);
+        }
+    }
+});
 
 window.onload = () => {
     connectWebSocket();

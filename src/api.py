@@ -63,11 +63,13 @@ async def receive_command(cmd: CommandRequest):
         return {"status": "success", "action_queued": cmd.action}
     return {"status": "error", "message": "Unknown command"}
 
+main_loop = None
+
 def push_data_to_clients(data: dict):
-    """Called from main.py thread to push data to all connected ws clients"""
     if not active_connections:
         return
     
+    global main_loop
     json_data = json.dumps(data)
     
     async def _send():
@@ -76,18 +78,23 @@ def push_data_to_clients(data: dict):
                 await connection.send_text(json_data)
             except Exception:
                 pass
-                
-    # Create new event loop for this thread if needed, or use existing
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            asyncio.run_coroutine_threadsafe(_send(), loop)
-        else:
-            loop.run_until_complete(_send())
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(_send())
+
+    if main_loop and main_loop.is_running():
+        main_loop.call_soon_threadsafe(lambda: asyncio.create_task(_send()))
+    else:
+        # Fallback if loop not captured yet or not running
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                asyncio.run_coroutine_threadsafe(_send(), loop)
+            else:
+                loop.run_until_complete(_send())
+        except: pass
+
+@app.on_event("startup")
+async def startup_event():
+    global main_loop
+    main_loop = asyncio.get_running_loop()
 
 def start_server(host="0.0.0.0", port=8000):
     """

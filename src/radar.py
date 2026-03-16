@@ -242,30 +242,29 @@ class RadarSistemi:
             self.aktif_hedefler.append(h)
 
     def hedef_uret_asama2(self) -> List[Hedef]:
-        """TEKNOFEST Aşama-2: Sürü Saldırı (3 koldan, parkur içi: 0-15m)."""
+        """TEKNOFEST Aşama-2: Sürü Saldırı (3 koldan, toplam 15 hedef, parkur içi: 0-15m)."""
         self.aktif_hedefler.clear()
         suru = []
         
-        # PDF: "3 farklı koldan hedeflerin önceden tanımlı bir yol üzerinde yaklaşması"
-        # 3 kol için 3 ana açı
+        # 3 farklı koldan (yön) hedeflerin yaklaşması
         kollar = [0, 2*math.pi/3, 4*math.pi/3]
-        labels = ["Balistik Fuze", "Mini/Micro IHA", "Mini/Micro IHA"]
+        labels = ["Balistik Fuze", "Mini/Micro IHA", "Savas Ucagi (F16)"]
         
-        for i, angle in enumerate(kollar):
-            dist = 0.015 # 15m'den başlar (Parkur sınırı)
-            x = dist * math.cos(angle)
-            y = dist * math.sin(angle)
-            z = 0.001 # 1m irtifa
-            
-            # Hız: PDF "A noktasından B noktasına gitmeleri" -> yavaş progresyon
-            hiz_mps = 0.5 / 1000 # 0.5 m/s -> km/s
-            vx = -x / dist * hiz_mps
-            vy = -y / dist * hiz_mps
-            
-            h = Hedef(f"SWRM-{i}", x, y, z, vx, vy, 0, rcs=0.1)
-            h.etiket = labels[i]
-            self.aktif_hedefler.append(h)
-            suru.append(h)
+        for k_idx, angle in enumerate(kollar):
+            for i in range(5):  # Her koldan 5 hedef, toplam 15
+                dist = 0.015 + (i * 0.002) # 15m'den başlayarak dizili
+                x = dist * math.cos(angle + random.uniform(-0.1, 0.1))
+                y = dist * math.sin(angle + random.uniform(-0.1, 0.1))
+                z = 0.001 + (random.random() * 0.001)
+                
+                hiz_mps = 0.8 / 1000 # 0.8 m/s -> km/s
+                vx = -x / dist * hiz_mps
+                vy = -y / dist * hiz_mps
+                
+                h = Hedef(f"SWRM-{k_idx}-{i}", x, y, z, vx, vy, 0, rcs=0.1)
+                h.etiket = labels[k_idx]
+                self.aktif_hedefler.append(h)
+                suru.append(h)
         return suru
 
     def hedef_uret_asama3(self) -> None:

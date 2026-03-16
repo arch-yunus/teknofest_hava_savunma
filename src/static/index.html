@@ -1,130 +1,110 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ÇELİKKUBBE AI | Taktik Komuta Merkezi</title>
+    <title>GÖKKALKAN AI | Millî Hava Savunma Sistemi</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Google Fonts for Cyberpunk/Modern look -->
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
-
-    <!-- Three.js and OrbitControls via CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <!-- Chart.js for Telemetry -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
-    <!-- Boot Sequence Overlay -->
     <div id="boot-overlay" class="boot-level"></div>
-
-    <!-- 3D Canvas Container -->
     <div id="canvas-container"></div>
-
-    <!-- CRT Overlay Effect -->
     <div class="crt-overlay"></div>
     <div class="emp-whiteout"></div>
 
     <div id="comp-hud" class="comp-hud hidden">
         <div class="hud-box">
             <span class="hud-label">AKTİF AŞAMA</span>
-            <span id="hud-stage" class="hud-value">BEKLEMEDE</span>
+            <span id="hud-stage" class="hud-value">-</span>
         </div>
+        <div class="hud-box separator"></div>
         <div class="hud-box">
-            <span class="hud-label">SAVAŞ MODU</span>
+            <span class="hud-label">SAVUNMA STATÜSÜ</span>
             <span id="hud-mode" class="hud-value">OTONOM</span>
         </div>
     </div>
 
     <div class="ui-layer">
-        <!-- Sidebar for Telemetry -->
         <aside class="sidebar">
             <div class="logo-box">
-                <h1>ÇELİKKUBBE</h1>
-                <p>HAVA SAVUNMA SİSTEMLERİ</p>
-                <div class="status-indicator">
-                    <div class="led green"></div>
-                    <span>SİSTEM AKTİF</span>
+                <h1>GÖKKALKAN</h1>
+                <div class="sub-logo">
+                    <span>MİLLÎ HAVA SAVUNMA KOMUTA MERKEZİ</span>
+                    <div class="version">v2026.1-PRO</div>
                 </div>
             </div>
 
-            <div class="system-health">
-                <div class="health-item">
-                    <span>BATARYA</span>
+            <div class="system-grid">
+                <div class="system-item">
+                    <span class="label">BATARYA GÜCÜ</span>
                     <div class="bar-container">
                         <div id="battery-bar" class="bar green" style="width: 100%"></div>
                     </div>
                 </div>
-                <div class="health-item">
-                    <span>İŞLEMCİ</span>
+                <div class="system-item">
+                    <span class="label">İŞLEMCİ YÜKÜ</span>
                     <div class="bar-container">
                         <div id="cpu-bar" class="bar cyan" style="width: 15%"></div>
-                    </div>
-                </div>
-                <div class="health-item">
-                    <span>SİNYAL SNR</span>
-                    <div class="bar-container">
-                        <div id="snr-bar" class="bar green" style="width: 95%"></div>
                     </div>
                 </div>
             </div>
 
             <div class="metrics-panel">
-                <h2>İSTİHBARAT AKIŞI</h2>
-                <div id="target-list" class="target-list">
-                    <!-- Targets injected via JS -->
+                <div class="panel-header">
+                    <span class="led green"></span>
+                    <h2>GERÇEK ZAMANLI TEHDİT AKIŞI</h2>
                 </div>
+                <div id="target-list" class="target-list"></div>
+            </div>
+
+            <div class="telemetry-chart-box">
+                <div class="chart-header">TEHDİT YOĞUNLUK ANALİZİ</div>
+                <canvas id="telemetryChart"></canvas>
             </div>
 
             <div class="footer-info">
-                <p>C2 DÜĞÜMÜ: SEKTÖR 7 (3D GÖRÜNÜM)</p>
-                <p>BAĞLANTI DURUMU: <span id="ws-status" style="color:red">BAĞLANTI YOK</span></p>
-                <p class="hint">Fare Sol Tık: Döndür | Sağ Tık: Pan | Kaydırma: Yakınlaş</p>
-            </div>
-
-            <div class="chart-container">
-                <canvas id="telemetryChart"></canvas>
+                <div class="connection-status">
+                    SİSTEM DURUMU: <span id="ws-status" class="status-offline">BAĞLANILIYOR...</span>
+                </div>
+                <div class="shortcuts">
+                    [1-3] AŞAMALAR | [A] OTO-ATIŞ | [F] MANUEL ATEŞ
+                </div>
             </div>
         </aside>
 
-        <!-- Dynamic Target Tooltips Container (2D Overlays on 3D Space) -->
         <div id="tooltips-container"></div>
 
-        <!-- C2 Interactive Control Panel -->
         <div class="c2-controls">
-            <div class="control-header">C2 PROTOKOLLERİ</div>
+            <div class="control-header">C2 HAREKAT PROTOKOLLERİ</div>
 
-            <div class="control-group">
-                <button id="btn-stage-1" class="btn active">AŞAMA-1 (MANUEL)</button>
-                <button id="btn-stage-2" class="btn active">AŞAMA-2 (SÜRÜ)</button>
-                <button id="btn-stage-3" class="btn active">AŞAMA-3 (KATMANLI)</button>
+            <div class="control-row">
+                <button id="btn-stage-1" class="btn">AŞAMA-1</button>
+                <button id="btn-stage-2" class="btn">AŞAMA-2</button>
+                <button id="btn-stage-3" class="btn">AŞAMA-3</button>
             </div>
 
-            <div class="control-group">
-<<<<<<< HEAD
-                <button id="btn-toggle-auto" class="btn active">OTO-ATIŞ: AKTİF</button>
-                <button id="btn-toggle-weather" class="btn info">HAVA DURUMU (FIRTINA)</button>
-                <button id="btn-toggle-emission" class="btn active">RADAR YAYINI: AÇIK</button>
-=======
+            <div class="control-row secondary">
                 <select id="target-selector" class="dropdown-select">
-                    <option value="">-- SELECT TARGET TO LOCK --</option>
+                    <option value="">-- HEDEF KİLİTLE --</option>
                 </select>
-                <button id="btn-manual-fire" class="btn warning">MANUAL FIRE OVERRIDE</button>
+                <button id="btn-manual-fire" class="btn warning">ANGARYA</button>
             </div>
 
-            <div class="control-group">
-                <button id="btn-toggle-auto" class="btn active">AUTO-FIRE: ENABLED</button>
-                <button id="btn-toggle-weather" class="btn info">TOGGLE RAIN STORM</button>
-                <button id="btn-toggle-emission" class="btn active">RADAR EMISSION: ON</button>
->>>>>>> 96b327496e62b8aa9f036cdc6db924bab9b04b07
+            <div class="control-row tertiary">
+                <button id="btn-toggle-auto" class="btn active">OTONOM MOD: AÇIK</button>
+                <button id="btn-toggle-weather" class="btn info">METEOROLOJİ</button>
             </div>
 
-            <div class="control-group center">
-                <button id="btn-estop" class="btn danger e-stop">ACİL DURDURMA</button>
-                <button id="btn-force-swarm" class="btn warning">SÜRÜ SALDIRISI TETİKLE</button>
-                <button id="btn-trigger-emp" class="btn danger">EMP DALGASI GÖNDER</button>
+            <div class="control-row actions">
+                <button id="btn-trigger-emp" class="btn danger-alt">EMP BLAST</button>
+                <button id="btn-force-swarm" class="btn warning-alt">SWARM TEST</button>
+                <button id="btn-estop" class="btn estop">ACİL DURDURMA</button>
             </div>
         </div>
     </div>

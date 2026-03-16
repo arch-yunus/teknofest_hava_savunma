@@ -19,7 +19,7 @@ class OnleyiciFuze:
         self.x = baslangic_x
         self.y = baslangic_y
         self.z = baslangic_z
-        self.hiz_km_s = 0.9 # Savunma füzesi hızı ~ Mach 2.6
+        self.hiz_km_s = 1.4 # Savunma füzesi hızı ~ Mach 4.1 (YÜKSEK PERFORMANS)
         self.vurus_mesafesi = 0.5 # Hedefi yok sayma yarıçapı (km)
         self.aktif = True
         self.vurdu = False

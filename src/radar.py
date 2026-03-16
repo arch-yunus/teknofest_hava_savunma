@@ -236,6 +236,7 @@ class RadarSistemi:
             y = dist * math.sin(angle)
             z = random.uniform(0.001, 0.002) # 1-2 metre yükseklik
             
+            # Aşama 1 hedefleri özeldir
             h = Hedef(f"STG1-{i}", x, y, z, 0, 0, 0, rcs=0.5)
             h.etiket = label
             self.aktif_hedefler.append(h)
@@ -268,20 +269,29 @@ class RadarSistemi:
         return suru
 
     def hedef_uret_asama3(self) -> None:
-        """TEKNOFEST Aşama-3: Katmanlı (1 Düşman, 2 Dost maket)."""
+        """TEKNOFEST Aşama-3: Katmanlı (1 Düşman, 2 Dost maket). Farklı hız ve irtifalarda hareket ederler."""
         self.aktif_hedefler.clear()
         
         # 1 Düşman Hedef (Rastgele tip: F16, Helikopter, IHA)
         type_choice = random.choice([
-            ("Savas Ucagi (F16)", 0.015), 
-            ("Helikopter", 0.010),
-            ("Mini/Micro IHA", 0.005)
+            ("Savas Ucagi (F16)", 0.015, 0.005, 1000),      # Yüksek irtifa, hızlı
+            ("Helikopter", 0.010, 0.002, 300),              # Orta irtifa, yavaş
+            ("Mini/Micro IHA", 0.005, 0.001, 150)           # Alçak irtifa, çok yavaş
         ])
         
         # Düşman
         ang1 = random.uniform(0, 2*math.pi)
-        x1, y1 = type_choice[1] * math.cos(ang1), type_choice[1] * math.sin(ang1)
-        h_dusman = Hedef("STG3-ENEMY", x1, y1, 0.002, 0, 0, 0, rcs=0.5)
+        dist_enemy = type_choice[1]
+        z_enemy = type_choice[2] # km
+        speed_enemy_kmh = type_choice[3]
+        
+        x1, y1 = dist_enemy * math.cos(ang1), dist_enemy * math.sin(ang1)
+        # Merkeze (0,0,0) doğru hız vektörü
+        hiz_mps1 = speed_enemy_kmh / 3.6
+        vx1 = -x1 / dist_enemy * hiz_mps1 if dist_enemy > 0 else 0
+        vy1 = -y1 / dist_enemy * hiz_mps1 if dist_enemy > 0 else 0
+        
+        h_dusman = Hedef("STG3-ENEMY", x1, y1, z_enemy, vx1, vy1, 0, rcs=0.5)
         h_dusman.etiket = type_choice[0]
         h_dusman.is_dost = False
         self.aktif_hedefler.append(h_dusman)
@@ -289,9 +299,18 @@ class RadarSistemi:
         # 2 Dost Unsur
         for i in range(2):
             ang = ang1 + (i+1) * (math.pi/2)
-            dist = random.choice([0.005, 0.010, 0.015])
+            dist = random.choice([0.008, 0.012, 0.015])
+            z_dost = random.uniform(0.002, 0.006)
+            speed_dost_kmh = random.uniform(400, 900)
+            
             x, y = dist * math.cos(ang), dist * math.sin(ang)
-            h_dost = Hedef(f"STG3-FRIEND-{i}", x, y, 0.002, 0, 0, 0, rcs=0.5)
+            hiz_mps_dost = speed_dost_kmh / 3.6
+            
+            # Dost hedefleri merkeze değilde radar etrafında devriye attıralım (Tanjant Hız)
+            tanjant_vx = -y / dist * hiz_mps_dost if dist > 0 else 0
+            tanjant_vy = x / dist * hiz_mps_dost if dist > 0 else 0
+            
+            h_dost = Hedef(f"STG3-FRIEND-{i}", x, y, z_dost, tanjant_vx, tanjant_vy, 0, rcs=0.5)
             h_dost.etiket = random.choice(["F16 (Dost)", "IHA (Dost)"])
             h_dost.is_dost = True
             self.aktif_hedefler.append(h_dost)

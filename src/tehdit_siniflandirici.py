@@ -21,6 +21,7 @@ class TehditTipi(Enum):
     HIPERSONIK_FUZE   = auto()   # Mach 5+ hızlar, manevra kabiliyeti yüksek
     SABIT_KANAT_UCAK  = auto()   # Orta-yüksek hız, sabit irtifa
     INSANSIZ_HAVA     = auto()   # Düşük hız, değişken irtifa
+    DOST_UNSUR        = auto()   # Dost unsurlar (IFF doğrulanmış)
     BILINMEYEN        = auto()   # Sınıflandırılamayan
 
 
@@ -86,6 +87,17 @@ class TehditSiniflandirici:
         Returns:
             TehditDegerlendirmesi nesnesi
         """
+        if getattr(hedef, 'is_dost', False):
+            return TehditDegerlendirmesi(
+                hedef_id=hedef.id,
+                tehdit_tipi=TehditTipi.DOST_UNSUR,
+                oncelik=TehditOnceligi.DUSUK,
+                tehdit_skoru=0.0,
+                tahmini_mensei="Doğrulanmış Dost Unsur (IFF)",
+                onerilen_karar="DOST - ANGAJMAN YASAK",
+                ek_notlar=["Sistem Kilidi: Kinetik müdahale engellendi."]
+            )
+
         hiz = hedef.toplam_hiz           # km/h
         irtifa = hedef.z                 # km
         mesafe = hedef.mesafe            # km

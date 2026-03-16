@@ -88,7 +88,7 @@ def main():
         hassasiyet_ayarlari=ayarlar.get('batarya', {}).get('vurus_hassasiyeti')
     )
     
-    ciws = Lazer_CIWS(menzil_km=15.0, atis_hizi=10)
+    ciws = Lazer_CIWS(menzil_km=2.0, atis_hizi=10)
 
     # Başlangıç Ekranı
     console.clear()
@@ -134,7 +134,8 @@ def main():
             while True:
                 # --- ARAYÜZ (FRONTEND) KOMUTLARINI İŞLE ---
                 while len(api.frontend_commands) > 0:
-                    cmd = api.frontend_commands.pop(0)
+                    cmd_dict = api.frontend_commands.pop(0)
+                    cmd = cmd_dict.get("action")
                     if cmd == "force_swarm":
                         radar.tara_suru_saldirisi(merkez_x=180, merkez_y=80, merkez_z=8, adet=6, hiz_mag=600)
                         telemetri.olay_kaydet("WARNING", "MANUEL KOMUT: Sürü saldırısı başlatıldı!")
@@ -144,6 +145,44 @@ def main():
                         durum = "AKTİF" if auto_fire_enabled else "PASİF (MANUEL)"
                         telemetri.olay_kaydet("INFO", f"OTOMATİK ATIŞ (AI): {durum}")
                         live.console.print(f"[bold yellow][i] C2 OVERRIDE: Otomatik Atış {durum}[/]")
+                    elif cmd == "manual_fire":
+                        target_id = cmd_dict.get("target_id")
+                        hedef_vuruldu_mu = False
+                        
+                        if target_id:
+                            # Specific target lock override
+                            secili_hedef = next((h for h in radar.aktif_hedefler if h.id == target_id), None)
+                            if secili_hedef and not getattr(secili_hedef, 'is_dost', False):
+                                try:
+                                    batarya.angaje_ol(secili_hedef)
+                                    telemetri.olay_kaydet("ACTION", f"MANUEL ATIŞ TETİKLENDİ: {secili_hedef.id}")
+                                    live.console.print(f"[bold red][!] KİLİT ATILDI: {secili_hedef.id}[/]")
+                                    hedef_vuruldu_mu = True
+                                except MuhimmatYokHatasi:
+                                    live.console.print("[bold red][X] KRİTİK HATA: MÜHİMMAT YOK![/]")
+                        else:
+                            # Fallback to closest if no target locked
+                            for h in sorted(radar.aktif_hedefler, key=lambda tgt: getattr(tgt, 'is_dost', False)): 
+                                if getattr(h, 'is_dost', False): continue 
+                                
+                                cpa_km = utils.en_yakin_yaklasma_noktasi_hesapla((h.x, h.y, h.z), (h.vx, h.vy, h.vz))
+                                tti = utils.hizli_carpisan_zamani(h.mesafe, h.hiz * 3600)
+                                degerlendirme = siniflandirici.siniflandir(h, cpa_km, tti)
+                                
+                                if degerlendirme.oncelik in [TehditOnceligi.KRİTİK, TehditOnceligi.YUKSEK, TehditOnceligi.ORTA]:
+                                    try:
+                                        batarya.angaje_ol(h)
+                                        telemetri.olay_kaydet("ACTION", f"MANUEL ATIŞ TETİKLENDİ: {h.id}")
+                                        live.console.print(f"[bold red][!] MANUEL ATIŞ: {h.id}[/]")
+                                        hedef_vuruldu_mu = True
+                                        break 
+                                    except MuhimmatYokHatasi:
+                                        live.console.print("[bold red][X] KRİTİK HATA: MÜHİMMAT YOK![/]")
+                                        break
+                                    
+                        if not hedef_vuruldu_mu:
+                            live.console.print("[bold yellow][!] MANUEL ATIŞ BAŞARISIZ: Uygun düşman hedef bulunamadı.[/]")
+                            
                     elif cmd == "trigger_emp":
                         radar.aktif_hedefler.clear()
                         kalman_yoneticisi = KalmanTakipYoneticisi(dt=1.0) # Reset tracks
@@ -247,16 +286,30 @@ def main():
                     karar = "İZLENİYOR"
                     # Otomatik atış modu açıksa ve öncelik uygunsa füze ateşle
                     if auto_fire_enabled and degerlendirme.oncelik in [TehditOnceligi.KRİTİK, TehditOnceligi.YUKSEK] and batarya.muhimmat > 0 and h.mesafe > ciws.menzil_km:
-                        try:
-                            # Aynı hedefe multiple füze atmamak için basit kontrol
-                            hedefte_fuze_var_mi = any(f.hedef.id == h.id for f in batarya.aktif_fuzeler)
-                            if not hedefte_fuze_var_mi:
-                                batarya.angaje_ol(h)
-                                telemetri.olay_kaydet("ACTION", f"KİNETİK ÖNLEME BAŞLATILDI: {h.id}")
-                                live.console.print(f"[bold red][!] ÖNLEME BAŞLATILDI: {h.id}[/]")
-                                karar = "ANGAJE"
-                        except MuhimmatYokHatasi:
-                            karar = "MÜHİMMAT YOK!"
+                        # Teknofest Aşama-3 Menzil Sınırları
+                        mesafe_m = h.mesafe * 1000
+                        menzil_uygun = True
+                        if hasattr(h, 'etiket'):
+                            if "F16" in h.etiket:
+                                menzil_uygun = 10 <= mesafe_m <= 15
+                            elif "Helikopter" in h.etiket or "Balistik Fuze" in h.etiket:
+                                menzil_uygun = 5 <= mesafe_m <= 15
+                            elif "IHA" in h.etiket:
+                                menzil_uygun = 0 <= mesafe_m <= 15
+                        
+                        if menzil_uygun:
+                            try:
+                                # Aynı hedefe multiple füze atmamak için basit kontrol
+                                hedefte_fuze_var_mi = any(f.hedef.id == h.id for f in batarya.aktif_fuzeler)
+                                if not hedefte_fuze_var_mi:
+                                    batarya.angaje_ol(h)
+                                    telemetri.olay_kaydet("ACTION", f"KİNETİK ÖNLEME BAŞLATILDI: {h.id}")
+                                    live.console.print(f"[bold red][!] ÖNLEME BAŞLATILDI: {h.id}[/]")
+                                    karar = "ANGAJE"
+                            except MuhimmatYokHatasi:
+                                karar = "MÜHİMMAT YOK!"
+                        else:
+                            karar = f"BEKLİYOR ({mesafe_m:.1f}m)"
                     elif not auto_fire_enabled and degerlendirme.oncelik in [TehditOnceligi.KRİTİK]:
                         karar = "ENGAGEMENT HOLD (MANUEL)"
                     

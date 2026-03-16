@@ -553,6 +553,13 @@ function updateDashboard(targets, interceptors, lasers, jammingActive, empActive
     const tooltipContainer = document.getElementById('tooltips-container');
     tooltipContainer.innerHTML = '';
 
+    // Dropdown for Stage-1 target selection
+    const targetSelector = document.getElementById('target-selector');
+    const prevVal = targetSelector ? targetSelector.value : "";
+    if (targetSelector) {
+        targetSelector.innerHTML = '<option value="">-- SELECT TARGET TO LOCK --</option>';
+    }
+
     // --- Process Targets ---
     targets.forEach(t => {
         activeTargetIds.add(t.id);
@@ -561,6 +568,15 @@ function updateDashboard(targets, interceptors, lasers, jammingActive, empActive
 
         // Sidebar Card
         const isDost = t.is_dost;
+        
+        if (targetSelector && !isDost) {
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = `[${t.id}] ${t.etiket || t.tip} - ${parseFloat(t.mesafe * 1000).toFixed(0)}m`;
+            if (t.id === prevVal) opt.selected = true;
+            targetSelector.appendChild(opt);
+        }
+
         const card = document.createElement("div");
         card.className = `target-card ${isKritik ? "kritik" : ""} ${isDost ? "friend" : ""}`;
 
@@ -714,13 +730,14 @@ function updateDashboard(targets, interceptors, lasers, jammingActive, empActive
 }
 
 // --- Interactive C2 UI Controls ---
-function sendCommand(action) {
+function sendCommand(action, extraData = {}) {
+    const bodyArgs = { action: action, ...extraData };
     fetch('/api/command', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ action: action })
+        body: JSON.stringify(bodyArgs)
     })
         .catch(err => console.error("Komut gönderim hatası:", err));
 }
@@ -728,6 +745,34 @@ function sendCommand(action) {
 document.getElementById('btn-toggle-emission').addEventListener('click', () => {
     if (audioCtx.state === 'suspended') audioCtx.resume();
     sendCommand('toggle_radar_emission');
+});
+
+document.getElementById('btn-toggle-auto').addEventListener('click', () => {
+    sendCommand('toggle_auto_fire');
+    const btn = document.getElementById('btn-toggle-auto');
+    if (btn.classList.contains('active')) {
+        btn.classList.remove('active');
+        btn.classList.add('warning');
+        btn.textContent = "AUTO-FIRE: DISABLED";
+    } else {
+        btn.classList.remove('warning');
+        btn.classList.add('active');
+        btn.textContent = "AUTO-FIRE: ENABLED";
+    }
+});
+
+document.getElementById('btn-manual-fire').addEventListener('click', () => {
+    const targetSelector = document.getElementById('target-selector');
+    let selectedId = null;
+    if (targetSelector && targetSelector.value) {
+        selectedId = targetSelector.value;
+    }
+    
+    sendCommand('manual_fire', { target_id: selectedId });
+    const btn = document.getElementById('btn-manual-fire');
+    const originalText = btn.textContent;
+    btn.textContent = ">>> KINETIC LAUNCH <<<";
+    setTimeout(() => btn.textContent = originalText, 500);
 });
 
 document.getElementById('btn-force-swarm').addEventListener('click', () => {

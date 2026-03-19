@@ -6,11 +6,10 @@ import yaml
 import logging
 from typing import Dict, Any
 
-# Add src to PATH for IDE and runtime resolution
-import os
-import sys
+# Root dizini ve src yolunu ayarla
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.join(ROOT_DIR, 'src'))
+if os.path.join(ROOT_DIR, 'src') not in sys.path:
+    sys.path.append(os.path.join(ROOT_DIR, 'src'))
 
 try:
     from rich.console import Console
@@ -48,7 +47,8 @@ class GokkalkanRunner:
             try:
                 with open(yol, 'r', encoding='utf-8') as f:
                     return yaml.safe_load(f)
-            except: pass
+            except Exception:
+                pass
         return {}
 
     def generate_dashboard(self) -> Panel:
@@ -74,7 +74,7 @@ class GokkalkanRunner:
         main_content = Table.grid(expand=True)
         main_content.add_row(table)
         main_content.add_row(Panel(status, border_style="yellow"))
-        main_content.add_row(Align.center("[b]1-3:[/] Seç Aşama | [b]A:[/] Oto-Atış | [b]F:[/] Ateşle | [b]Q:[/] Çıkış"))
+        main_content.add_row(Align.center("[b]1-3:[/] Aşama | [b]A:[/] Oto-Atış | [b]F:[/] Ateşle | [b]S/E/W/R:[/] EH Komutları | [b]Q:[/] Çıkış"))
         
         return Panel(main_content, title="[bold cyan]🛡️ GÖKKALKAN KONTROL MERKEZİ[/]", border_style="blue")
 
@@ -105,15 +105,21 @@ class GokkalkanRunner:
                     if self.auto_fire:
                         for h in self.radar.aktif_hedefler:
                             if getattr(h, 'is_dost', False): continue
-                            if any(f.hedef.id == h.id for f in self.batarya.aktif_fuzeler): continue
+                            if any(f.hedef and f.hedef.id == h.id for f in self.batarya.aktif_fuzeler): continue
                             try:
                                 self.batarya.angaje_ol(h)
                                 self.last_event = f"Otomatik Ateşlendi: {h.id}"
-                            except: pass
+                            except Exception:
+                                pass
 
                     # API Sync
                     targets_data = [{"id": h.id, "x": h.x, "y": h.y, "z": h.z, "mesafe": h.mesafe, "is_dost": getattr(h, 'is_dost', False), "etiket": getattr(h, 'etiket', "Hedef")} for h in self.radar.aktif_hedefler]
-                    out_data = {"targets": targets_data, "interceptors": [{"id": f.id, "x": f.x, "y": f.y, "z": f.z, "target_id": f.hedef.id} for f in self.batarya.aktif_fuzeler], "lasers": self.ciws.aktif_atislar, "stage": self.current_stage}
+                    out_data = {
+                        "targets": targets_data, 
+                        "interceptors": [{"id": f.id, "x": f.x, "y": f.y, "z": f.z, "target_id": f.hedef.id if f.hedef else None} for f in self.batarya.aktif_fuzeler], 
+                        "lasers": self.ciws.aktif_atislar, 
+                        "stage": self.current_stage
+                    }
                     push_data_to_clients(out_data)
                     
                     # Remote commands from Web UI
@@ -136,19 +142,30 @@ class GokkalkanRunner:
                 elif cmd == '3': self.set_stage(3)
                 elif cmd == 'A': self.auto_fire = not self.auto_fire; self.last_event = f"Oto-Atış: {self.auto_fire}"
                 elif cmd == 'F': self.manual_fire()
+                elif cmd == 'S': self.process_command("force_swarm")
+                elif cmd == 'E': self.process_command("trigger_emp")
+                elif cmd == 'W': self.process_command("toggle_weather")
+                elif cmd == 'R': self.process_command("toggle_radar_emission")
                 elif cmd == 'Q': self.running = False; os._exit(0)
-            except EOFError: break
-            except: pass
+            except EOFError:
+                break
+            except Exception:
+                pass
 
     def set_stage(self, stage: int):
         self.current_stage = stage
-        if stage == 1: self.radar.hedef_uret_asama1(); self.auto_fire = False
-        elif stage == 2: self.radar.hedef_uret_asama2(); self.auto_fire = True
-        elif stage == 3: self.radar.hedef_uret_asama3(); self.auto_fire = True
+        if stage == 1: 
+            self.radar.hedef_uret_asama1()
+            self.auto_fire = False
+        elif stage == 2: 
+            self.radar.hedef_uret_asama2()
+            self.auto_fire = True
+        elif stage == 3: 
+            self.radar.hedef_uret_asama3()
+            self.auto_fire = True
         self.last_event = f"Aşama {stage} Aktif."
 
     def manual_fire(self):
-        # Type safe search for targets
         threats = [h for h in self.radar.aktif_hedefler if not getattr(h, 'is_dost', False)]
         target = min(threats, key=lambda x: getattr(x, 'mesafe', 999.0), default=None)
         if target:
@@ -156,12 +173,45 @@ class GokkalkanRunner:
             try:
                 self.batarya.angaje_ol(target)
                 self.last_event = f"Manuel Ateş: {target_id_val}"
-            except: self.last_event = "Mühimmat Bitti!"
-        else: self.last_event = "Uygun Tehdit Yok."
+            except Exception:
+                self.last_event = "Mühimmat Bitti!"
+        else:
+            self.last_event = "Uygun Tehdit Yok."
 
     def process_command(self, action: str):
-        if "set_stage" in action: self.set_stage(int(action[-1]))
-        elif action == "toggle_auto_fire": self.auto_fire = not self.auto_fire
+        if not action: return
+        
+        if "set_stage" in action:
+            try: self.set_stage(int(action[-1]))
+            except: pass
+        elif action == "toggle_auto_fire":
+            self.auto_fire = not self.auto_fire
+            self.last_event = f"Oto-Atış: {'AKTİF' if self.auto_fire else 'PASİF'}"
+        elif action == "force_swarm":
+            suru = self.radar.tara_suru_saldirisi()
+            if suru: self.last_event = f"Sürü Saldırısı Tespit Edildi ({len(suru)} İHA)!"
+            else: self.last_event = "Sürü tetiklendi fakat tespit edilemedi (Emisyon kapalı olabilir)."
+        elif action == "trigger_emp":
+            self.radar.aktif_hedefler.clear()
+            self.batarya.aktif_fuzeler.clear()
+            self.ciws.aktif_atislar.clear()
+            self.last_event = "!!! EMP TETİKLENDİ - TÜM HEDEFLER KAVRULDU !!!"
+        elif action == "toggle_weather":
+            from src.radar import HavaDurumu
+            self.radar.hava_durumu = HavaDurumu.RAIN if self.radar.hava_durumu == HavaDurumu.CLEAR else HavaDurumu.CLEAR
+            self.last_event = f"Hava Durumu: {self.radar.hava_durumu.name}"
+        elif action == "toggle_radar_emission":
+            self.radar.emisyon_aktif = not self.radar.emisyon_aktif
+            self.last_event = f"Radar Emisyonu: {'AKTİF' if self.radar.emisyon_aktif else 'KAPALI (KÖR)'}"
+        elif action == "trigger_estop":
+            self.radar.e_stop_tetikle(True)
+            self.last_event = "E-STOP AKTİF! Tüm hedefler donduruldu."
+        elif action == "release_estop":
+            self.radar.e_stop_tetikle(False)
+            self.last_event = "E-STOP Kaldırıldı. Simülasyon devam ediyor."
+        elif action == "toggle_manual_mode":
+            self.auto_fire = False
+            self.last_event = "Sistem MANUEL moda alındı."
 
 if __name__ == "__main__":
     try:

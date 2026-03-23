@@ -13,6 +13,7 @@ from src.kalman_takip import KalmanTakipYoneticisi
 from src.strategic_analyzer import StrategicAnalyzer
 import src.utils as utils
 import src.api as api
+from src.aar_logger import AARLogger
 
 class GokkalkanEngine:
     """GökKalkan Millî Hava Savunma Sistemi - Merkezi Simülasyon Motoru (v10.0)"""
@@ -44,6 +45,8 @@ class GokkalkanEngine:
         self.loop_thread: threading.Thread | None = None
         
         self.current_telemetry: Dict[str, Any] = {}
+        self.aar_logger = AARLogger()
+        self.sim_time_cumulative = 0.0
 
     def load_config(self, yol: str) -> Dict[str, Any]:
         """Konfigürasyonu yükler ve temel şema doğrulaması yapar."""
@@ -100,6 +103,7 @@ class GokkalkanEngine:
                     self.telemetri.olay_kaydet("ERROR", f"Komut İşleme Hatası: {str(e)}")
 
             # 1. Update Radar and Physical State
+            self.sim_time_cumulative += 1.0
             self.radar.guncelle(self.batarya.aktif_fuzeler)
             
             # ARM (Anti-Radyasyon) füzesi radarı vurdu mu?
@@ -127,6 +131,7 @@ class GokkalkanEngine:
                     vh_id = getattr(vh, 'id', 'Unknown')
                     self.kalman_yoneticisi.hedef_sil(vh_id)
                     self.telemetri.olay_kaydet("SUCCESS", f"Hedef İmha Edildi: {vh_id}")
+                    self.aar_logger.log_event(self.sim_time_cumulative, "HIT", vh_id, "Target altitude/position neutralized")
 
             # 3. Target Processing & AI Analysis
             all_target_info = []
@@ -154,8 +159,24 @@ class GokkalkanEngine:
                             try:
                                 self.batarya.angaje_ol(h)
                                 karar = "ANGAJE"
+                                self.aar_logger.log_event(self.sim_time_cumulative, "FIRE", h.id, f"Auto engagement at {h.mesafe:.1f}km")
                             except: pass
                 
+                # AAR DETECT & MANEUVER LOGGING
+                if not hasattr(self, '_tracked_ids_aar'): self._tracked_ids_aar = set()
+                if h.id not in self._tracked_ids_aar:
+                    self.aar_logger.log_event(self.sim_time_cumulative, "DETECT", h.id, f"Type: {degerlendirme.tehdit_tipi.name}")
+                    self._tracked_ids_aar.add(h.id)
+                
+                # Manevra takibi
+                prev_maneuver = getattr(h, '_prev_maneuver_aar', False)
+                curr_maneuver = getattr(h, 'is_maneuvering', False)
+                if curr_maneuver and not prev_maneuver:
+                    self.aar_logger.log_event(self.sim_time_cumulative, "MANEUVER_START", h.id, "High-G evasion initiated")
+                elif not curr_maneuver and prev_maneuver:
+                    self.aar_logger.log_event(self.sim_time_cumulative, "MANEUVER_END", h.id, "Returned to steady flight")
+                h._prev_maneuver_aar = curr_maneuver
+
                 data = {
                     "id": h.id, "mesafe": h.mesafe, "irtifa": tahmin[2],
                     "hiz": hiz_km_h, "tti": tti, "cpa": cpa_km,
@@ -189,6 +210,13 @@ class GokkalkanEngine:
                 "stage": self.current_stage
             }
             api.push_data_to_clients(self.current_telemetry)
+            
+            # 7. AAR Periodic Telemetry Log
+            self.aar_logger.log_telemetry(
+                self.sim_time_cumulative,
+                len(self.radar.aktif_hedefler),
+                len(self.batarya.aktif_fuzeler)
+            )
         except Exception as e:
             self.telemetri.olay_kaydet("CRITICAL", f"Tick Hatası: {str(e)}")
             self.last_event = "SİSTEM HATASI"
@@ -246,5 +274,6 @@ class GokkalkanEngine:
             try:
                 self.batarya.angaje_ol(target)
                 self.telemetri.olay_kaydet("ACTION", f"Manuel Ateş: {target.id}")
+                self.aar_logger.log_event(self.sim_time_cumulative, "FIRE", target.id, "Manual pilot command")
             except Exception as e:
                 self.telemetri.olay_kaydet("ERROR", f"Ateşleme Hatası: {e}")

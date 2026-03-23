@@ -219,6 +219,14 @@ class RadarSistemi:
         self.cfar_guard_size = 2    # Koruma hücreleri sayısı
         self.clutter_floor_db = -20 # Yer/Deniz clutter taban seviyesi
 
+        # Aşama 13: ECCM (Electronic Counter-Countermeasures)
+        self.eccm_aktif = True
+        self.frekans_kanallari = [9.3e9, 9.4e9, 9.5e9, 9.6e9, 9.7e9] # X-Band Kanalları
+        self.kanal_idx = 2 # Başlangıç: 9.5 GHz
+        self.f_hz = self.frekans_kanallari[self.kanal_idx]
+        self.hopping_cooldown = 0
+        self.interference_threshold = 15.0 # dB (Hopping tetikleme eşiği)
+
     def _snr_hesapla(self, hedef: Hedef) -> float:
         """Radar Menzil Denklemi ile anlık SNR hesaplar."""
         R = max(float(hedef.mesafe * 1000.0), 1.0) # Metre cinsinden mesafe
@@ -248,10 +256,27 @@ class RadarSistemi:
 
         # SNR = (Pt * G^2 * lam^2 * sigma) / ((4pi)^3 * R^4 * k * T * B * L)
         pay = self.P_t * (G**2) * (lam**2) * rcs
-        payda = ((4 * math.pi)**3) * (R**4) * k_bolt * T * B * L_total
+        payda = ((4.0 * math.pi)**3.0) * (R**4.0) * k_bolt * T * B * L_total
         
-        snr_linear = pay / payda
-        return 10 * math.log10(max(snr_linear, 1e-15))
+        snr_raw = pay / payda
+        snr_db = 10.0 * math.log10(max(snr_raw, 1e-20))
+
+        # ECCM & Jamming Modeli
+        jamming_total_db = 0.0
+        for h in self.aktif_hedefler:
+            if h.is_jammer and h.mesafe < 120.0:
+                # Jammer frekansı radara tutuyorsa etki max (ECCM etkisi)
+                jammer_f = getattr(h, 'jam_freq', 9.5e9)
+                freq_diff = abs(jammer_f - self.f_hz)
+                
+                # Frekans uyumu % (Bant dışı bastırma: 0.05 factor)
+                freq_match_factor = 1.0 if freq_diff < 1e6 else 0.05
+                
+                j_power_base = 25.0 # dB
+                dist_factor = max(0.0, 1.0 - (h.mesafe / 120.0))
+                jamming_total_db += j_power_base * dist_factor * freq_match_factor
+
+        return snr_db - jamming_total_db
 
     def _ca_cfar_test(self, point_snr: float) -> bool:
         """
@@ -409,13 +434,23 @@ class RadarSistemi:
         for h in self.aktif_hedefler:
             h.dondu = aktif
 
+    def frekans_atla(self):
+        """Radar taşıyıcı frekansını değiştirerek karıştırmadan (Jamming) kaçınır."""
+        self.kanal_idx = (self.kanal_idx + 1) % len(self.frekans_kanallari)
+        self.f_hz = self.frekans_kanallari[self.kanal_idx]
+        self.hopping_cooldown = 5 # 5 scan boyunca tekrar atlama yapma
+        print(f"[ECCM] Frekans Atlandı: {self.f_hz/1e9:.2f} GHz")
+
     def tara(self) -> List[Hedef]:
         """Radar taraması yapar ve tespit edilen hedefleri döndürür."""
         if not self.emisyon_aktif:
             return [] # Radar sussturulduğunda tamamen kör oluruz
 
+        if self.hopping_cooldown > 0: self.hopping_cooldown -= 1
+        
         tespit_edilenler = []
         jami_etkisinde_mi = False
+        jammer_count = 0
         
         # Jammer kontrolü (100km altındaysa radar menzilinde Ghost üretir)
         # Aktif hedefler listesi üzerinde dönerken değişiklik yapmamak için kopyasını al
@@ -429,24 +464,34 @@ class RadarSistemi:
         
         for h in veri_havuzu:
             if h.is_jammer and h.mesafe < 100.0:
-                jami_etkisinde_mi = True
-                # Jammer, çevresinde rastgele hayalet (Ghost) kopyalar oluşturur
-                if random.random() < 0.3: # Her taramada %30 ihtimalle ghost oluştur
+                jammer_count += 1
+                # Jammer frekansı radarla tutuyorsa ghost üretir
+                jammer_f = getattr(h, 'jam_freq', 9.5e9)
+                if abs(jammer_f - self.f_hz) < 1e6:
+                    jami_etkisinde_mi = True
+                
+                # Karıştırma çok yüksekse ve ECCM aktifse frekans atla
+                if jami_etkisinde_mi and self.eccm_aktif and self.hopping_cooldown == 0:
+                    self.frekans_atla()
+                    jami_etkisinde_mi = False # Yeni frekansta henüz kilit yok
+                    break # Bu scan döngüsünü yeni frekansla devam ettir? Hayır, bir sonraki scan'e kalsın.
+
+                if jami_etkisinde_mi:
                     ghost_x = h.x + random.uniform(-10, 10)
                     ghost_y = h.y + random.uniform(-10, 10)
                     ghost_z = h.z + random.uniform(-2, 2)
                     ghost = Hedef(
                         hedef_id=f"GHOST-{random.randint(100, 999)}",
                         x=ghost_x, y=ghost_y, z=ghost_z,
-                        vx=h.vx + random.uniform(-0.05, 0.05), # km/s cinsinden küçük hız farkları
+                        vx=h.vx + random.uniform(-0.05, 0.05),
                         vy=h.vy + random.uniform(-0.05, 0.05),
                         vz=0,
-                        rcs=h.rcs_base, # Ghost'un RCS'i jammer'ınkiyle aynı olabilir
+                        rcs=h.rcs_base,
                         is_ghost=True
                     )
-                    # Sadece kısa süreliğine veri havuzuna aktarılır (kalıcı olmaz)
-                    # radar.py'deki aktif listeye atmak yerine sadece bu cycle'da taramaya dahil edelim
-                    self.aktif_hedefler.append(ghost) # Add to active targets for this scan cycle
+                    # Ghost mesafesi menzil dışındaysa ekleme (Gözden kaçabilir)
+                    if ghost.mesafe <= self.menzil_km:
+                        self.aktif_hedefler.append(ghost)
 
         # Tüm aktif hedefleri (gerçek ve ghost) tara
         for hedef in self.aktif_hedefler:
@@ -461,9 +506,11 @@ class RadarSistemi:
         # Aşama 10.2: Yanlış Alarm (False Alarm) Üretimi
         # Nadiren gürültü eşiği geçer ve hayali bir hedef (Clutter Spike) oluşur
         if random.random() < 0.05: # Her taramada %5 ihtimalle false alarm
-            fa_x = random.uniform(-self.menzil_km, self.menzil_km)
-            fa_y = random.uniform(-self.menzil_km, self.menzil_km)
-            fa_z = random.uniform(0, 2.0) # Genelde alçak irtifada (yer clutter)
+            fa_aci = random.uniform(0, 2*math.pi)
+            fa_r = random.uniform(0, self.menzil_km)
+            fa_x = fa_r * math.cos(fa_aci)
+            fa_y = fa_r * math.sin(fa_aci)
+            fa_z = random.uniform(0, 2.0)
             fa_target = Hedef(
                 f"CLUTTER-{random.randint(10,99)}", fa_x, fa_y, fa_z, 
                 random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1), 0,

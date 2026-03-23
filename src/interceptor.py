@@ -39,12 +39,38 @@ class OnleyiciFuze:
             self.aktif = False
             return
 
-        # Proportional Navigation (Basitleştirilmiş Gözlem Hattı Takibi)
-        # Sadece doğrusal yönelimle (Pure Pursuit) hızı vektörlendiriyoruz:
-        nx = dx / mesafe
-        ny = dy / mesafe
-        nz = dz / mesafe
+        # --- Phase 16: Proportional Navigation (PN) Guidance ---
+        # Mevcut Gözlem Hattı (Line of Sight - LOS)
+        los_x, los_y, los_z = dx, dy, dz
+        
+        # Eğer önceki LOS verisi yoksa (ilk adım), hedefe doğru yönel (Pure Pursuit)
+        if not hasattr(self, 'prev_los'):
+            self.prev_los = (los_x, los_y, los_z)
+            nx, ny, nz = dx / mesafe, dy / mesafe, dz / mesafe
+        else:
+            # LOS Değişim Oranı (LOS Rate) Hesaplama
+            # Basitleştirilmiş ayrık zamanlı PN: n_new = n_los + N * (n_los - n_los_prev)
+            N = 4.0 # Navigation Constant (Genelde 3-5 arası)
+            
+            old_los_x, old_los_y, old_los_z = self.prev_los
+            old_dist = math.sqrt(old_los_x**2 + old_los_y**2 + old_los_z**2)
+            
+            # Normalize LOS vektörleri
+            curr_n = (los_x/mesafe, los_y/mesafe, los_z/mesafe)
+            prev_n = (old_los_x/old_dist, old_los_y/old_dist, old_los_z/old_dist)
+            
+            # Yönelim değişikliği (Kapatma/Lead vektörü)
+            nx = curr_n[0] + N * (curr_n[0] - prev_n[0])
+            ny = curr_n[1] + N * (curr_n[1] - prev_n[1])
+            nz = curr_n[2] + N * (curr_n[2] - prev_n[2])
+            
+            # Yeni yönelim vektörünü normalize et
+            mag = math.sqrt(nx**2 + ny**2 + nz**2)
+            nx, ny, nz = nx/mag, ny/mag, nz/mag
+            
+            self.prev_los = (los_x, los_y, los_z)
 
+        # Hız vektörünü uygula
         self.x += nx * self.hiz_km_s * dt
         self.y += ny * self.hiz_km_s * dt
         self.z += nz * self.hiz_km_s * dt

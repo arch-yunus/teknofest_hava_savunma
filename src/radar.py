@@ -443,8 +443,15 @@ class RadarSistemi:
 
     def tara(self) -> List[Hedef]:
         """Radar taraması yapar ve tespit edilen hedefleri döndürür."""
+        # --- Phase 16: Pasif Takip (ESM) Mekanizması ---
+        # Radar kapalı olsa dahi yayın yapan hedefler (Jammer, ARM) tespit edilebilir.
         if not self.emisyon_aktif:
-            return [] # Radar sussturulduğunda tamamen kör oluruz
+            pasif_tespitler = []
+            for h in self.aktif_hedefler:
+                # Jeneratör veya Aktif ARM füzeleri pasif sensörlerle (ESM) görülebilir
+                if h.is_jammer or h.is_arm:
+                    pasif_tespitler.append(h)
+            return pasif_tespitler 
 
         if self.hopping_cooldown > 0: self.hopping_cooldown -= 1
         

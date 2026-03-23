@@ -106,12 +106,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-                
-                time.sleep(1)
-
-    except KeyboardInterrupt:
-        console.print("\n[bold red]SİSTEM KAPATILDI.[/] [white]Gök vatan size emanet.[/]")
-        sys.exit(0)
-
-if __name__ == "__main__":
-    main()

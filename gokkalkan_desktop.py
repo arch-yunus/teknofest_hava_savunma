@@ -29,7 +29,7 @@ class GokkalkanDesktop:
             except Exception as e:
                 print(f"Desktop Simulation Error: {e}")
             
-            time.sleep(1)
+            time.sleep(0.5)
 
 if __name__ == "__main__":
     # Ensure src is in path (though usually it should be if run from root)
@@ -45,7 +45,18 @@ if __name__ == "__main__":
     
     print("GÖKKALKAN Masaüstü Komuta Merkezi başlatılıyor...")
     
-    # Create the webview window pointing to our internal API dashboard
+    # 0. API Servisi için bekleme (Resilience)
+    max_retries = 10
+    while max_retries > 0:
+        try:
+            import socket
+            with socket.create_connection(("127.0.0.1", 8000), timeout=1):
+                break
+        except:
+            max_retries -= 1
+            time.sleep(0.5)
+
+    # 1. Webview penceresini oluştur
     window = webview.create_window(
         "GÖKKALKAN AI - Komuta Kontrol Merkezi (v10.0)",
         "http://localhost:8000",
@@ -54,6 +65,6 @@ if __name__ == "__main__":
         resizable=True
     )
     
-    # Start the GUI loop
+    # 2. GUI döngüsünü başlat
     webview.start(debug=False)
     app.running = False

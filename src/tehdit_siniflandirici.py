@@ -23,6 +23,7 @@ class TehditTipi(Enum):
     INSANSIZ_HAVA     = auto()   # Düşük hız, değişken irtifa
     DOST_UNSUR        = auto()   # Dost unsurlar (IFF doğrulanmış)
     BILINMEYEN        = auto()   # Sınıflandırılamayan
+    CLUTTER           = auto()   # Yeni: Radar gürültüsü / Yanlış alarm
 
 
 class TehditOnceligi(Enum):
@@ -133,7 +134,18 @@ class TehditSiniflandirici:
             return TehditTipi.SABIT_KANAT_UCAK, "Sabit kanatlı hava aracı"
         if hiz < self.IHA_HIZ_UST:
             return TehditTipi.INSANSIZ_HAVA, "İnsansız Hava Aracı (İHA)"
+        
+        # Aşama 10.2: Clutter/Gürültü tespiti
+        # Eğer etiket CLUTTER ise veya hız/irtifa çok düşük/düzensiz ise
         return TehditTipi.BILINMEYEN, "Kimliği doğrulanamayan hava unsuru"
+
+    def _clutter_kontrol(self, hedef: Hedef) -> bool:
+        """Hedefin clutter olup olmadığını kontrol eder."""
+        if getattr(hedef, 'etiket', "") == "CLUTTER":
+            return True
+        if getattr(hedef, 'is_ghost', False) and hedef.toplam_hiz < 100:
+            return True
+        return False
 
     def _skor_hesapla(
         self,
@@ -161,6 +173,7 @@ class TehditSiniflandirici:
             TehditTipi.SABIT_KANAT_UCAK:  0.60,
             TehditTipi.INSANSIZ_HAVA:     0.40,
             TehditTipi.BILINMEYEN:        0.50,
+            TehditTipi.CLUTTER:           0.01, # Clutter skoru çok düşük
         }.get(tip, 0.5)
 
         # Bileşen 4: Hız bileşeni (normalleştirilmiş)

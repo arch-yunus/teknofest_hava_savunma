@@ -155,6 +155,12 @@ class RadarSistemi:
         # Aşama 8 & 9 - Çevre Faktörleri ve Taktik Emisyon
         self.hava_durumu = HavaDurumu.CLEAR
         self.emisyon_aktif = True  # Radar yayını yapıyor mu?
+        
+        # Aşama 10.2 - Clutter ve CFAR Parametreleri
+        self.false_alarm_rate = 1e-4 # P_fa (Yanlış alarm olasılığı)
+        self.cfar_win_size = 10     # Eğitim hücreleri sayısı
+        self.cfar_guard_size = 2    # Koruma hücreleri sayısı
+        self.clutter_floor_db = -20 # Yer/Deniz clutter taban seviyesi
 
     def _snr_hesapla(self, hedef: Hedef) -> float:
         """Radar Menzil Denklemi ile anlık SNR hesaplar."""
@@ -175,7 +181,13 @@ class RadarSistemi:
             attenuation_db_per_km = 0.4 # Gidiş-Dönüş (Two-way)
             
         total_atten_db = attenuation_db_per_km * (hedef.mesafe)
-        L_total = L * (10**(total_atten_db / 10.0)) # Toplam kayıba lineer olarak ekle
+        
+        # Clutter Effect (Alçak irtifada yer yansıması gürültüyü artırır)
+        clutter_db = 0.0
+        if hedef.z < 1.0: # 1km altı "Low-Level" clutter bölgesi
+            clutter_db = (1.0 - hedef.z) * 15.0 # İrtifa azaldıkça clutter artar (max 15dB)
+
+        L_total = L * (10**((total_atten_db + clutter_db) / 10.0)) 
 
         # SNR = (Pt * G^2 * lam^2 * sigma) / ((4pi)^3 * R^4 * k * T * B * L)
         pay = self.P_t * (G**2) * (lam**2) * rcs
@@ -183,6 +195,23 @@ class RadarSistemi:
         
         snr_linear = pay / payda
         return 10 * math.log10(max(snr_linear, 1e-15))
+
+    def _ca_cfar_test(self, point_snr: float) -> bool:
+        """
+        Cell-Averaging Constant False Alarm Rate (CA-CFAR) algoritması.
+        Gürültü tabanına göre dinamik eşikleme yapar.
+        """
+        # Eğitim hücreleri simülasyonu (Gerçek radarda dizi (array) üzerinden yapılır)
+        # Burada basitleştirilmiş bir model kullanıyoruz.
+        noise_samples = [random.gauss(0, 2) for _ in range(self.cfar_win_size)]
+        noise_avg = sum([10**(n/10.0) for n in noise_samples]) / self.cfar_win_size
+        noise_avg_db = 10 * math.log10(max(noise_avg, 1e-10))
+        
+        # Alfa eşik katsayısı (P_fa'ya bağlı)
+        alpha = self.cfar_win_size * (self.false_alarm_rate**(-1.0/self.cfar_win_size) - 1)
+        
+        threshold = noise_avg_db + (10 * math.log10(max(alpha, 1.0)))
+        return point_snr > threshold
         
     def hedef_uret(self, max_hedef: int = 5) -> None:
         """Rastgele yeni hedefler (Uçak, Füze, İHA ve EH Jammers) üretir."""
@@ -366,10 +395,26 @@ class RadarSistemi:
         for hedef in self.aktif_hedefler:
             if hedef.mesafe <= self.menzil_km:
                 snr = self._snr_hesapla(hedef)
-                if snr >= self.snr_min_db:
-                    # Tespit olasılığına göre filtrele
+                # Yeni: CFAR Eşikleme
+                if self._ca_cfar_test(snr):
+                    # Tespit olasılığı ve CFAR başarımı
                     if random.random() < self.tespit_olasiligi:
                         tespit_edilenler.append(hedef)
+        
+        # Aşama 10.2: Yanlış Alarm (False Alarm) Üretimi
+        # Nadiren gürültü eşiği geçer ve hayali bir hedef (Clutter Spike) oluşur
+        if random.random() < 0.05: # Her taramada %5 ihtimalle false alarm
+            fa_x = random.uniform(-self.menzil_km, self.menzil_km)
+            fa_y = random.uniform(-self.menzil_km, self.menzil_km)
+            fa_z = random.uniform(0, 2.0) # Genelde alçak irtifada (yer clutter)
+            fa_target = Hedef(
+                f"CLUTTER-{random.randint(10,99)}", fa_x, fa_y, fa_z, 
+                random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1), 0,
+                rcs=0.01, is_ghost=True
+            )
+            fa_target.etiket = "CLUTTER"
+            tespit_edilenler.append(fa_target)
+            
         return tespit_edilenler
 
     def tara_suru_saldirisi(self) -> List[Hedef]:

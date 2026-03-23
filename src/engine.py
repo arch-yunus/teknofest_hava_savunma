@@ -46,12 +46,22 @@ class GokkalkanEngine:
         self.current_telemetry: Dict[str, Any] = {}
 
     def load_config(self, yol: str) -> Dict[str, Any]:
+        """Konfigürasyonu yükler ve temel şema doğrulaması yapar."""
         try:
             if os.path.exists(yol):
                 with open(yol, 'r', encoding='utf-8') as f:
-                    return yaml.safe_load(f)
-        except Exception:
-            pass
+                    config = yaml.safe_load(f) or {}
+                    # Basit Şema Doğrulaması (Production Readiness)
+                    required = ['radar', 'batarya']
+                    for r in required:
+                        if r not in config:
+                            self.telemetri.olay_kaydet("WARNING", f"Eksik Konfig: {r} bölümü bulunamadı. Varsayılanlar yüklenecek.")
+                            config[r] = {}
+                    return config
+            else:
+                self.telemetri.olay_kaydet("ERROR", f"Konfig dosyası bulunamadı: {yol}")
+        except Exception as e:
+            self.telemetri.olay_kaydet("CRITICAL", f"Konfig yükleme hatası: {str(e)}")
         return {}
 
     def start(self):
@@ -79,102 +89,109 @@ class GokkalkanEngine:
             time.sleep(max(0.1, 1.0 - elapsed))
 
     def tick(self):
-        """Perform one simulation step (dt=1.0s)"""
-        # 0. Handle External Commands from API
-        while api.frontend_commands:
-            cmd = api.frontend_commands.pop(0)
-            self.execute_command(cmd)
+        """Perform one simulation step (dt=1.0s) with Robustness."""
+        try:
+            # 0. Handle External Commands from API
+            while api.frontend_commands:
+                cmd = api.frontend_commands.pop(0)
+                try:
+                    self.execute_command(cmd)
+                except Exception as e:
+                    self.telemetri.olay_kaydet("ERROR", f"Komut İşleme Hatası: {str(e)}")
 
-        # 1. Update Radar and Physical State
-        self.radar.guncelle()
-        
-        # ARM (Anti-Radyasyon) füzesi radarı vurdu mu?
-        for h in list(self.radar.aktif_hedefler):
-            h_mesafe = getattr(h, 'mesafe', 999.0)
-            if getattr(h, 'is_arm', False) and h_mesafe < 0.5:
-                self.last_event = "KRİTİK: RADAR VURULDU (ARM)!"
-                self.telemetri.olay_kaydet("CRITICAL", self.last_event)
-                self.trigger_emp(duration=5)
-                self.radar.emisyon_aktif = False
-                self.radar.aktif_hedefler.remove(h)
-                break
-        
-        self.radar.tara()
+            # 1. Update Radar and Physical State
+            self.radar.guncelle()
+            
+            # ARM (Anti-Radyasyon) füzesi radarı vurdu mu?
+            for h in list(self.radar.aktif_hedefler):
+                h_mesafe = getattr(h, 'mesafe', 999.0)
+                if getattr(h, 'is_arm', False) and h_mesafe < 0.5:
+                    self.last_event = "KRİTİK: RADAR VURULDU (ARM)!"
+                    self.telemetri.olay_kaydet("CRITICAL", self.last_event)
+                    self.trigger_emp(duration=5)
+                    self.radar.emisyon_aktif = False
+                    self.radar.aktif_hedefler.remove(h)
+                    break
+            
+            self.radar.tara()
 
-        # 2. Update Weapons systems
-        vurulan_hedefler_fuzeler = self.batarya.guncelle(1.0, self.radar.aktif_hedefler)
-        vurulan_hedefler_ciws = self.ciws.guncelle(1.0, self.radar.aktif_hedefler)
-        
-        tum_vurulanlar = set(vurulan_hedefler_fuzeler).union(set(vurulan_hedefler_ciws))
-        
-        for vh in tum_vurulanlar:
-            if vh in self.radar.aktif_hedefler:
-                self.radar.aktif_hedefler.remove(vh)
-                vh_id = getattr(vh, 'id', 'Unknown')
-                self.kalman_yoneticisi.hedef_sil(vh_id)
-                self.telemetri.olay_kaydet("SUCCESS", f"Hedef İmha Edildi: {vh_id}")
+            # 2. Update Weapons systems
+            vurulan_hedefler_fuzeler = self.batarya.guncelle(1.0, self.radar.aktif_hedefler)
+            vurulan_hedefler_ciws = self.ciws.guncelle(1.0, self.radar.aktif_hedefler)
+            
+            tum_vurulanlar = set(vurulan_hedefler_fuzeler).union(set(vurulan_hedefler_ciws))
+            
+            for vh in tum_vurulanlar:
+                if vh in self.radar.aktif_hedefler:
+                    self.radar.aktif_hedefler.remove(vh)
+                    vh_id = getattr(vh, 'id', 'Unknown')
+                    self.kalman_yoneticisi.hedef_sil(vh_id)
+                    self.telemetri.olay_kaydet("SUCCESS", f"Hedef İmha Edildi: {vh_id}")
 
-        # 3. Target Processing & AI Analysis
-        all_target_info = []
-        for h in list(self.radar.aktif_hedefler):
-            self.kalman_yoneticisi.guncelle(h.id, h.x, h.y, h.z)
-            tahmin = self.kalman_yoneticisi.tahmin_al(h.id)
-            hiz_km_h = h.hiz * 3600
-            tti = utils.hizli_carpisan_zamani(h.mesafe, hiz_km_h)
-            cpa_km = utils.en_yakin_yaklasma_noktasi_hesapla((h.x, h.y, h.z), (h.vx, h.vy, h.vz))
+            # 3. Target Processing & AI Analysis
+            all_target_info = []
+            for h in list(self.radar.aktif_hedefler):
+                self.kalman_yoneticisi.guncelle(h.id, h.x, h.y, h.z)
+                tahmin = self.kalman_yoneticisi.tahmin_al(h.id)
+                hiz_km_h = h.toplam_hiz
+                tti = utils.hizli_carpisan_zamani(h.mesafe, hiz_km_h)
+                cpa_km = utils.en_yakin_yaklasma_noktasi_hesapla((h.x, h.y, h.z), (h.vx, h.vy, h.vz))
+                
+                degerlendirme = self.siniflandirici.siniflandir(h, cpa_km, tti)
+                karar = "İZLENİYOR"
+                
+                # Engagement Logic
+                if self.auto_fire_enabled and degerlendirme.oncelik in [TehditOnceligi.KRİTİK, TehditOnceligi.YUKSEK]:
+                    if self.batarya.muhimmat > 0 and h.mesafe > self.ciws.menzil_km:
+                        mesafe_m = h.mesafe * 1000
+                        menzil_uygun = True
+                        if hasattr(h, 'etiket'):
+                            if "F16" in h.etiket: menzil_uygun = 10 <= mesafe_m <= 15
+                            elif "Helikopter" in h.etiket or "Balistik Fuze" in h.etiket: menzil_uygun = 5 <= mesafe_m <= 15
+                            elif "IHA" in h.etiket: menzil_uygun = 0 <= mesafe_m <= 15
+                        
+                        if menzil_uygun and not any(f.hedef.id == h.id for f in self.batarya.aktif_fuzeler):
+                            try:
+                                self.batarya.angaje_ol(h)
+                                karar = "ANGAJE"
+                            except: pass
+                
+                data = {
+                    "id": h.id, "mesafe": h.mesafe, "irtifa": tahmin[2],
+                    "hiz": hiz_km_h, "tti": tti, "cpa": cpa_km,
+                    "tip": "EH JAMMER" if h.is_jammer else ("GHOST" if h.is_ghost else degerlendirme.tehdit_tipi.name.replace("_", " ")),
+                    "oncelik": degerlendirme.oncelik.name, "karar": karar, "skor": degerlendirme.tehdit_skoru,
+                    "x": h.x, "y": h.y, "z": h.z, "is_dost": getattr(h, 'is_dost', False),
+                    "etiket": getattr(h, 'etiket', "Hedef")
+                }
+                all_target_info.append(data)
+
+            # 4. Strategic Analysis
+            stratejik_rapor = self.stratejik_analizor.analiz_et(all_target_info, self.batarya.muhimmat)
             
-            degerlendirme = self.siniflandirici.siniflandir(h, cpa_km, tti)
-            karar = "İZLENİYOR"
-            
-            # Engagement Logic
-            if self.auto_fire_enabled and degerlendirme.oncelik in [TehditOnceligi.KRİTİK, TehditOnceligi.YUKSEK]:
-                if self.batarya.muhimmat > 0 and h.mesafe > self.ciws.menzil_km:
-                    mesafe_m = h.mesafe * 1000
-                    menzil_uygun = True
-                    if hasattr(h, 'etiket'):
-                        if "F16" in h.etiket: menzil_uygun = 10 <= mesafe_m <= 15
-                        elif "Helikopter" in h.etiket or "Balistik Fuze" in h.etiket: menzil_uygun = 5 <= mesafe_m <= 15
-                        elif "IHA" in h.etiket: menzil_uygun = 0 <= mesafe_m <= 15
-                    
-                    if menzil_uygun and not any(f.hedef.id == h.id for f in self.batarya.aktif_fuzeler):
-                        try:
-                            self.batarya.angaje_ol(h)
-                            karar = "ANGAJE"
-                        except: pass
-            
-            data = {
-                "id": h.id, "mesafe": h.mesafe, "irtifa": tahmin[2],
-                "hiz": hiz_km_h, "tti": tti, "cpa": cpa_km,
-                "tip": "EH JAMMER" if h.is_jammer else ("GHOST" if h.is_ghost else degerlendirme.tehdit_tipi.name.replace("_", " ")),
-                "oncelik": degerlendirme.oncelik.name, "karar": karar, "skor": degerlendirme.tehdit_skoru,
-                "x": h.x, "y": h.y, "z": h.z, "is_dost": getattr(h, 'is_dost', False),
-                "etiket": getattr(h, 'etiket', "Hedef")
+            # 5. EMP Effect Update
+            if self.emp_blast_active:
+                self.emp_timer -= 1
+                if self.emp_timer <= 0: self.emp_blast_active = False
+
+            # 6. UI Data Sync
+            self.current_telemetry = {
+                "targets": all_target_info,
+                "interceptors": [{"id": f.id, "x": f.x, "y": f.y, "z": f.z, "target_id": f.hedef.id} for f in self.batarya.aktif_fuzeler],
+                "lasers": self.ciws.aktif_atislar,
+                "jamming": any(t.get("tip") == "GHOST" for t in all_target_info),
+                "emp": self.emp_blast_active,
+                "weather": self.radar.hava_durumu.name,
+                "emission": self.radar.emisyon_aktif,
+                "strategic": stratejik_rapor,
+                "ammo": self.batarya.muhimmat,
+                "auto_fire": self.auto_fire_enabled,
+                "stage": self.current_stage
             }
-            all_target_info.append(data)
-
-        # 4. Strategic Analysis
-        stratejik_rapor = self.stratejik_analizor.analiz_et(all_target_info, self.batarya.muhimmat)
-        
-        # 5. EMP Effect Update
-        if self.emp_blast_active:
-            self.emp_timer -= 1
-            if self.emp_timer <= 0: self.emp_blast_active = False
-
-        # 6. UI Data Sync
-        self.current_telemetry = {
-            "targets": all_target_info,
-            "interceptors": [{"id": f.id, "x": f.x, "y": f.y, "z": f.z, "target_id": f.hedef.id} for f in self.batarya.aktif_fuzeler],
-            "lasers": self.ciws.aktif_atislar,
-            "jamming": any(t.get("tip") == "GHOST" for t in all_target_info),
-            "emp": self.emp_blast_active,
-            "weather": self.radar.hava_durumu.name,
-            "emission": self.radar.emisyon_aktif,
-            "strategic": stratejik_rapor,
-            "ammo": self.batarya.muhimmat,
-            "auto_fire": self.auto_fire_enabled,
-            "stage": self.current_stage
-        }
-        api.push_data_to_clients(self.current_telemetry)
+            api.push_data_to_clients(self.current_telemetry)
+        except Exception as e:
+            self.telemetri.olay_kaydet("CRITICAL", f"Tick Hatası: {str(e)}")
+            self.last_event = "SİSTEM HATASI"
 
     def execute_command(self, cmd_dict: Dict[str, Any]):
         action = cmd_dict.get("action")

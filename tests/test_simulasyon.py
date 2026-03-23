@@ -28,8 +28,10 @@ class TestGokKalkanV2(unittest.TestCase):
         radar = RadarSistemi(menzil_km=100)
         tespit = None
         for _ in range(20):
-            tespit = radar.tara()
-            if tespit: break
+            tespitler = radar.tara()
+            if tespitler:
+                tespit = tespitler[0] # İlk tespit edilen hedefi al
+                break
         if tespit:
             self.assertIsInstance(tespit, Hedef)
             self.assertLessEqual(tespit.mesafe, 100 * 1.1)

@@ -38,6 +38,11 @@ class Hedef:
         self.etiket = "Bilinmeyen" # F16, Helikopter, Mini IHA, Balistik Fuze
         self.dondu = False # E-Stop için hareket durdurma bayrağı
 
+        # Aşama-11: Manevra ve TWR (Threat Warning Receiver)
+        self.is_maneuvering = False
+        self.maneuver_timer = 0.0
+        self.chaff_cooldown = 0.0
+
     @property
     def mesafe(self) -> float:
         """Merkeze (Radara) olan öklid mesafesi."""
@@ -139,6 +144,58 @@ class Hedef:
             # Swerling 3: Chi-square 4-DOF
             return self.rcs_base * random.gammavariate(2, 0.5)
 
+    def detect_and_evade(self, interceptors: List[Any], dt: float):
+        """
+        Gelen füzeleri tespit eder (TWR) ve kaçınma manevrası yapar.
+        """
+        if self.dondu or self.is_ghost: return
+        
+        # 1. TWR: Füze Tespit (Menzil: 15km)
+        detected_missile = None
+        min_missile_dist = 15.0
+        
+        for f in interceptors:
+            if not f.aktif: continue
+            dist = math.sqrt((f.x - self.x)**2 + (f.y - self.y)**2 + (f.z - self.z)**2)
+            if dist < min_missile_dist:
+                min_missile_dist = dist
+                detected_missile = f
+        
+        # 2. Reaksiyon: Manevra ve Chaff
+        if detected_missile:
+            # Chaff bırakma (Menzil < 8km ise)
+            if min_missile_dist < 8.0 and self.chaff_cooldown <= 0:
+                self.chaff_deployed = True
+                self.chaff_cooldown = 10.0 # 10 saniye cooldown
+                # RCS geçici olarak artar (yanıltıcı bulut) ama füze kilidini bozabilir
+                
+            # Kaçınma Manevrası: Füzeye dik yönde High-G dönüş
+            self.is_maneuvering = True
+            # Füze yön vektörü
+            m_dx = detected_missile.x - self.x
+            m_dy = detected_missile.y - self.y
+            m_dz = detected_missile.z - self.z
+            m_len = math.sqrt(m_dx**2 + m_dy**2 + m_dz**2)
+            
+            if m_len > 0:
+                # Dik (perpendicular) kaçış vektörü (2D projeksiyonda basitçe)
+                evade_vx = -m_dy / m_len
+                evade_vy = m_dx / m_len
+                
+                # Mevcut hıza manevra bileşeni ekle (G-limit simülasyonu)
+                maneuver_strength = 0.15 # Mach cinsinden kuvvet
+                self.vx += evade_vx * maneuver_strength
+                self.vy += evade_vy * maneuver_strength
+                if self.z > 2.0: # Yere çarpmamak için irtifa manevrası
+                    self.vz -= 0.05
+        else:
+            self.is_maneuvering = False
+            
+        # Cooldowns update
+        if self.chaff_cooldown > 0: self.chaff_cooldown -= dt
+        if self.chaff_deployed and self.chaff_cooldown < 8.0: 
+            self.chaff_deployed = False # Chaff bulutu 2 saniye etkili
+
 class RadarSistemi:
     def __init__(self, menzil_km: float = 150.0, tespit_olasiligi: float = 0.4):
         self.menzil_km = menzil_km
@@ -164,7 +221,7 @@ class RadarSistemi:
 
     def _snr_hesapla(self, hedef: Hedef) -> float:
         """Radar Menzil Denklemi ile anlık SNR hesaplar."""
-        R = max(hedef.mesafe * 1000.0, 1.0) # Metre cinsinden mesafe
+        R = max(float(hedef.mesafe * 1000.0), 1.0) # Metre cinsinden mesafe
         rcs = hedef.get_instant_rcs()
         c = 3e8
         lam = c / self.f_hz
@@ -210,7 +267,7 @@ class RadarSistemi:
         # Alfa eşik katsayısı (P_fa'ya bağlı)
         alpha = self.cfar_win_size * (self.false_alarm_rate**(-1.0/self.cfar_win_size) - 1)
         
-        threshold = noise_avg_db + (10 * math.log10(max(alpha, 1.0)))
+        threshold = noise_avg_db + (10 * math.log10(max(float(alpha), 1.0)))
         return point_snr > threshold
         
     def hedef_uret(self, max_hedef: int = 5) -> None:
@@ -500,11 +557,16 @@ class RadarSistemi:
         self.aktif_hedefler.append(h)
         return [h]
 
-    def guncelle(self):
-        """Tüm hedeflerin konumlarını günceller."""
+    def guncelle(self, interceptors: Optional[List[Any]] = None):
+        """Tüm hedeflerin konumlarını ve taktik durumlarını günceller."""
+        if interceptors is None: interceptors = []
+        
         suru_hedefleri = [h for h in self.aktif_hedefler if h.id.startswith("SWRM-")]
         
         for h in self.aktif_hedefler:
+            # Taktik Zeka: Füze tespiti ve Kaçınma
+            h.detect_and_evade(interceptors, 1.0)
+            
             h.boids_guncelle(suru_hedefleri, 1.0) # Boids alg. (SWRM etiketiyse çalışır)
             
             # ARM Davranışı (Anti-Radyasyon)
@@ -513,9 +575,6 @@ class RadarSistemi:
                     # Radar kapalıysa hedefini kaybeder ve rastgele sapar
                     h.vx += random.uniform(-0.1, 0.1)
                     h.vy += random.uniform(-0.1, 0.1)
-                elif h.mesafe < 0.5:
-                    # Radar vuruldu! (Main loop'ta yakalanacak)
-                    pass
             
             # Jammer uçakları radar açıksa ARM ateşleyebilir
             if h.is_jammer and getattr(h, 'is_ghost', False) == False and not h.has_fired_arm and self.emisyon_aktif:

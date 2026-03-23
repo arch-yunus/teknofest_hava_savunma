@@ -79,44 +79,41 @@ class OnleyiciBatarya:
         silinecek_fuzeler = []
         
         for fuze in self.aktif_fuzeler:
-            if fuze.aktif and fuze.hedef:
-                import random
-                # Aşama-9: Chaff/Flare Aldatıcı Sistemleri
-                if not getattr(fuze.hedef, 'is_arm', False) and not getattr(fuze.hedef, 'chaff_deployed', False):
-                    dx = fuze.hedef.x - fuze.x
-                    dy = fuze.hedef.y - fuze.y
-                    dz = fuze.hedef.z - fuze.z
-                    mesafe = math.sqrt(dx**2 + dy**2 + dz**2)
-                    
-                    if mesafe < 15.0: # Füze 15km yaklaştığında kedi-fare oyunu başlar
-                        if random.random() < 0.3: # %30 Chaff atma şansı (EH Yeteneği)
-                            fuze.hedef.chaff_deployed = True
-                            if random.random() < 0.5: # %50 ihtimalle önleyici füze Chaff'a kilitlenir
-                                fuze.hedef = None
-                                fuze.aktif = False
-                                
-            fuze.guncelle(dt)
-            if fuze.vurdu:
-                # Füze hedefini kesin vurdu
-                vurulan_hedefler.add(fuze.hedef)
+            if not fuze.aktif or not fuze.hedef:
                 silinecek_fuzeler.append(fuze)
+                continue
+
+            # --- TAKTİKSEL ANALİZ (ECM/ECCM) ---
+            # Hedef Chaff/Flare bıraktıysa füze kilidi %60 ihtimalle bozulur
+            if getattr(fuze.hedef, 'chaff_deployed', False):
+                import random
+                if random.random() < 0.6:
+                    fuze.hedef = None
+                    fuze.aktif = False
+                    continue
+
+            # Hedef manevra yapıyorsa (High-G Turn), vuruş ihtimali düşer
+            is_maneuvering = getattr(fuze.hedef, 'is_maneuvering', False)
+            
+            fuze.guncelle(dt)
+            
+            if fuze.vurdu:
+                # Hedef manevra yapıyorsa vuruş şansı %70'e düşer (Kinetik limitler)
+                import random
+                p_k = 0.7 if is_maneuvering else 0.95
                 
-                # --- BLAST SPLASH DAMAGE (Parça Tesirli Savaş Başlığı) ---
-                # Füzenin patladığı (hedefi vurduğu) andaki pozisyonu:
-                px, py, pz = fuze.x, fuze.y, fuze.z
+                if random.random() < p_k:
+                    vurulan_hedefler.add(fuze.hedef)
+                    # --- BLAST SPLASH DAMAGE (Parça Tesirli Savaş Başlığı) ---
+                    px, py, pz = fuze.x, fuze.y, fuze.z
+                    for diger_hedef in aktif_hedefler:
+                        if diger_hedef == fuze.hedef: continue
+                        mesaf_karesi = (diger_hedef.x - px)**2 + (diger_hedef.y - py)**2 + (diger_hedef.z - pz)**2
+                        if mesaf_karesi <= (self.patlama_yaricapi_km ** 2):
+                            vurulan_hedefler.add(diger_hedef)
                 
-                # Radardaki diğer hedefleri kontrol et
-                for diger_hedef in aktif_hedefler:
-                    if diger_hedef == fuze.hedef:
-                        continue # Ana hedef zaten vuruldu
-                    
-                    # Mesafe hesapla
-                    mesaf_karesi = (diger_hedef.x - px)**2 + (diger_hedef.y - py)**2 + (diger_hedef.z - pz)**2
-                    if mesaf_karesi <= (self.patlama_yaricapi_km ** 2):
-                        # Alan hasarı içindeki hedef imha oldu!
-                        vurulan_hedefler.add(diger_hedef)
-            elif not fuze.aktif and not fuze.vurdu:
-                # Füze hedefini kaybetti (Chaff yedi veya menzilden çıktı/hedef kayboldu)
+                silinecek_fuzeler.append(fuze)
+            elif not fuze.aktif:
                 silinecek_fuzeler.append(fuze)
         
         for f in set(silinecek_fuzeler):

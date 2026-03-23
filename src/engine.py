@@ -100,7 +100,7 @@ class GokkalkanEngine:
                     self.telemetri.olay_kaydet("ERROR", f"Komut İşleme Hatası: {str(e)}")
 
             # 1. Update Radar and Physical State
-            self.radar.guncelle()
+            self.radar.guncelle(self.batarya.aktif_fuzeler)
             
             # ARM (Anti-Radyasyon) füzesi radarı vurdu mu?
             for h in list(self.radar.aktif_hedefler):

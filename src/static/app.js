@@ -494,6 +494,15 @@ function connectWebSocket() {
 
         // Radar Update
         updateRadar(data.targets || [], data.interceptors || [], data.lasers || []);
+        
+        // Strategic Update (Phase 10)
+        if (data.strategic) {
+            const drEl = document.getElementById('hud-directive');
+            const nwEl = document.getElementById('hud-network');
+            if (drEl) drEl.textContent = data.strategic.directive || "ANALİZ...";
+            if (nwEl) nwEl.textContent = `AĞ DURUMU: ${data.strategic.network_status || "OK"}`;
+        }
+
         updateTargetList(data.targets || []);
         
         if (data.emp) {
@@ -797,6 +806,14 @@ document.getElementById('btn-force-swarm').addEventListener('click', () => {
     const btn = document.getElementById('btn-force-swarm');
     const originalText = btn.textContent;
     btn.textContent = ">>> INITIATING SWARM <<<";
+    setTimeout(() => btn.textContent = originalText, 1000);
+});
+
+document.getElementById('btn-force-hypersonic').addEventListener('click', () => {
+    sendCommand('force_hypersonic');
+    const btn = document.getElementById('btn-force-hypersonic');
+    const originalText = btn.textContent;
+    btn.textContent = ">>> HYPERSONIC ALERT <<<";
     setTimeout(() => btn.textContent = originalText, 1000);
 });
 

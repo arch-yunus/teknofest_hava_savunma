@@ -1,37 +1,21 @@
 import time
 import sys
-import yaml
 import os
-from typing import Dict, Any
-
+import threading
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 from rich.live import Live
 from rich.progress import Progress, SpinnerColumn, TextColumn
-from rich import print as rprint
 
-from radar import RadarSistemi, Hedef, HavaDurumu
-from interceptor import OnleyiciBatarya, MuhimmatYokHatasi, Lazer_CIWS
-from telemetry import TelemetriSistemi
-from tehdit_siniflandirici import TehditSiniflandirici, TehditOnceligi
-from kalman_takip import KalmanTakipYoneticisi
-import utils
-from api import start_server, push_data_to_clients
-import threading
+from src.engine import GokkalkanEngine
+import src.api as api
 
 console = Console()
 
-def ayarları_yukle(yol: str = "config/ayarlar.yaml") -> Dict[str, Any]:
-    try:
-        with open(yol, 'r', encoding='utf-8') as f:
-            return yaml.safe_load(f)
-    except Exception:
-        return {}
-
 def create_status_table(target_data: list, battery_ammo: int) -> Table:
     table = Table(
-        title="[bold blue]GÖKKALKAN YZ v3.0 — CANLI TEMAS ÇİZELGESİ[/]",
+        title="[bold blue]GÖKKALKAN YZ v10.0 — CANLI TAKTİK TABLO[/]",
         border_style="blue"
     )
 
@@ -68,34 +52,18 @@ def create_status_table(target_data: list, battery_ammo: int) -> Table:
             t.get("karar", "?"),
         )
 
-    table.caption = f"[bold white]Mühimmat: {battery_ammo} | Aktif İzci: {target_data.__len__()}[/]"
+    table.caption = f"[bold white]Mühimmat: {battery_ammo} | Aktif İz: {len(target_data)}[/]"
     return table
 
-
 def main():
-    ayarlar = ayarları_yukle()
-    telemetri = TelemetriSistemi(log_dosyasi="logs/gokkalkan_gorev.log")
-    siniflandirici = TehditSiniflandirici()
-    kalman_yoneticisi = KalmanTakipYoneticisi(dt=1.0)
-
-    radar = RadarSistemi(
-        menzil_km=ayarlar.get('radar', {}).get('menzil_km', 200),
-        tespit_olasiligi=ayarlar.get('radar', {}).get('tespit_olasiligi', 0.4)
-    )
-
-    batarya = OnleyiciBatarya(
-        muhimmat=ayarlar.get('batarya', {}).get('muhimmat', 50),
-        hassasiyet_ayarlari=ayarlar.get('batarya', {}).get('vurus_hassasiyeti')
-    )
+    # 1. Initialize Engine and API
+    engine = GokkalkanEngine()
     
-    ciws = Lazer_CIWS(menzil_km=2.0, atis_hizi=10)
-
-    # Başlangıç Ekranı
     console.clear()
     console.print(Panel.fit(
-        "[bold cyan]GÖKKALKAN YZ v3.0 — HAVA SAVUNMA KOMUTA MERKEZİ[/]\n"
-        "[dim]Yeni Özellikler: Kalman Takip Filtresi · AI Tehdit Sınıflandırıcı[/]\n"
-        "[dim]Mimar: Bahattin Yunus Çetin | Sektör: Karadeniz/Trabzon[/]",
+        "[bold cyan]GÖKKALKAN YZ v10.0 — HAVA SAVUNMA KOMUTA MERKEZİ[/]\n"
+        "[dim]Merkezi Simülasyon Motoru (Core Engine) Aktif[/]\n"
+        "[dim]Mimar: Bahattin Yunus Çetin | Sektör: Gök Vatan[/]",
         border_style="bold blue"
     ))
 
@@ -104,284 +72,40 @@ def main():
         TextColumn("[progress.description]{task.description}"),
         transient=True,
     ) as progress:
-        progress.add_task(description="Radar sistemleri senkronize ediliyor...", total=None)
-        time.sleep(1)
-        progress.add_task(description="Kalman takip filtreleri yükleniyor...", total=None)
-        time.sleep(0.8)
-        progress.add_task(description="Tehdit sınıflandırma motoru başlatılıyor...", total=None)
-        time.sleep(0.8)
-        progress.add_task(description="Silah sistemleri kalibre ediliyor...", total=None)
+        progress.add_task(description="Çekirdek motor yükleniyor...", total=None)
         time.sleep(0.5)
-        progress.add_task(description="Gök vatan veritabanı bağlandı.", total=None)
+        progress.add_task(description="API servisleri başlatılıyor...", total=None)
+        api_thread = threading.Thread(target=api.start_server, kwargs={"host": "0.0.0.0", "port": 8000}, daemon=True)
+        api_thread.start()
         time.sleep(0.5)
 
-    telemetri.olay_kaydet("INFO", "GÖKKALKAN v3.0 tam kapasite ile başlatıldı.")
+    console.print("[bold green]Taktik Web Radar Paneli: http://localhost:8000[/]")
 
-    # V4.0 UI Upgrade: Start FastAPI server in a background thread
-    api_thread = threading.Thread(target=start_server, kwargs={"host": "0.0.0.0", "port": 8000}, daemon=True)
-    api_thread.start()
-    console.print("[bold green]Taktik Web Radar Paneli başlatıldı: http://localhost:8000[/]")
-
-    import api # import api to access frontend_commands
-    
-    # Yeni C2 Kontrol Değişkenleri
-    auto_fire_enabled = True
-    emp_blast_active = False
-    emp_timer = 0
-    
+    # 2. Main Execution Loop
     try:
-        with Live(create_status_table([], batarya.muhimmat), refresh_per_second=1) as live:
+        with Live(create_status_table([], engine.batarya.muhimmat), refresh_per_second=2) as live:
             while True:
-                # --- ARAYÜZ (FRONTEND) KOMUTLARINI İŞLE ---
-                while len(api.frontend_commands) > 0:
-                    cmd_dict = api.frontend_commands.pop(0)
-                    cmd = cmd_dict.get("action")
-                    if cmd == "force_swarm":
-                        radar.tara_suru_saldirisi(merkez_x=180, merkez_y=80, merkez_z=8, adet=6, hiz_mag=600)
-                        telemetri.olay_kaydet("WARNING", "MANUEL KOMUT: Sürü saldırısı başlatıldı!")
-                        live.console.print("[bold red][!] C2 OVERRIDE: Sürü Saldırısı Başlatılıyor...[/]")
-                    elif cmd == "toggle_auto_fire":
-                        auto_fire_enabled = not auto_fire_enabled
-                        durum = "AKTİF" if auto_fire_enabled else "PASİF (MANUEL)"
-                        telemetri.olay_kaydet("INFO", f"OTOMATİK ATIŞ (AI): {durum}")
-                        live.console.print(f"[bold yellow][i] C2 OVERRIDE: Otomatik Atış {durum}[/]")
-                    elif cmd == "manual_fire":
-                        target_id = cmd_dict.get("target_id")
-                        hedef_vuruldu_mu = False
-                        
-                        if target_id:
-                            # Specific target lock override
-                            secili_hedef = next((h for h in radar.aktif_hedefler if h.id == target_id), None)
-                            if secili_hedef and not getattr(secili_hedef, 'is_dost', False):
-                                try:
-                                    batarya.angaje_ol(secili_hedef)
-                                    telemetri.olay_kaydet("ACTION", f"MANUEL ATIŞ TETİKLENDİ: {secili_hedef.id}")
-                                    live.console.print(f"[bold red][!] KİLİT ATILDI: {secili_hedef.id}[/]")
-                                    hedef_vuruldu_mu = True
-                                except MuhimmatYokHatasi:
-                                    live.console.print("[bold red][X] KRİTİK HATA: MÜHİMMAT YOK![/]")
-                        else:
-                            # Fallback to closest if no target locked
-                            for h in sorted(radar.aktif_hedefler, key=lambda tgt: getattr(tgt, 'is_dost', False)): 
-                                if getattr(h, 'is_dost', False): continue 
-                                
-                                cpa_km = utils.en_yakin_yaklasma_noktasi_hesapla((h.x, h.y, h.z), (h.vx, h.vy, h.vz))
-                                tti = utils.hizli_carpisan_zamani(h.mesafe, h.hiz * 3600)
-                                degerlendirme = siniflandirici.siniflandir(h, cpa_km, tti)
-                                
-                                if degerlendirme.oncelik in [TehditOnceligi.KRİTİK, TehditOnceligi.YUKSEK, TehditOnceligi.ORTA]:
-                                    try:
-                                        batarya.angaje_ol(h)
-                                        telemetri.olay_kaydet("ACTION", f"MANUEL ATIŞ TETİKLENDİ: {h.id}")
-                                        live.console.print(f"[bold red][!] MANUEL ATIŞ: {h.id}[/]")
-                                        hedef_vuruldu_mu = True
-                                        break 
-                                    except MuhimmatYokHatasi:
-                                        live.console.print("[bold red][X] KRİTİK HATA: MÜHİMMAT YOK![/]")
-                                        break
-                                    
-                        if not hedef_vuruldu_mu:
-                            live.console.print("[bold yellow][!] MANUEL ATIŞ BAŞARISIZ: Uygun düşman hedef bulunamadı.[/]")
-                            
-                    elif cmd == "trigger_emp":
-                        radar.aktif_hedefler.clear()
-                        kalman_yoneticisi = KalmanTakipYoneticisi(dt=1.0) # Reset tracks
-                        telemetri.olay_kaydet("CRITICAL", "MANUEL KOMUT: EMP PATLAMASI TETİKLENDİ!")
-                        live.console.print("[bold white on red][⚡] C2 OVERRIDE: EMP PATLAMASI! TÜM ELEKTRONİKLER KAVRULDU![/]")
-                        emp_blast_active = True
-                        emp_timer = 3 # holds the effect for 3 loops
-                    elif cmd == "toggle_weather":
-                        if radar.hava_durumu == HavaDurumu.CLEAR:
-                            radar.hava_durumu = HavaDurumu.RAIN
-                            live.console.print("[bold blue][☁️] C2 OVERRIDE: TROPİKAL FIRTINA BAŞLADI (RADAR SNR DÜŞÜYOR)[/]")
-                            telemetri.olay_kaydet("WARNING", "Hava Şartları Bozuldu: YAĞMUR")
-                        else:
-                            radar.hava_durumu = HavaDurumu.CLEAR
-                            live.console.print("[bold yellow][☀️] C2 OVERRIDE: HAVA AÇIK (RADAR SNR OPTİMAL)[/]")
-                            telemetri.olay_kaydet("INFO", "Hava Şartları Düzeldi: AÇIK")
-                    elif cmd == "toggle_radar_emission":
-                        radar.emisyon_aktif = not radar.emisyon_aktif
-                        if radar.emisyon_aktif:
-                            live.console.print("[bold green][📡] C2 OVERRIDE: RADAR EMİSYONU AKTİF. GÖZLER AÇIK.[/]")
-                            telemetri.olay_kaydet("INFO", "Radar Yayını Başladı")
-                        else:
-                            live.console.print("[bold magenta][🔇] C2 OVERRIDE: RADAR SUSTURULDU (BLINK). TAM SESSİZLİK.[/]")
-                            telemetri.olay_kaydet("WARNING", "Radar Yayını Kesildi! (ARM Savunması)")
-                    
-                    # --- TEKNOFEST 2026 SPECIAL COMMANDS ---
-                    elif cmd == "set_stage_1":
-                        radar.hedef_uret_asama1()
-                        auto_fire_enabled = False # Stage 1 is MANUEL as per PDF
-                        live.console.print("[bold cyan][1️⃣] TEKNOFEST: AŞAMA-1 (DURAN HEDEFLER) YÜKLENDİ. MOD: MANUEL.[/]")
-                        telemetri.olay_kaydet("INFO", "Yarışma Başlatıldı: Aşama-1")
-                    elif cmd == "set_stage_2":
-                        radar.hedef_uret_asama2()
-                        auto_fire_enabled = True # Stage 2 is OTONOM
-                        live.console.print("[bold cyan][2️⃣] TEKNOFEST: AŞAMA-2 (SÜRÜ SALDIRISI) YÜKLENDİ. MOD: OTONOM.[/]")
-                        telemetri.olay_kaydet("INFO", "Yarışma Başlatıldı: Aşama-2")
-                    elif cmd == "set_stage_3":
-                        radar.hedef_uret_asama3()
-                        auto_fire_enabled = True # Stage 3 is OTONOM
-                        live.console.print("[bold cyan][3️⃣] TEKNOFEST: AŞAMA-3 (KATMANLI SAVUNMA) YÜKLENDİ. MOD: OTONOM.[/]")
-                        telemetri.olay_kaydet("INFO", "Yarışma Başlatıldı: Aşama-3")
-                    elif cmd == "trigger_estop":
-                        radar.e_stop_tetikle(True)
-                        live.console.print("[bold white on red][🛑] ACİL DURDURMA (E-STOP) AKTİF! SİSTEM DONDURULDU![/]")
-                        telemetri.olay_kaydet("CRITICAL", "ACİL DURDURMA TETİKLENDİ")
-                    elif cmd == "release_estop":
-                        radar.e_stop_tetikle(False)
-                        live.console.print("[bold green][▶️] ACİL DURDURMA KALDIRILDI. OPERASYON DEVAM EDİYOR.[/]")
-                        telemetri.olay_kaydet("INFO", "Acil Durdurma Kaldırıldı")
-                    elif cmd == "toggle_manual_mode":
-                        auto_fire_enabled = not auto_fire_enabled
-                        mod_str = "OTONOM" if auto_fire_enabled else "MANUEL"
-                        live.console.print(f"[bold yellow][🕹️] MOD DEĞİŞİMİ: {mod_str}[/]")
-                        telemetri.olay_kaydet("INFO", f"Kontrol Modu Değişti: {mod_str}")
-                        
-                radar.guncelle()
+                # Update Engine (Simulation + API Commands + UI Sync)
+                engine.tick()
                 
-                # ARM (Anti-Radyasyon) füzesi radarı (merkezi 0,0,0) vurdu mu kontrolü
-                for h in list(radar.aktif_hedefler):
-                    if getattr(h, 'is_arm', False) and h.mesafe < 0.5:
-                        live.console.print("[bold white on red][💥] KRİTİK: ANTİ-RADYASYON FÜZESİ (ARM) RADARI VURDU![/]")
-                        telemetri.olay_kaydet("CRITICAL", "RADAR İMHA EDİLDİ - SİSTEM ÇÖKTÜ")
-                        emp_blast_active = True # Ekranı sallamak için EMP görsel efektini tetikle
-                        emp_timer = 5
-                        radar.emisyon_aktif = False # Radar mecburen kapanır
-                        radar.aktif_hedefler.remove(h)
-                        break
-                radar.tara()
-                # Füzeleri güncelle (dt = 1 saniye) ve Splash Damage kontrolü yap
-                vurulan_hedefler_fuzeler = batarya.guncelle(1.0, radar.aktif_hedefler)
+                # Update CLI Dashboard
+                telemetry = engine.current_telemetry
+                live.update(create_status_table(telemetry.get("targets", []), telemetry.get("ammo", 0)))
                 
-                # CIWS her zaman oto-korumada (son hat savunması)
-                vurulan_hedefler_ciws = ciws.guncelle(1.0, radar.aktif_hedefler)
+                # Handle occasional console messages from command events
+                if engine.last_event != "Sistem Çekirdeği Başlatıldı.":
+                    # Simple hack to avoid repeating the same last_event indefinitely
+                    # We could use a queue for events if more complex messaging is needed
+                    pass
                 
-                tum_vurulanlar = set(vurulan_hedefler_fuzeler).union(set(vurulan_hedefler_ciws))
-                
-                # Vurulan hedefleri radar ve takipten çıkar
-                for vh in tum_vurulanlar:
-                    if vh in radar.aktif_hedefler:
-                        radar.aktif_hedefler.remove(vh)
-                        kalman_yoneticisi.hedef_sil(vh.id)
-                        
-                        if vh in vurulan_hedefler_ciws:
-                            telemetri.olay_kaydet("SUCCESS", f"CIWS LAZER İLE İMHA: {vh.id}")
-                            live.console.print(f"[bold bright_cyan][⚡] CIWS LAZER KİLİDİ: {vh.id} İMHA EDİLDİ![/]")
-                        else:
-                            telemetri.olay_kaydet("SUCCESS", f"HEDEF İMHA EDİLDİ (Kinetik/Splash): {vh.id}")
-                            live.console.print(f"[bold green][*] HEDEF İMHA EDİLDİ: {vh.id}[/]")
+                time.sleep(0.5) # Dashboard refresh rate independent of engine tick if desired
 
-                current_targets = []
-                for h in list(radar.aktif_hedefler):
-                    kalman_yoneticisi.guncelle(h.id, h.x, h.y, h.z)
-                    tahmin = kalman_yoneticisi.tahmin_al(h.id)
-                    hiz_km_h = h.hiz * 3600
-                    hiz_vektoru = (h.vx, h.vy, h.vz)
-                    tti = utils.hizli_carpisan_zamani(h.mesafe, hiz_km_h)
-                    cpa_km = utils.en_yakin_yaklasma_noktasi_hesapla((h.x, h.y, h.z), hiz_vektoru)
-                    
-                    degerlendirme = siniflandirici.siniflandir(h, cpa_km, tti)
-                    
-                    karar = "İZLENİYOR"
-                    # Otomatik atış modu açıksa ve öncelik uygunsa füze ateşle
-                    if auto_fire_enabled and degerlendirme.oncelik in [TehditOnceligi.KRİTİK, TehditOnceligi.YUKSEK] and batarya.muhimmat > 0 and h.mesafe > ciws.menzil_km:
-                        # Teknofest Aşama-3 Menzil Sınırları
-                        mesafe_m = h.mesafe * 1000
-                        menzil_uygun = True
-                        if hasattr(h, 'etiket'):
-                            if "F16" in h.etiket:
-                                menzil_uygun = 10 <= mesafe_m <= 15
-                            elif "Helikopter" in h.etiket or "Balistik Fuze" in h.etiket:
-                                menzil_uygun = 5 <= mesafe_m <= 15
-                            elif "IHA" in h.etiket:
-                                menzil_uygun = 0 <= mesafe_m <= 15
-                        
-                        if menzil_uygun:
-                            try:
-                                # Aynı hedefe multiple füze atmamak için basit kontrol
-                                hedefte_fuze_var_mi = any(f.hedef.id == h.id for f in batarya.aktif_fuzeler)
-                                if not hedefte_fuze_var_mi:
-                                    batarya.angaje_ol(h)
-                                    telemetri.olay_kaydet("ACTION", f"KİNETİK ÖNLEME BAŞLATILDI: {h.id}")
-                                    live.console.print(f"[bold red][!] ÖNLEME BAŞLATILDI: {h.id}[/]")
-                                    karar = "ANGAJE"
-                            except MuhimmatYokHatasi:
-                                karar = "MÜHİMMAT YOK!"
-                        else:
-                            karar = f"BEKLİYOR ({mesafe_m:.1f}m)"
-                    elif not auto_fire_enabled and degerlendirme.oncelik in [TehditOnceligi.KRİTİK]:
-                        karar = "ENGAGEMENT HOLD (MANUEL)"
-                    
-                    data = {
-                        "id":      h.id,
-                        "mesafe":  h.mesafe,
-                        "irtifa":  tahmin[2], # Kalman'dan gelen irtifa
-                        "hiz":     hiz_km_h,
-                        "tti":     tti,
-                        "cpa":     cpa_km,
-                        "tip":     "EH JAMMER" if h.is_jammer else ("GHOST" if h.is_ghost else degerlendirme.tehdit_tipi.name.replace("_", " ")),
-                        "oncelik": degerlendirme.oncelik.name,
-                        "karar":   karar,
-                        "skor":    degerlendirme.tehdit_skoru,
-                        "x":       h.x,
-                        "y":       h.y,
-                        "z":       h.z,
-                        "etiket":  getattr(h, 'etiket', "Bilinmeyen"),
-                        "is_dost": getattr(h, 'is_dost', False),
-                        "is_jammer": getattr(h, 'is_jammer', False),
-                        "is_ghost": getattr(h, 'is_ghost', False),
-                        "is_arm": getattr(h, 'is_arm', False),
-                        "chaff_deployed": getattr(h, 'chaff_deployed', False)
-                    }
-                    current_targets.append(data)
+    except KeyboardInterrupt:
+        console.print("\n[bold red]SİSTEM KAPATILDI.[/] [white]Gök vatan size emanet.[/]")
+        sys.exit(0)
 
-                    kritik_cpa = ayarlar.get('tehdit_limitleri', {}).get('kritik_mesafe', 50.0)
-                    if (
-                        degerlendirme.oncelik == TehditOnceligi.KRİTİK
-                        or cpa_km < kritik_cpa
-                    ):
-                        # Zaten bu hedefe giden füze var mı kontrolü eklenebilir, şimdilik basit
-                        hedefe_fuze_var_mi = any(f.hedef.id == h.id for f in batarya.aktif_fuzeler)
-                        if not hedefe_fuze_var_mi:
-                            telemetri.olay_kaydet("WARNING", f"KRİTİK TEHDİT: {h.id}", data)
-                            live.console.print(
-                                f"[bold red]>>> TEHDİT KİLİDİ: {h.id} "
-                                f"({degerlendirme.tehdit_tipi.name}) <<<[/]"
-                            )
-                            try:
-                                batarya.angaje_ol(h)
-                                live.console.print(f"[bold yellow][!] FÜZE FIRLATILDI -> Hedef: {h.id}[/]")
-                            except MuhimmatYokHatasi as e:
-                                live.console.print(f"[bold red][X] KRİTİK HATA: {e}[/]")
-
-                # Check if Jamming is currently active (Any ghosts currently on radar)
-                jamming_active = any(t.get("is_ghost", False) for t in current_targets)
-                if jamming_active:
-                    telemetri.olay_kaydet("WARNING", "RADAR JAMMING (EH) TESPİT EDİLDİ!")
-                    live.console.print("[bold magenta][!] ELEKTRONİK HARP - HAYALET HEDEFLER TESPİT EDİLDİ![/]")
-                
-                # Hazırlanan verileri WebSocket üzerinden Web UI'a gönder
-                
-                # Manage EMP visual effect duration
-                if emp_blast_active:
-                    emp_timer -= 1
-                    if emp_timer <= 0:
-                        emp_blast_active = False
-
-                out_data = {
-                    "targets": current_targets,
-                    "interceptors": [
-                        {"id": f.id, "x": f.x, "y": f.y, "z": f.z, "target_id": f.hedef.id}
-                        for f in batarya.aktif_fuzeler
-                    ],
-                    "lasers": ciws.aktif_atislar,  # Lazer atış listesi
-                    "jamming": jamming_active,
-                    "emp": emp_blast_active,
-                    "weather": radar.hava_durumu.name, # CLEAR or RAIN
-                    "emission": radar.emisyon_aktif
-                }
-                push_data_to_clients(out_data)
+if __name__ == "__main__":
+    main()
                 
                 time.sleep(1)
 

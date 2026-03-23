@@ -56,7 +56,8 @@ async def receive_command(cmd: CommandRequest):
         "toggle_weather", "toggle_radar_emission",
         "set_stage_1", "set_stage_2", "set_stage_3", # TEKNOFEST Stages
         "trigger_estop", "release_estop",            # E-Stop
-        "toggle_manual_mode"                         # Mode Switch
+        "toggle_manual_mode",                        # Mode Switch
+        "force_hypersonic"                           # Phase 10 Hypersonic
     ]
     if cmd.action in allowed:
         frontend_commands.append({"action": cmd.action, "target_id": cmd.target_id})

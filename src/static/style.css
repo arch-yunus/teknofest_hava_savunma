@@ -1,11 +1,12 @@
 :root {
-    --bg-dark: #000508;
+    --bg-dark: #00080a;
     --primary-cyan: #00f2ff;
     --primary-green: #0cf50c;
     --alert-red: #ff3344;
     --warning-gold: #ffcc00;
-    --panel-bg: rgba(2, 10, 20, 0.85);
-    --border-glow: rgba(0, 242, 255, 0.4);
+    --phase10-gold: #ffb400;
+    --panel-bg: rgba(2, 8, 15, 0.9);
+    --border-glow: rgba(255, 180, 0, 0.2);
     --military-font: 'Share Tech Mono', monospace;
 }
 
@@ -69,13 +70,14 @@ body {
     background: var(--panel-bg);
     backdrop-filter: blur(20px);
     border: 1px solid var(--border-glow);
-    border-radius: 4px;
+    border-radius: 2px;
     padding: 25px;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 0 30px rgba(0, 242, 255, 0.1);
+    box-shadow: 0 0 40px rgba(255, 180, 0, 0.05);
     pointer-events: auto;
     clip-path: polygon(0 0, 100% 0, 100% 95%, 90% 100%, 0 100%);
+    border-left: 3px solid var(--phase10-gold);
 }
 
 .logo-box h1 {
@@ -262,6 +264,11 @@ body {
 
 .btn.warning { border-color: var(--warning-gold); color: var(--warning-gold); }
 .btn.warning:hover { background: var(--warning-gold); color: black; }
+
+.btn.gold-btn { border-color: var(--phase10-gold); color: var(--phase10-gold); box-shadow: 0 0 5px var(--phase10-gold); }
+.btn.gold-btn:hover { background: var(--phase10-gold); color: black; box-shadow: 0 0 20px var(--phase10-gold); }
+
+.gold-text { color: var(--phase10-gold) !important; text-shadow: 0 0 10px var(--phase10-gold); }
 
 .btn.danger-alt { border-color: #ff00ff; color: #ff00ff; }
 .btn.warning-alt { border-color: var(--alert-red); color: var(--alert-red); }

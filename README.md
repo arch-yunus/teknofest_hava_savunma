@@ -6,16 +6,17 @@
 [SYSTEM BOOT] Calibrating Kalman Matrices (MATH_MODELS.md) ... OK
 [SYSTEM BOOT] Powering up 3D Phased Array Radars ... OK
 [SYSTEM BOOT] EW Jammer Counter-Measures ... ONLINE
+[SYSTEM BOOT] C5ISR Strategic Orchestrator ... READY
 [SYSTEM BOOT] ...
-[SYSTEM BOOT] GÖKKALKAN AI v3.0 ULTIMATE STANDING BY.
+[SYSTEM BOOT] GÖKKALKAN AI v10.0 GÖK-VATAN STRATEGIC STANDING BY.
 ```
 <div align="center">
 
 ![GökKalkan AI Banner](docs/banner.png)
 
 [![Komuta Merkezi](https://img.shields.io/badge/KOMUTA--MERKEZ%C4%B0-Aktif-0052cc?style=for-the-badge&logo=opsgenie&logoColor=white)](https://github.com/bahattinyunus/teknofest_hava_savunma)
-[![Sürüm numarası](https://img.shields.io/badge/VERS%C4%B0YON-3.0_ULTIMATE-ffd700?style=for-the-badge&logo=rocket&logoColor=black)](https://github.com/bahattinyunus/teknofest_hava_savunma/releases)
-[![Otonomi Seviyesi](https://img.shields.io/badge/MOD-TAM_OTONOM-28a745?style=for-the-badge&logo=robot&logoColor=white)](https://github.com/bahattinyunus/teknofest_hava_savunma)
+[![Sürüm numarası](https://img.shields.io/badge/VERS%C4%B0YON-10.0_G%C3%96K--VATAN-ffd700?style=for-the-badge&logo=rocket&logoColor=black)](https://github.com/bahattinyunus/teknofest_hava_savunma/releases)
+[![Otonomi Seviyesi](https://img.shields.io/badge/MOD-STRATEJ%C4%B0K_OTONOM%C4%B0-28a745?style=for-the-badge&logo=robot&logoColor=white)](https://github.com/bahattinyunus/teknofest_hava_savunma)
 [![Python Version](https://img.shields.io/badge/PYTHON-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Lisans](https://img.shields.io/badge/L%C4%B0SANS-MIT-ff5722?style=for-the-badge&logo=git&logoColor=white)](LICENSE)
 [![Build Status](https://img.shields.io/badge/S%C4%B0STEM-STAB%C4%B0L-10b981?style=for-the-badge&logo=github-actions&logoColor=white)](https://github.com/bahattinyunus/teknofest_hava_savunma)
@@ -123,10 +124,11 @@ teknofest_hava_savunma/
 │   ├── radar.py            # Elektromanyetik Sinyal & Sensör Simülasyonu (AESA/PESA)
 │   ├── kalman_takip.py     # Hassas İz ve Yörünge Filtreleme (Kalman Filter)
 │   ├── tehdit_siniflandirici.py # AI/ML Tabanlı Tehdit Skorlama & Kimlik (IFF)
+│   ├── strategic_analyzer.py # 📡 NEW: Strategic Decision Engine (C5ISR)
 │   ├── interceptor.py      # Güdüm, TTI (Time-to-Impact) ve Önleme Matrisleri
 │   ├── telemetry.py        # Canlı Operasyonel Veri Kaydı ve Kara Kutu (Blackbox)
-│   ├── api.py              # 🌐 V4.0: FastAPI & WebSocket C2 İletişim Sunucusu  
-│   ├── static/             # 🌐 V4.0: C2 WebGL 3D Radar Dashboard (app.js, vb.)
+│   ├── api.py              # 🌐 V4.0+: FastAPI & WebSocket C2 İletişim Sunucusu  
+│   ├── static/             # 🌐 UI Phase 10: Obsidian Gold WebGL Dashboard
 │   └── utils.py            # Aerodinamik Matris Sabitleri, Fonksiyonlar & Çeviriciler
 ├── tests/                  # 💥 Muharebe Öncesi Sanal Atış ve Test Sahası
 │   └── test_simulasyon.py  # Ünit, Yük ve Çarpışma Entegrasyon testleri (pytest)
@@ -216,6 +218,16 @@ GökKalkan, statik hedefleri vurmak için değil, günümüzün asimetrik ve kar
 -   **Anti-Radyasyon Füzeleri (ARM):** EH platformları radara çok yaklaştığında hedefe (merkeze) inanılmaz hızlarda hipersonik Anti-Radyasyon Füzeleri ateşler. ARM'ler 3D ekranda mor renkte belirir ve radarı vurursa sistemi çökertir (Kritik EMP).
 -   **Radar Susturma (Emission Control):** ARM saldırılarından korunmak için C2 panelindeki `RADAR EMISSION` butonuna basılarak radar anlık olarak susturulabilir. Bu sırada ARM'ler hedefini kaybedip boşa uçar, ancak radar tüm hava sahasına KÖR olur. Savaş alanının en büyük taktik hamlesi!
 -   **Chaff (Aldatıcı) Sistemleri:** Füze düşman HSS'lerine 15 km yaklaştığında, hedefler %30 ihtimalle arkalarında otonom **Parlak Gümüş Chaff Partikül Bulutu** bırakır. Önleyici füze bu Chaff'a kilitlenip havada boş yere patlayabilir. Gerçek bir teknoloji harikası.
+
+---
+
+### 4.10 Hipersonik Tehditler (Mach 5+)
+-   **Tanım:** Geleneksel füzelerin yakalayamayacağı kadar hızlı (Mach 5 - Mach 8) seyreden gelişmiş mühimmatlar.
+-   **Savunma Yaklaşımı:** GökKalkan v10.0, hipersonik hedeflerin yüksek ısı imzasını ve plazma izini simüle eder. Radar modülündeki `is_hypersonic` bayrağı ile bu hedefler anında tespit edilir ve C2 paneline "HYPERSONIC ALERT" uyarısı düşer.
+
+### 4.11 Stratejik Analiz ve C5ISR Orkestrasyonu
+-   **Tanım:** Sadece hedefleri vurmak yerine, tüm savaş sahasını bir ağ olarak analiz etmek.
+-   **Savunma Yaklaşımı:** `StrategicAnalyzer` modülü; batarya mühimmat durumunu, ağdaki diğer dost ünitelerin (VATAN-1, VATAN-2) sağlığını ve genel tehdit yoğunluğunu analiz ederek milisaniyelik stratejik direktifler (Örn: `RADAR_SILENCE`, `SWARM_EMERGENCY`) üretir.
 
 ---
 

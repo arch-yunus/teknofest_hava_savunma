@@ -29,6 +29,10 @@ class Hedef:
         self.has_fired_arm = False
         self.chaff_deployed = False
 
+        # Aşama-10 Hipersonik (Mach 5+)
+        self.is_hypersonic = False
+        self.heat_signature = 1.0 # Hipersonik hedeflerde sürtünme kaynaklı yüksek ısı
+
         # TEKNOFEST 2026 Özel İsterler
         self.is_dost = False # Dost/Düşman ayrımı (Aşama-3)
         self.etiket = "Bilinmeyen" # F16, Helikopter, Mini IHA, Balistik Fuze
@@ -127,7 +131,7 @@ class Hedef:
 
     def get_instant_rcs(self) -> float:
         """Swerling modellerine göre anlık RCS dalgalanması hesaplar."""
-        # Radar gürültüsü ve Swerling modeli ...lerine göre anlık RCS dalgalanması hesaplar."""
+        # Radar gürültüsü ve Swerling modellerini içeren basit bir RCS dalgalanma simülasyonu
         if self.swerling_type == 1:
             # Swerling 1: Rayleigh dağılımı (Exponential in Power)
             return -self.rcs_base * math.log(max(random.random(), 1e-6))
@@ -373,67 +377,83 @@ class RadarSistemi:
         if not self.emisyon_aktif: 
             return [] # Radar kapalıyken sürü tespit edilemez/üretim event'i tetiklenmez
             
-        if random.random() < (self.tespit_olasiligi * 0.1): # Sürü saldırısı nadirdir
-            suru = []
-            adet = random.randint(5, 12)
+        suru = []
+        adet = random.randint(5, 12)
+        
+        # Ana sürü merkezi
+        aci = random.uniform(0, 2 * math.pi)
+        uzaklik = random.uniform(self.menzil_km * 0.7, self.menzil_km)
+        merkez_x = uzaklik * math.cos(aci)
+        merkez_y = uzaklik * math.sin(aci)
+        merkez_z = random.uniform(0.5, 3.0) # Sürü alçaktan gelir
+        
+        # Sürü hızı (hepsi aynı yöne, merkeze doğru)
+        hiz_mag = random.uniform(0.15, 0.3)
+        ana_vx = -merkez_x / uzaklik * hiz_mag
+        ana_vy = -merkez_y / uzaklik * hiz_mag
+        
+        # V-Formasyonu Oluşturma Geometrisi
+        formasyon_araligi_km = 0.5 
+        hiz_norm = math.sqrt(ana_vx**2 + ana_vy**2)
+        arka_x = -ana_vx / hiz_norm
+        arka_y = -ana_vy / hiz_norm
+        yan_x = -arka_y
+        yan_y = arka_x
+        
+        for i in range(adet):
+            if i == 0:
+                offset_arka = 0
+                offset_yan = 0
+            else:
+                kademesi = (i + 1) // 2
+                yon = 1 if i % 2 == 1 else -1
+                offset_arka = kademesi * formasyon_araligi_km
+                offset_yan = yon * kademesi * formasyon_araligi_km
             
-            # Ana sürü merkezi
-            aci = random.uniform(0, 2 * math.pi)
-            uzaklik = random.uniform(self.menzil_km * 0.7, self.menzil_km)
-            merkez_x = uzaklik * math.cos(aci)
-            merkez_y = uzaklik * math.sin(aci)
-            merkez_z = random.uniform(0.5, 3.0) # Sürü alçaktan gelir
+            x = merkez_x + (arka_x * offset_arka) + (yan_x * offset_yan)
+            y = merkez_y + (arka_y * offset_arka) + (yan_y * offset_yan)
+            z = merkez_z + (random.uniform(-0.1, 0.1))
             
-            # Sürü hızı (hepsi aynı yöne, merkeze doğru)
-            hiz_mag = random.uniform(0.15, 0.3)
-            ana_vx = -merkez_x / uzaklik * hiz_mag
-            ana_vy = -merkez_y / uzaklik * hiz_mag
+            vx = ana_vx
+            vy = ana_vy
+            vz = 0.0
             
-            # V-Formasyonu Oluşturma Geometrisi
-            # Lider ortada (0,0), diğerleri (-1, -1), (1, -1), vb. formasyonda
-            formasyon_araligi_km = 0.5 # İHA'lar arası mesafe (km)
-            
-            # Formasyon vektörleri (Lider uçuş yönünde, arkadakiler açılı geride)
-            # İlerleyiş vektörünün tersini bul:
-            hiz_norm = math.sqrt(ana_vx**2 + ana_vy**2)
-            arka_x = -ana_vx / hiz_norm
-            arka_y = -ana_vy / hiz_norm
-            
-            # Dik vektör (kanatlar için)
-            yan_x = -arka_y
-            yan_y = arka_x
-            
-            for i in range(adet):
-                # V-Formasyon Pozisyonu (0: Lider, 1: Sağ 1, 2: Sol 1, 3: Sağ 2, 4: Sol 2...)
-                if i == 0:
-                    offset_arka = 0
-                    offset_yan = 0
-                else:
-                    kademesi = (i + 1) // 2
-                    yon = 1 if i % 2 == 1 else -1
-                    
-                    # Geride ve Yanda
-                    offset_arka = kademesi * formasyon_araligi_km
-                    offset_yan = yon * kademesi * formasyon_araligi_km
-                
-                # Gerçek uzay pozisyonu
-                x = merkez_x + (arka_x * offset_arka) + (yan_x * offset_yan)
-                y = merkez_y + (arka_y * offset_arka) + (yan_y * offset_yan)
-                z = merkez_z + (random.uniform(-0.1, 0.1)) # İrtifa nispeten aynı
-                
-                # Koordineli hız (Lider ile birebir aynı hız vektörü, jitter yok)
-                vx = ana_vx
-                vy = ana_vy
-                vz = 0.0 # V-formasyonunda sabit irtifa uçağı
-                
-                iha = Hedef(
-                    hedef_id=f"SWRM-{random.randint(1000, 9999)}",
-                    x=x, y=y, z=z, vx=vx, vy=vy, vz=vz, rcs=0.01
-                )
-                self.aktif_hedefler.append(iha)
-                suru.append(iha)
-            return suru
-        return []
+            iha = Hedef(
+                hedef_id=f"SWRM-{random.randint(1000, 9999)}",
+                x=x, y=y, z=z, vx=vx, vy=vy, vz=vz, rcs=0.01
+            )
+            self.aktif_hedefler.append(iha)
+            suru.append(iha)
+        return suru
+
+    def tara_hipersonik_tehdit(self) -> List[Hedef]:
+        """
+        TEKNOFEST 2026 / Phase 10: Mach 5+ Hipersonik Tehdit Üretimi.
+        Çok yüksek hız, düşük manevra, yüksek ısı izi.
+        """
+        if not self.emisyon_aktif: return []
+        
+        # Hipersonik hedefler uzaklardan belirlenir (HGV / HCM)
+        aci = random.uniform(0, 2 * math.pi)
+        uzaklik = self.menzil_km * 0.95
+        x = uzaklik * math.cos(aci)
+        y = uzaklik * math.sin(aci)
+        z = random.uniform(20.0, 30.0) # Yüksek irtifa (Atmospheric entry)
+        
+        # Mach 5 - Mach 8 arası hız (1700 m/s - 2700 m/s)
+        hiz_mps = random.uniform(1700, 2700)
+        
+        vx = -(x / uzaklik) * hiz_mps
+        vy = -(y / uzaklik) * hiz_mps
+        vz = -(z / uzaklik) * hiz_mps * 0.2 # Sığ alçalış
+        
+        h = Hedef(f"H-SONIC-{random.randint(100, 999)}", x, y, z, vx, vy, vz, rcs=0.2)
+        h.is_hypersonic = True
+        h.heat_signature = 5.0 + (hiz_mps / 500.0) # Hızla artan termal iz
+        h.etiket = "Hipersonik HCM"
+        
+        self.aktif_hedefler.append(h)
+        return [h]
 
     def guncelle(self):
         """Tüm hedeflerin konumlarını günceller."""

@@ -61,3 +61,7 @@ class GokkalkanRunner:
 if __name__ == "__main__":
     runner = GokkalkanRunner()
     runner.run()
+
+if __name__ == "__main__":
+    runner = GokkalkanRunner()
+    runner.run()

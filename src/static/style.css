@@ -181,6 +181,7 @@ body {
 .target-card:hover {
     background: rgba(0, 242, 255, 0.08);
     border-color: var(--primary-cyan);
+    transform: translateX(5px);
 }
 
 .target-card.kritik {
@@ -243,6 +244,7 @@ body {
     background: var(--primary-cyan);
     color: var(--bg-dark);
     box-shadow: 0 0 15px var(--primary-cyan);
+    transform: scale(1.02);
 }
 
 .btn.active {

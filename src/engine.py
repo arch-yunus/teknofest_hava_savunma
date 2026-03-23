@@ -146,7 +146,13 @@ class GokkalkanEngine:
                 karar = "İZLENİYOR"
                 
                 # Engagement Logic
-                if self.auto_fire_enabled and degerlendirme.oncelik in [TehditOnceligi.KRİTİK, TehditOnceligi.YUKSEK]:
+                should_engage = degerlendirme.oncelik in [TehditOnceligi.KRİTİK, TehditOnceligi.YUKSEK]
+                
+                # Phase 15: Stratejik Kısıtlama (Mühimmat Tasarrufu)
+                if "YÜKSEK TASARRUF" in (getattr(self, 'stratejik_rapor', {}).get("directive", "")):
+                    should_engage = degerlendirme.oncelik == TehditOnceligi.KRİTİK
+
+                if self.auto_fire_enabled and should_engage:
                     if self.batarya.muhimmat > 0 and h.mesafe > self.ciws.menzil_km:
                         mesafe_m = h.mesafe * 1000
                         menzil_uygun = True
@@ -187,8 +193,26 @@ class GokkalkanEngine:
                 }
                 all_target_info.append(data)
 
-            # 4. Strategic Analysis
+            # 4. Strategic Analysis & Autonomous Directive Execution
             stratejik_rapor = self.stratejik_analizor.analiz_et(all_target_info, self.batarya.muhimmat)
+            directive_val = stratejik_rapor.get("directive", "")
+            
+            # Otonom Direktif İcrası (Phase 15)
+            if "RADAR SESSİZLİĞİ" in directive_val:
+                if self.radar.emisyon_aktif:
+                    self.radar.emisyon_aktif = False
+                    self.last_event = "STRATEJİK: RADAR SUSTURULDU (ARM TEHDİDİ)"
+                    self.telemetri.olay_kaydet("WARNING", self.last_event)
+            
+            elif "YÜKSEK TASARRUF" in directive_val:
+                # Sadece kritik hedeflere mühimmat harca (Engellendi: Yüksek/Orta/Düşük)
+                # Not: Bu mantık tick içindeki Engagement Logic'e sızmalı, 
+                # burada sadece mod değişimi yapıyoruz.
+                pass 
+
+            elif "AGRESİF SAVUNMA" in directive_val:
+                self.auto_fire_enabled = True
+                self.last_event = "STRATEJİK: AGRESİF SAVUNMA MODUNA GEÇİLDİ"
             
             # 5. EMP Effect Update
             if self.emp_blast_active:

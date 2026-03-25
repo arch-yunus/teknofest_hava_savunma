@@ -27,7 +27,7 @@
 
 **[🏆 TEKNOFEST 2026 Çelikkubbe HSS Yarışması Uyum Raporu](docs/SARTNAME_2026.md)** <br>
 **[⚔️ Taktik Zemin: Projenin Doğuş Hikayesi (LORE.md)](docs/LORE.md)** <br>
-**[🧮 Çekirdek Fizik: Operasyonel Matematik (MATH_MODELS.md)](docs/MATH_MODELS.md)** <br>
+**[🧮 Çekirdek Fizik: Operasyonel Matematik (MATH_MODELS.md)](docs/MATH_MODELS.md)** 🔸 **[📘 Teknik Kılavuz (TECHNICAL_GUIDE.md)](docs/TECHNICAL_GUIDE.md)** <br>
 **[⚙️ Teknik Mimari (TEKNIK_MIMARI.md)](docs/TEKNIK_MIMARI.md)** 🔸 **[Milli Teknoloji Manifestosu (MANIFESTO.md)](docs/MANIFESTO.md)**
 
 </div>

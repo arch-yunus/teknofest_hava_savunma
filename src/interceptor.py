@@ -1,7 +1,7 @@
 import time
 import math
 from typing import Dict, Any, List, Optional
-from radar import Hedef
+from src.models import Hedef
 
 class SavunmaHatasi(Exception):
     """GökKalkan savunma sistemi için genel hata sınıfı."""

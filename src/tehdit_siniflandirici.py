@@ -12,7 +12,7 @@ import math
 from enum import Enum, auto
 from dataclasses import dataclass, field
 from typing import Tuple
-from radar import Hedef
+from src.models import Hedef
 
 class TehditTipi(Enum):
     """Tanımlanmış hava tehdit kategorileri."""

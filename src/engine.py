@@ -5,7 +5,8 @@ import threading
 import logging
 from typing import Dict, Any, List
 
-from src.radar import RadarSistemi, Hedef, HavaDurumu
+from src.radar import RadarSistemi
+from src.models import Hedef, HavaDurumu
 from src.interceptor import OnleyiciBatarya, MuhimmatYokHatasi, Lazer_CIWS
 from src.telemetry import TelemetriSistemi
 from src.tehdit_siniflandirici import TehditSiniflandirici, TehditOnceligi
@@ -14,6 +15,7 @@ from src.strategic_analyzer import StrategicAnalyzer
 import src.utils as utils
 import src.api as api
 from src.aar_logger import AARLogger
+from src.network_manager import NetworkManager
 
 class GokkalkanEngine:
     """GökKalkan Millî Hava Savunma Sistemi - Merkezi Simülasyon Motoru (v10.0)"""
@@ -35,6 +37,7 @@ class GokkalkanEngine:
         
         self.ciws = Lazer_CIWS(menzil_km=2.0, atis_hizi=10)
         self.stratejik_analizor = StrategicAnalyzer()
+        self.network_manager = NetworkManager() # NCW Foundation
         
         self.auto_fire_enabled = True
         self.current_stage = 0
@@ -53,12 +56,12 @@ class GokkalkanEngine:
         try:
             if os.path.exists(yol):
                 with open(yol, 'r', encoding='utf-8') as f:
-                    config = yaml.safe_load(f) or {}
-                    # Basit Şema Doğrulaması (Production Readiness)
-                    required = ['radar', 'batarya']
-                    for r in required:
+                    content = yaml.safe_load(f)
+                    config: Dict[str, Any] = content if isinstance(content, dict) else {}
+                    
+                    for r in ['radar', 'batarya']:
                         if r not in config:
-                            self.telemetri.olay_kaydet("WARNING", f"Eksik Konfig: {r} bölümü bulunamadı. Varsayılanlar yüklenecek.")
+                            self.telemetri.olay_kaydet("WARNING", f"Eksik Konfig: {r} bölümü bulunamadı.")
                             config[r] = {}
                     return config
             else:
@@ -234,6 +237,7 @@ class GokkalkanEngine:
                 "stage": self.current_stage
             }
             api.push_data_to_clients(self.current_telemetry)
+            self.network_manager.start_broadcasting(self.current_telemetry)
             
             # 7. AAR Periodic Telemetry Log
             self.aar_logger.log_telemetry(

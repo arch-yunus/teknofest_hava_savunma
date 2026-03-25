@@ -817,6 +817,34 @@ document.getElementById('btn-force-hypersonic').addEventListener('click', () => 
     setTimeout(() => btn.textContent = originalText, 1000);
 });
 
+document.getElementById('btn-start-mission').addEventListener('click', () => {
+    const selector = document.getElementById('mission-selector');
+    const mId = selector.value;
+    if (mId) {
+        sendCommand('start_mission', { mission_id: mId });
+        const btn = document.getElementById('btn-start-mission');
+        const originalText = btn.textContent;
+        btn.textContent = ">>> MISSION STARTED <<<";
+        setTimeout(() => btn.textContent = originalText, 1500);
+        
+        // Reset scale for operational missions (they use 200km range)
+        COMP_MODE = false;
+        MAX_RANGE = 200.0;
+        createRadarCircles();
+    }
+});
+
+document.getElementById('btn-generate-report').addEventListener('click', () => {
+    sendCommand('generate_report');
+    const btn = document.getElementById('btn-generate-report');
+    const originalText = btn.textContent;
+    btn.textContent = ">>> RAPOR OLUŞTURULUYOR <<<";
+    setTimeout(() => {
+        btn.textContent = ">>> RAPOR HAZIR (reports/aar/) <<<";
+        setTimeout(() => btn.textContent = originalText, 3000);
+    }, 1000);
+});
+
 document.getElementById('btn-trigger-emp').addEventListener('click', () => {
     // If audio context is suspended (browser policy), resume it on first click
     if (audioCtx.state === 'suspended') audioCtx.resume();

@@ -15,7 +15,10 @@ from src.strategic_analyzer import StrategicAnalyzer
 import src.utils as utils
 import src.api as api
 from src.aar_logger import AARLogger
+from src.aar_logger import AARLogger
 from src.network_manager import NetworkManager
+from src.missions import MissionManager
+from src.aar_reporter import AARReporter
 
 class GokkalkanEngine:
     """GökKalkan Millî Hava Savunma Sistemi - Merkezi Simülasyon Motoru (v10.0)"""
@@ -38,6 +41,7 @@ class GokkalkanEngine:
         self.ciws = Lazer_CIWS(menzil_km=2.0, atis_hizi=10)
         self.stratejik_analizor = StrategicAnalyzer()
         self.network_manager = NetworkManager() # NCW Foundation
+        self.active_mission_id = "MANUEL"
         
         self.auto_fire_enabled = True
         self.current_stage = 0
@@ -197,7 +201,7 @@ class GokkalkanEngine:
                 all_target_info.append(data)
 
             # 4. Strategic Analysis & Autonomous Directive Execution
-            stratejik_rapor = self.stratejik_analizor.analiz_et(all_target_info, self.batarya.muhimmat)
+            stratejik_rapor = self.stratejik_analizor.analiz_et(all_target_info, self.batarya.muhimmat, mission_id=self.active_mission_id)
             directive_val = stratejik_rapor.get("directive", "")
             
             # Otonom Direktif İcrası (Phase 15)
@@ -252,13 +256,34 @@ class GokkalkanEngine:
     def execute_command(self, cmd_dict: Dict[str, Any]):
         action = cmd_dict.get("action")
         target_id = cmd_dict.get("target_id")
-        
         if action == "force_swarm": 
-            self.radar.tara_suru_saldirisi()
+            mission = MissionManager.get_mission("SWARM_ATTACK")
+            if mission:
+                self.radar.spawn_mission(mission)
+                self.active_mission_id = "SWARM_ATTACK"
             self.telemetri.olay_kaydet("WARNING", "Manuel Komut: Sürü Saldırısı")
         elif action == "force_hypersonic": 
-            self.radar.tara_hipersonik_tehdit()
-            self.telemetri.olay_kaydet("CRITICAL", "Manuel Komut: Hipersonik Tehdit")
+            mission = MissionManager.get_mission("HYPERSONIC_THREAT")
+            if mission:
+                self.radar.spawn_mission(mission)
+                self.active_mission_id = "HYPERSONIC_THREAT"
+        elif action == "generate_report":
+            reporter = AARReporter(self.aar_logger.events_file, self.aar_logger.telemetry_file)
+            report_path = reporter.generate_html()
+            self.telemetri.olay_kaydet("SUCCESS", f"Rapor Oluşturuldu: {os.path.basename(report_path)}")
+        elif action == "start_mission":
+            m_id = cmd_dict.get("mission_id")
+            mission = MissionManager.get_mission(m_id)
+            if mission:
+                self.radar.spawn_mission(mission)
+                self.active_mission_id = m_id
+                self.telemetri.olay_kaydet("INFO", f"Görev Başlatıldı: {mission.name}")
+        elif action == "simulate_network_track":
+            dummy_tracks = [{
+                "id": "NET-DUMMY-1", "x": 100, "y": 100, "z": 10, "vx": -0.2, "vy": -0.2, "vz": 0,
+                "rcs": 2.0, "etiket": "F16", "is_dost": False
+            }]
+            self.network_manager.receive_remote_data("BATARYA-2", dummy_tracks)
         elif action == "toggle_auto_fire": 
             self.auto_fire_enabled = not self.auto_fire_enabled
             self.telemetri.olay_kaydet("INFO", f"Otonom Mod: {self.auto_fire_enabled}")

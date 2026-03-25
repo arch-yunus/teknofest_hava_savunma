@@ -107,10 +107,23 @@
                 <button id="btn-toggle-weather" class="btn info">METEOROLOJİ</button>
             </div>
 
+            <div class="control-row mission-panel">
+                <select id="mission-selector" class="dropdown-select mission">
+                    <option value="">-- OPERASYONEL GÖREV SEÇ --</option>
+                    <option value="SWARM_ATTACK">Sürü İHA Taarruzu</option>
+                    <option value="BALLISTIC_SALVO">Balistik Füze Yaylımı</option>
+                    <option value="HYPERSONIC_THREAT">Hipersonik Önleme</option>
+                    <option value="EW_OPERATIONS">Elektronik Harp (EW)</option>
+                    <option value="HYBRID_ESCORT">Karma Refakat</option>
+                </select>
+                <button id="btn-start-mission" class="btn active">GÖREVİ BAŞLAT</button>
+            </div>
+
             <div class="control-row actions">
                 <button id="btn-trigger-emp" class="btn danger-alt">EMP BLAST</button>
                 <button id="btn-force-swarm" class="btn warning-alt">SWARM TEST</button>
                 <button id="btn-force-hypersonic" class="btn gold-btn">HYPERSONIC TEST</button>
+                <button id="btn-generate-report" class="btn success-alt">AAR RAPORU OLUŞTUR</button>
                 <button id="btn-estop" class="btn estop">ACİL DURDURMA</button>
             </div>
         </div>

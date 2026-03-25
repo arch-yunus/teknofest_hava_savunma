@@ -1,7 +1,8 @@
 import random
 import math
-from typing import List, Any
+from typing import List, Any, Tuple
 from enum import Enum
+from src.evasion_intelligence import EvasionAI
 
 class HavaDurumu(Enum):
     """Hava durumu durumlarını temsil eder."""
@@ -38,6 +39,7 @@ class Hedef:
         self.is_dost = False # Dost/Düşman ayrımı
         self.etiket = "Bilinmeyen" # F16, Helikopter, Mini IHA, Balistik Fuze
         self.dondu = False # E-Stop için hareket durdurma bayrağı
+        self.evasion_ai = EvasionAI()
 
         # Manevra ve TWR (Threat Warning Receiver)
         self.is_maneuvering = False
@@ -55,9 +57,19 @@ class Hedef:
         hiz_kmps = math.sqrt(self.vx**2 + self.vy**2 + self.vz**2)
         return hiz_kmps * 3600.0
 
-    def ilerle(self, dt: float = 1.0):
-        """Hedefi hız vektörü yönünde dt süresi kadar hareket ettirir."""
+    def ilerle(self, dt: float = 1.0, interceptors: list = None):
+        """Hedefi hız vektörü yönünde dt süresi kadar hareket ettirir ve kaçınma yapar."""
         if self.dondu: return # E-Stop aktifse hareket yok
+
+        # AI Tabanlı Kaçınma Manevrası (TWR Entegrasyonu)
+        if interceptors and not self.is_dost:
+            # interceptors is a list of interceptor objects (from battery.aktif_fuzeler)
+            # We need to pass them in a format EvasionAI understands or use them directly
+            int_data = [{"x": f.x, "y": f.y, "z": f.z} for f in interceptors if getattr(f, 'aktif', True)]
+            ox, oy, oz = self.evasion_ai.calculate_maneuver((self.x, self.y, self.z), int_data)
+            self.vx += ox * dt
+            self.vz += oz * dt
+
         self.x += self.vx * dt
         self.y += self.vy * dt
         self.z += self.vz * dt

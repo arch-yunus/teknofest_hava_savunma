@@ -23,7 +23,7 @@ class StrategicAnalyzer:
             "C2_Global": "SYNCHRONIZED"
         }
 
-    def analiz_et(self, hedefler: List[Dict[str, Any]], mühimmat: int) -> Dict[str, Any]:
+    def analiz_et(self, hedefler: List[Dict[str, Any]], mühimmat: int, mission_id: str = "DEFAULT") -> Dict[str, Any]:
         """
         Hedef yoğunluğu, mühimmat durumu ve EH faaliyetlerine göre stratejik rapor sunar.
         """
@@ -41,6 +41,12 @@ class StrategicAnalyzer:
         elif mühimmat < 10 and kritik_hedefler > 0:
             directive = StrategicDirective.CONSERVE_AMMO
         elif kritik_hedefler > 3:
+            directive = StrategicDirective.MAX_INTERCEPTION
+            
+        # Mission Specific Overrides
+        if mission_id == "SWARM_ATTACK":
+            directive = StrategicDirective.SWARM_EMERGENCY
+        elif mission_id == "HYPERSONIC_THREAT" and kritik_hedefler > 0:
             directive = StrategicDirective.MAX_INTERCEPTION
             
         self.last_directive = directive

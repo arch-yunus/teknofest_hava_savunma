@@ -2,6 +2,7 @@ import random
 import math
 from typing import List, Dict, Optional, Any
 from src.models import Hedef, HavaDurumu
+from src.missions import Mission
 
 class RadarSistemi:
     def __init__(self, menzil_km: float = 150.0, tespit_olasiligi: float = 0.4):
@@ -425,8 +426,6 @@ class RadarSistemi:
         suru_hedefleri = [h for h in self.aktif_hedefler if h.id.startswith("SWRM-")]
         
         for h in self.aktif_hedefler:
-            # Taktik Zeka: Füze tespiti ve Kaçınma
-            h.detect_and_evade(interceptors, 1.0)
             
             h.boids_guncelle(suru_hedefleri, 1.0) # Boids alg. (SWRM etiketiyse çalışır)
             
@@ -454,7 +453,57 @@ class RadarSistemi:
                     arm.is_arm = True
                     self.aktif_hedefler.append(arm)
             
-            h.ilerle(1.0)
+            h.ilerle(1.0, interceptors)
             if h.mesafe > self.menzil_km * 1.5: # Menzili çok aşanı sil
                 if h in self.aktif_hedefler:
                     self.aktif_hedefler.remove(h)
+    def spawn_mission(self, mission: Mission) -> List[Hedef]:
+        """Verilen görev tanımına göre hedefleri dinamik olarak üretir."""
+        self.aktif_hedefler.clear()
+        yeni_hedefler = []
+        
+        for i in range(mission.target_count):
+            # Rastgele konum (Menzil 80-180 km arası, açı 360 derece)
+            dist = random.uniform(80.0, 180.0)
+            angle = random.uniform(0, 2*math.pi)
+            x, y = dist * math.cos(angle), dist * math.sin(angle)
+            z = random.uniform(mission.alt_range[0], mission.alt_range[1])
+            
+            # Merkeze doğru hız
+            speed_kmh = random.uniform(mission.speed_range[0], mission.speed_range[1])
+            hiz_mps = speed_kmh / 3.6
+            vx = -x / dist * hiz_mps
+            vy = -y / dist * hiz_mps
+            vz = 0
+            
+            h = Hedef(f"{mission.id}-{i}", x, y, z, vx, vy, vz, rcs=random.uniform(mission.rcs_range[0], mission.rcs_range[1]))
+            
+            if mission.is_swarm:
+                h.etiket = "Sürü İHA"
+            elif mission.is_hypersonic:
+                h.etiket = "Hipersonik Füze"
+            elif speed_kmh > 3000:
+                h.etiket = "Balistik Füze"
+            else:
+                h.etiket = "Hava Tehdidi"
+                
+            if mission.has_jammer and i % 3 == 0:
+                h.is_jammer = True
+                h.etiket += " (Jammer)"
+                
+            self.aktif_hedefler.append(h)
+            yeni_hedefler.append(h)
+            
+        # Dost unsurları ekle
+        for i in range(mission.dost_unsur_count):
+            dist = random.uniform(40, 100)
+            angle = random.uniform(0, 2*math.pi)
+            x, y = dist * math.cos(angle), dist * math.sin(angle)
+            z = random.uniform(2, 8)
+            h = Hedef(f"FRIEND-{i}", x, y, z, 0, 0, 0, rcs=2.0)
+            h.is_dost = True
+            h.etiket = "Dost Unsur"
+            self.aktif_hedefler.append(h)
+            yeni_hedefler.append(h)
+            
+        return yeni_hedefler

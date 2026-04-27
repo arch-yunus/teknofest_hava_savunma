@@ -22,6 +22,11 @@
 [![Build Status](https://img.shields.io/badge/S%C4%B0STEM-STAB%C4%B0L-10b981?style=for-the-badge&logo=github-actions&logoColor=white)](https://github.com/bahattinyunus/teknofest_hava_savunma)
 
 <br>
+
+> [!NOTE]
+> **ARGUS Nereden Geliyor?**  
+> Proje ismini Yunan mitolojisindeki **"Argus Panoptes"**ten (Her Şeyi Gören Argus) almaktadır. Yüz gözü olan ve asla tamamen uyumayan bu dev bekçi, her yöne bakabilme ve en küçük hareketi bile saptayabilme yeteneğiyle bilinir. **ARGUS AI**, çok katmanlı radar sistemleri ve 3D sensör füzyonu ile gökyüzünü her an, her yönden tarayan bu efsanevi "Sonsuz Gözü" temsil eder.
+
 <i>"Bilginin sınırları, gökyüzünün sınırları gibidir; her ikisi de sadece ufuk çizgisine kadar değil, sonsuzluğa kadar uzanır."</i>
 <br><br>
 

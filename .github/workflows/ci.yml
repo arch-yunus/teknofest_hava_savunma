@@ -1,4 +1,4 @@
-name: ARGUS CI
+name: SANCAR CI
 
 on:
   push:

@@ -21,11 +21,11 @@ from src.network_manager import NetworkManager
 from src.missions import MissionManager
 from src.aar_reporter import AARReporter
 
-class ArgusEngine:
-    """ARGUS Millî Hava Savunma Sistemi - Merkezi Simülasyon Motoru (v10.0)"""
+class SancarEngine:
+    """SANCAR Millî Hava Savunma Sistemi - Merkezi Simülasyon Motoru (v10.0)"""
     def __init__(self, config_path: str = "config/ayarlar.yaml"):
         self.ayarlar = self.load_config(config_path)
-        self.telemetri = TelemetriSistemi(log_dosyasi="logs/argus_core.log")
+        self.telemetri = TelemetriSistemi(log_dosyasi="logs/sancar_core.log")
         self.siniflandirici = TehditSiniflandirici()
         self.kalman_yoneticisi = KalmanTakipYoneticisi(dt=1.0)
         
@@ -83,14 +83,14 @@ class ArgusEngine:
         self.loop_thread = threading.Thread(target=self._run_loop, daemon=True)
         if self.loop_thread:
             self.loop_thread.start()
-        self.telemetri.olay_kaydet("INFO", "ArgusEngine simülasyon döngüsü başlatıldı.")
+        self.telemetri.olay_kaydet("INFO", "SancarEngine simülasyon döngüsü başlatıldı.")
 
     def stop(self):
         """Stop the simulation loop."""
         self.running = False
         if self.loop_thread:
             self.loop_thread.join(timeout=2.0)
-        self.telemetri.olay_kaydet("INFO", "ArgusEngine simülasyon döngüsü durduruldu.")
+        self.telemetri.olay_kaydet("INFO", "SancarEngine simülasyon döngüsü durduruldu.")
 
     def _run_loop(self):
         while self.running:

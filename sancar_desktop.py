@@ -4,14 +4,14 @@ import threading
 import time
 import webview
 
-from src.engine import ArgusEngine
+from src.engine import SancarEngine
 import src.api as api
 
-class ArgusDesktop:
-    """ARGUS Desktop Application - Unified Engine Client"""
+class SancarDesktop:
+    """SANCAR Desktop Application - Unified Engine Client"""
     def __init__(self):
         # Initialize the core engine
-        self.engine = ArgusEngine()
+        self.engine = SancarEngine()
         self.running = True
 
     def simulation_loop(self):
@@ -37,13 +37,13 @@ if __name__ == "__main__":
     if ROOT_DIR not in sys.path:
         sys.path.append(os.path.join(ROOT_DIR, 'src'))
 
-    app = ArgusDesktop()
+    app = SancarDesktop()
     
     # Run the core simulation engine in a background thread
     sim_thread = threading.Thread(target=app.simulation_loop, daemon=True)
     sim_thread.start()
     
-    print("ARGUS Masaüstü Komuta Merkezi başlatılıyor...")
+    print("SANCAR Masaüstü Komuta Merkezi başlatılıyor...")
     
     # 0. API Servisi için bekleme (Resilience)
     max_retries = 10
@@ -58,7 +58,7 @@ if __name__ == "__main__":
 
     # 1. Webview penceresini oluştur
     window = webview.create_window(
-        "ARGUS AI - Komuta Kontrol Merkezi (v10.0)",
+        "SANCAR AI - Komuta Kontrol Merkezi (v10.0)",
         "http://localhost:8000",
         width=1280,
         height=800,

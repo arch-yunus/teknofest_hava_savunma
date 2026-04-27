@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "argus-yz"
+name = "sancar-yz"
 version = "2.5.0"
 authors = [
   { name="Bahattin Yunus Çetin", email="b.yunuscetin@gmail.com" },
@@ -28,4 +28,4 @@ dependencies = [
 "Bug Tracker" = "https://github.com/bahattinyunus/teknofest_hava_savunma/issues"
 
 [project.scripts]
-argus = "src.main:main"
+sancar = "src.main:main"

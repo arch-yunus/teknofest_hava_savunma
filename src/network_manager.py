@@ -6,7 +6,7 @@ from typing import Dict, Any, List
 
 class NetworkManager:
     """
-    ARGUS Ağ Merkezli Harp (NCW) İletişim Yöneticisi.
+    SANCAR Ağ Merkezli Harp (NCW) İletişim Yöneticisi.
     Diğer bataryalar ile 'Recognized Air Picture' (RAP) paylaşımı yapar.
     """
     def __init__(self, port: int = 9000):

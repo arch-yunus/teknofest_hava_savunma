@@ -1,7 +1,7 @@
-# ARGUS YZ'ye Katkıda Bulunma
+# SANCAR YZ'ye Katkıda Bulunma
 
 ## Görev Özeti
-ARGUS YZ geliştirme birimine hoş geldiniz. Yeni nesil hava savunma sistemlerini inşa ediyoruz. Doğruluk ve güvenilirlik her şeyden önemlidir.
+SANCAR YZ geliştirme birimine hoş geldiniz. Yeni nesil hava savunma sistemlerini inşa ediyoruz. Doğruluk ve güvenilirlik her şeyden önemlidir.
 
 ## Protokol
 1.  **Fork** (Çatallama) işlemini yapın.

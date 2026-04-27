@@ -6,7 +6,7 @@ import { trpc } from '@/lib/trpc';
 import { LayeredDefenseVisualization } from '@/components/LayeredDefenseVisualization';
 
 /**
- * ARGUS AI - Çok Katmanlı Hava Savunma Komuta Kontrol Merkezi
+ * SANCAR AI - Çok Katmanlı Hava Savunma Komuta Kontrol Merkezi
  * İsrail'in katmanlı savunma sistemine benzer mimariye dayalı
  * TEKNOFEST 2026 Çelikkubbe Hava Savunma Sistemleri Yarışması
  * 
@@ -280,7 +280,7 @@ export default function CommandCenter() {
           <div className="flex items-center gap-3">
             <Layers className="w-8 h-8 text-primary animate-pulse" />
             <div>
-              <h1 className="text-2xl font-bold text-primary">ARGUS AI</h1>
+              <h1 className="text-2xl font-bold text-primary">SANCAR AI</h1>
               <p className="text-xs text-muted-foreground">ÇOK KATMANLI HAVA SAVUNMA KOMUTAKONTROLMERKEZİ - SİMÜLASYON BAĞLI</p>
             </div>
           </div>
@@ -425,7 +425,7 @@ export default function CommandCenter() {
           {/* 3D Radar Görseli */}
           <Card className="bg-card border-border overflow-hidden h-64">
             <img 
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663274973023/amgFZtxC2LKhCABLsBVbfV/argus-hero-3d-radar-cT2eyHNNXavqpzXKuWfCpc.webp"
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663274973023/amgFZtxC2LKhCABLsBVbfV/sancar-hero-3d-radar-cT2eyHNNXavqpzXKuWfCpc.webp"
               alt="3D Radar Ekranı"
               className="w-full h-full object-cover"
             />

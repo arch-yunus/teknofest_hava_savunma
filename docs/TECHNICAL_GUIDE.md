@@ -1,6 +1,6 @@
-# 🧮 ARGUS AI: Teknik Dokümantasyon ve Operasyonel Fizik
+# 🧮 SANCAR AI: Teknik Dokümantasyon ve Operasyonel Fizik
 
-Bu kılavuz, ARGUS sisteminin kalbinde yatan matematiksel modelleri ve uçuş fiziği kurallarını detaylandırmaktadır.
+Bu kılavuz, SANCAR sisteminin kalbinde yatan matematiksel modelleri ve uçuş fiziği kurallarını detaylandırmaktadır.
 
 ## 1. Radar Menzil Denklemi (SNR Analizi)
 

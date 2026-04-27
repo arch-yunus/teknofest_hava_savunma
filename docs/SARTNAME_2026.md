@@ -1,6 +1,6 @@
-# 🎯 TEKNOFEST 2026 Çelikkubbe Hava Savunma Sistemleri Yarışması Şartnamesi ve ARGUS AI Entegrasyonu
+# 🎯 TEKNOFEST 2026 Çelikkubbe Hava Savunma Sistemleri Yarışması Şartnamesi ve SANCAR AI Entegrasyonu
 
-ARGUS AI, **TEKNOFEST 2026 Çelikkubbe Hava Savunma Sistemleri Yarışması** teknik şartnamesine tam uyumlu bir şekilde, modern harp doktrinleriyle modernize edilmiştir. Bu belge, şartnamede istenen görev aşamalarının ARGUS AI sisteminde nasıl simüle edildiğini açıklamaktadır.
+SANCAR AI, **TEKNOFEST 2026 Çelikkubbe Hava Savunma Sistemleri Yarışması** teknik şartnamesine tam uyumlu bir şekilde, modern harp doktrinleriyle modernize edilmiştir. Bu belge, şartnamede istenen görev aşamalarının SANCAR AI sisteminde nasıl simüle edildiğini açıklamaktadır.
 
 ## 📖 Şartname Özeti
 
@@ -26,11 +26,11 @@ Yarışma üç temel operasyonel aşamadan oluşmaktadır:
 
 ---
 
-## 🛠️ ARGUS AI Şartname Uyumu
+## 🛠️ SANCAR AI Şartname Uyumu
 
 Sistemimizin çekirdek mekaniği, yarışmanın üç aşamasını da doğrudan destekleyecek ve aşacak (military-grade) seviyede tasarlanmıştır:
 
-| Şartname Görevi | ARGUS AI Modülü | Nasıl Sağlanıyor? |
+| Şartname Görevi | SANCAR AI Modülü | Nasıl Sağlanıyor? |
 | :--- | :--- | :--- |
 | **Aşama-1 (Duran Hedefler)** | `radar.py` & `interceptor.py` | Radar taramamız yavaş veya sabit hedefleri (hız $\approx$ 0) tespit eder ve kinetik önleyiciler hedefe saniyeler içinde kilitlenir. |
 | **Aşama-2 (Sürü Saldırısı)** | `Boids Algoritması` & `CIWS` | Sistemi özel Boids (Flocking) algoritması ile aynı anda 5-12 adet V ve otonom formasyonlu İHA simülasyonu üretir (`tara_suru_saldirisi` metodu). Hedefler yaklaştığında füzeler veya enerji silahları (Lazer-CIWS) devreye girer. |
@@ -38,4 +38,4 @@ Sistemimizin çekirdek mekaniği, yarışmanın üç aşamasını da doğrudan d
 | **Puanlama Kriterleri** | `telemetry.py` | Başarıyla imha edilen (Hit-to-Kill Onaylı) hedefler anbean kaydedilir ve yarışma jürisine rapor formatında sunulabilir. |
 
 ## 🚀 Sonuç
-ARGUS AI, TEKNOFEST 2026 için sadece asgari müşterekleri sağlayan bir betik değil, aynı zamanda siber harp, EH (Elektronik Harp / Jammer) ve yağmur (Weather Attenuation) gibi çevresel zorlukları barındıran; Çelikkubbe'nin beklentilerinin ötesinde yüksek sadakatli bir Hava Savunma Doktrini simülasyonudur.
+SANCAR AI, TEKNOFEST 2026 için sadece asgari müşterekleri sağlayan bir betik değil, aynı zamanda siber harp, EH (Elektronik Harp / Jammer) ve yağmur (Weather Attenuation) gibi çevresel zorlukları barındıran; Çelikkubbe'nin beklentilerinin ötesinde yüksek sadakatli bir Hava Savunma Doktrini simülasyonudur.

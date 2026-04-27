@@ -1,4 +1,4 @@
-name: ARGUS AI Quality Check
+name: SANCAR AI Quality Check
 
 on:
   push:

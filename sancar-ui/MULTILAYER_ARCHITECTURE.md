@@ -1,8 +1,8 @@
-# ARGUS AI - Çok Katmanlı Savunma Mimarisi
+# SANCAR AI - Çok Katmanlı Savunma Mimarisi
 
 ## Sistem Mimarisi Özeti
 
-ARGUS AI, İsrail'in katmanlı savunma sistemine benzer şekilde, farklı menzil ve irtifada gelen tehditleri müdafaa etmek için 5 katmanlı bir yapı ile tasarlanmıştır. Her katman, diğer katmanların başarısız olması durumunda devreye giren bağımsız bir savunma sistemidir.
+SANCAR AI, İsrail'in katmanlı savunma sistemine benzer şekilde, farklı menzil ve irtifada gelen tehditleri müdafaa etmek için 5 katmanlı bir yapı ile tasarlanmıştır. Her katman, diğer katmanların başarısız olması durumunda devreye giren bağımsız bir savunma sistemidir.
 
 ## Katmanlar ve Özellikleri
 

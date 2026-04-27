@@ -10,7 +10,7 @@ class MissionStatus(Enum):
 
 @dataclass
 class Mission:
-    """ARGUS Operasyonel Görev Tanımı."""
+    """SANCAR Operasyonel Görev Tanımı."""
     id: str
     name: str
     description: str

@@ -6,19 +6,19 @@ from rich.console import Console
 from rich.table import Table
 from rich.live import Live
 
-from src.engine import ArgusEngine
+from src.engine import SancarEngine
 import src.api as api
 
 console = Console()
 
-class ArgusRunner:
-    """ARGUS CLI Simulation Runner - Unified Engine Client"""
+class SancarRunner:
+    """SANCAR CLI Simulation Runner - Unified Engine Client"""
     def __init__(self):
-        self.engine = ArgusEngine()
+        self.engine = SancarEngine()
         self.console = console
 
     def create_table(self, targets: list, ammo: int) -> Table:
-        table = Table(title="[bold magenta]ARGUS CLI RUNNER — TAKTİK VERİ[/]")
+        table = Table(title="[bold magenta]SANCAR CLI RUNNER — TAKTİK VERİ[/]")
         table.add_column("ID", style="cyan")
         table.add_column("Mesafe", justify="right")
         table.add_column("Hız", justify="right")
@@ -42,7 +42,7 @@ class ArgusRunner:
         api_thread.start()
         
         self.console.print("[bold green]Runner Başlatıldı. API Port: 8001[/]")
-        self.console.print("[dim]Bu istemci merkezi ArgusEngine çekirdeğini kullanmaktadır.[/]")
+        self.console.print("[dim]Bu istemci merkezi SancarEngine çekirdeğini kullanmaktadır.[/]")
         
         try:
             with Live(self.create_table([], 0), refresh_per_second=2) as live:
@@ -59,9 +59,9 @@ class ArgusRunner:
             self.console.print("\n[bold red]Runner Durduruldu.[/]")
 
 if __name__ == "__main__":
-    runner = ArgusRunner()
+    runner = SancarRunner()
     runner.run()
 
 if __name__ == "__main__":
-    runner = ArgusRunner()
+    runner = SancarRunner()
     runner.run()

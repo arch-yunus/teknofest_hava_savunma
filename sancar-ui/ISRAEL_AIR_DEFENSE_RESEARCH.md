@@ -83,9 +83,9 @@
 - Otomatik sistem (insan müdahalesi minimal)
 - Birden fazla hedef aynı anda işlenebilir
 
-## ARGUS AI Uyarlaması
+## SANCAR AI Uyarlaması
 
-ARGUS AI sistemi, İsrail'in bu katmanlı savunma mimarisini Türkçe terminoloji ile uyarlanacaktır:
+SANCAR AI sistemi, İsrail'in bu katmanlı savunma mimarisini Türkçe terminoloji ile uyarlanacaktır:
 
 ### Katman Adlandırması (Türkçe)
 1. **Uzak Katman:** Yıldırım Sistemi (Arrow benzeri)

@@ -1,7 +1,7 @@
 """
 tehdit_siniflandirici.py
 ========================
-ARGUS YZ - Tehdit Sınıflandırma Motoru
+SANCAR YZ - Tehdit Sınıflandırma Motoru
 
 Hedefin kinematik parametrelerinden (hız, irtifa, manevra kabiliyeti, 
 CPA) yararlanarak tehdit tipini ve öncelik skorunu belirler.

@@ -16,7 +16,7 @@ if __name__ == '__main__':
     # Add project root to sys path
     sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
     
-    # Run the GökKalkan Backend (Simulation + FastAPI) in a separate daemon thread
+    # Run the ARGUS Backend (Simulation + FastAPI) in a separate daemon thread
     backend_thread = threading.Thread(target=start_backend, daemon=True)
     backend_thread.start()
     
@@ -26,7 +26,7 @@ if __name__ == '__main__':
     # Create Native Desktop Window pointing to the local dashboard
     print("Masaüstü uygulamasi baslatiliyor...")
     webview.create_window(
-        "GökKalkan AI Komuta Kontrol Merkezi - Teknofest 2026", 
+        "ARGUS AI Komuta Kontrol Merkezi - Teknofest 2026", 
         "http://localhost:8000",
         width=1280,
         height=720,

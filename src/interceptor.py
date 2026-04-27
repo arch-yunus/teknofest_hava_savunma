@@ -4,7 +4,7 @@ from typing import Dict, Any, List, Optional
 from src.models import Hedef
 
 class SavunmaHatasi(Exception):
-    """GökKalkan savunma sistemi için genel hata sınıfı."""
+    """ARGUS savunma sistemi için genel hata sınıfı."""
     pass
 
 class MuhimmatYokHatasi(SavunmaHatasi):

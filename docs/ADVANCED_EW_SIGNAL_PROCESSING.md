@@ -1,7 +1,7 @@
-# 📡 GökKalkan AI - İleri Elektronik Harp (EW) ve Sinyal İşleme Doktrini
+# 📡 ARGUS AI - İleri Elektronik Harp (EW) ve Sinyal İşleme Doktrini
 
 ## 1. Giriş
-Bu döküman, GökKalkan AI sisteminin elektromanyetik spektrum üzerindeki operasyonel yeteneklerini, sinyal işleme algoritmalarını ve Elektronik Karşı-Karşı Tedbir (ECCM) stratejilerini detaylandırır.
+Bu döküman, ARGUS AI sisteminin elektromanyetik spektrum üzerindeki operasyonel yeteneklerini, sinyal işleme algoritmalarını ve Elektronik Karşı-Karşı Tedbir (ECCM) stratejilerini detaylandırır.
 
 ## 2. Radar Menzil Denklemi ve SNR Analizi
 
@@ -16,7 +16,7 @@ Burada:
 - $R$: Hedef mesafesi
 - $L$: Sistem kayıpları
 
-**GökKalkan V5.0**, statik bir "tespit olasılığı" yerine, anlık SNR değerini hesaplayarak dedeksiyon kararını verir. SNR > $SNR_{threshold}$ ise hedef takibe alınır.
+**ARGUS V5.0**, statik bir "tespit olasılığı" yerine, anlık SNR değerini hesaplayarak dedeksiyon kararını verir. SNR > $SNR_{threshold}$ ise hedef takibe alınır.
 
 ## 3. RCS Dalgalanma Modelleri (Swerling Modelleri)
 
@@ -31,7 +31,7 @@ Pervaneli İHA'ların (Drones) gövde hareketine ek olarak pervanelerinin hızı
 
 $$f_{mD} = \frac{2 \cdot v_{tip}}{\lambda} \cdot \cos(\theta)$$
 
-GökKalkan AI, bu frekans kaymalarını analiz ederek kuş ve drone ayrımını (Bird vs Drone) yüksek doğrulukla gerçekleştirir.
+ARGUS AI, bu frekans kaymalarını analiz ederek kuş ve drone ayrımını (Bird vs Drone) yüksek doğrulukla gerçekleştirir.
 
 ## 5. Elektronik Karşı-Karşı Tedbirler (ECCM)
 

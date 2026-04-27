@@ -2,465 +2,148 @@ const wsStatusEl = document.getElementById('ws-status');
 const targetListEl = document.getElementById('target-list');
 const tooltipsContainer = document.getElementById('tooltips-container');
 
-let MAX_RANGE = 200.0; // Default simulation range
-let COMP_MODE = false; // Competition scale mode (15m)
+let MAX_RANGE = 200.0;
+let COMP_MODE = false;
+let chartTime = 0;
 
-// --- Three.js Setup ---
+// --- Three.js Advanced Setup ---
 const canvasContainer = document.getElementById('canvas-container');
 const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x060608, 0.002);
 
 // Camera
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
-camera.position.set(200, 250, 300); // Cinematic starting position
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 5000);
+camera.position.set(200, 250, 400);
 
-// Renderer
+// Renderer with Bloom-friendly settings
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.toneMapping = THREE.ReinhardToneMapping;
 canvasContainer.appendChild(renderer.domElement);
 
 // Controls
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
-controls.maxPolarAngle = Math.PI / 2 - 0.05; // Don't allow going below ground
+controls.maxPolarAngle = Math.PI / 2 - 0.05;
 
-let selectedTargetId = null;
+// --- Digital Holographic World ---
+const terrainSize = 1000;
+const terrainSegments = 50;
+const terrainGeo = new THREE.PlaneGeometry(terrainSize, terrainSize, terrainSegments, terrainSegments);
 
-function autoZoom(targets) {
-    if (!targets || targets.length === 0) return;
-    
-    // Find highest priority target
-    const criticalTarget = targets.find(t => t.oncelik === "KRİTİK") || targets[0];
-    
-    if (criticalTarget) {
-        const posX = criticalTarget.x;
-        const posY = Math.max(criticalTarget.irtifa * 10, 0);
-        const posZ = -criticalTarget.y;
-        
-        // Smoothly move controls target towards critical target
-        controls.target.lerp(new THREE.Vector3(posX, posY, posZ), 0.05);
-    }
-}
-
-// --- Cyberpunk 3D Terrain (Holo-Map) ---
-const mapSize = 400;
-const segments = 60;
-const terrainGeo = new THREE.PlaneGeometry(mapSize, mapSize, segments, segments);
-
-// Add some random noise to vertices to simulate mountains/valleys
-const vertices = terrainGeo.attributes.position.array;
-for (let i = 0; i < vertices.length; i += 3) {
-    // Modify Z value (which will be Y after rotation)
-    // Create a slight valley in the center, mountains on the edges
-    const x = vertices[i];
-    const y = vertices[i + 1];
-    const distFromCenter = Math.sqrt(x * x + y * y);
-    const noise = Math.random() * 2;
-    // Taller mountains further from center
-    vertices[i + 2] = (distFromCenter / 15) + noise - 5;
+// Procedural Terrain Noise (Holographic Mountains)
+const posAttr = terrainGeo.attributes.position;
+for (let i = 0; i < posAttr.count; i++) {
+    const x = posAttr.getX(i);
+    const y = posAttr.getY(i);
+    const dist = Math.sqrt(x*x + y*y);
+    const z = (Math.sin(x/50) * Math.cos(y/50) * 15) + (dist > 300 ? (dist-300)/2 : 0);
+    posAttr.setZ(i, z);
 }
 terrainGeo.computeVertexNormals();
 
-const terrainMat = new THREE.MeshBasicMaterial({
-    color: 0x004400, // Koyu yeşil
-    wireframe: true,
-    transparent: true,
-    opacity: 0.3
+const terrainMat = new THREE.MeshBasicMaterial({ 
+    color: 0x00f3ff, 
+    wireframe: true, 
+    transparent: true, 
+    opacity: 0.05 
 });
 const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
 terrainMesh.rotation.x = -Math.PI / 2;
-terrainMesh.position.y = -1; // Ana gridin biraz altında
+terrainMesh.position.y = -10;
 scene.add(terrainMesh);
 
-// --- Radar Environment ---
-const gridHelper = new THREE.GridHelper(MAX_RANGE * 2, 40, 0x00ff00, 0x004400);
-gridHelper.position.y = 0;
-gridHelper.material.opacity = 0.3;
+// Grid Helper (Subtle secondary grid)
+const gridHelper = new THREE.GridHelper(1000, 50, 0x00f3ff, 0x002233);
+gridHelper.position.y = -0.5;
 gridHelper.material.transparent = true;
+gridHelper.material.opacity = 0.1;
 scene.add(gridHelper);
 
-const circleMaterial = new THREE.LineBasicMaterial({ color: 0x00f2ff, transparent: true, opacity: 0.15 });
-const radarCircles = [];
-function createRadarCircles() {
-    // Remove old circles
-    radarCircles.forEach(c => scene.remove(c));
-    radarCircles.length = 0;
+// --- Radar Pulse Effect ---
+const pulseGeo = new THREE.RingGeometry(0, 5, 64);
+const pulseMat = new THREE.MeshBasicMaterial({ 
+    color: 0x00f3ff, 
+    transparent: true, 
+    opacity: 0.5, 
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending
+});
+const pulseMesh = new THREE.Mesh(pulseGeo, pulseMat);
+pulseMesh.rotation.x = -Math.PI / 2;
+scene.add(pulseMesh);
 
-    const circles = COMP_MODE ? [5, 10, 15] : [50, 100, 150, 200];
-    circles.forEach(radius => {
-        const geometry = new THREE.CircleGeometry(radius, 64);
-        const points = geometry.getPoints();
-        const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
-        const circle = new THREE.LineLoop(lineGeo, circleMaterial);
-        circle.rotation.x = -Math.PI / 2;
-        scene.add(circle);
-        radarCircles.push(circle);
-    });
-}
-createRadarCircles();
+// Compass Circles
+const createCircle = (radius, color, opacity) => {
+    const geo = new THREE.RingGeometry(radius - 0.5, radius + 0.5, 128);
+    const mat = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: opacity, side: THREE.DoubleSide });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.rotation.x = -Math.PI / 2;
+    return mesh;
+};
 
-const baseGeo = new THREE.CylinderGeometry(5, 5, 2, 16);
-const baseMat = new THREE.MeshBasicMaterial({ color: 0x0cf50c, wireframe: true });
+const circles = [100, 200, 300, 400];
+circles.forEach(r => scene.add(createCircle(r, 0x00f3ff, 0.1)));
+
+// --- Center Hologram ---
+const baseGeo = new THREE.CylinderGeometry(5, 8, 2, 6, 1, true);
+const baseMat = new THREE.MeshBasicMaterial({ color: 0x00ffaa, wireframe: true, transparent: true, opacity: 0.5 });
 const baseStation = new THREE.Mesh(baseGeo, baseMat);
 scene.add(baseStation);
 
-const scanGeo = new THREE.CylinderGeometry(0, MAX_RANGE, MAX_RANGE, 32, 1, true, 0, Math.PI / 4);
+// Volumetric Scanner
+const scanGeo = new THREE.CylinderGeometry(0, 400, 400, 32, 1, true, 0, Math.PI / 6);
 const scanMat = new THREE.MeshBasicMaterial({
-    color: 0x0cf50c, transparent: true, opacity: 0.1,
-    side: THREE.DoubleSide, depthWrite: false
+    color: 0x00f3ff,
+    transparent: true,
+    opacity: 0.1,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
 });
 const scanMesh = new THREE.Mesh(scanGeo, scanMat);
 scanMesh.rotation.x = Math.PI / 2;
-scanMesh.position.y = MAX_RANGE / 2;
+scanMesh.position.y = 200;
 const scanGroup = new THREE.Group();
 scanGroup.add(scanMesh);
 scene.add(scanGroup);
 
+// --- Lighting ---
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
 scene.add(ambientLight);
+
+const pointLight = new THREE.PointLight(0x00f3ff, 1, 500);
+pointLight.position.set(0, 100, 0);
+scene.add(pointLight);
 
 // --- Dictionaries ---
 const targetMeshes = {};
 const targetTooltips = {};
 const interceptorMeshes = {};
-const explosions = []; // For particle effects
+const explosions = [];
 
-const normalMat = new THREE.MeshBasicMaterial({ color: 0xffff00 }); // Yellow
-const kritikMat = new THREE.MeshBasicMaterial({ color: 0xff3333 }); // Red
-const friendMat = new THREE.MeshBasicMaterial({ color: 0x00f2ff }); // Cyan
-const targetGeo = new THREE.SphereGeometry(3, 16, 16);
+const normalMat = new THREE.MeshPhongMaterial({ color: 0xffbb00, shininess: 80, emissive: 0x221100 });
+const kritikMat = new THREE.MeshPhongMaterial({ color: 0xff3131, shininess: 80, emissive: 0x330000 });
+const friendMat = new THREE.MeshPhongMaterial({ color: 0x00ffaa, shininess: 80, emissive: 0x002200 });
 
-// Missile geometry (Neon Blue)
-const missileGeo = new THREE.CylinderGeometry(0.5, 0.5, 4, 8); // Silindir gövde
-missileGeo.rotateX(Math.PI / 2); // Point forward along Z
-const missileMat = new THREE.MeshBasicMaterial({ color: 0xcccccc }); // Gri gövde
+const uavGeo = new THREE.TetrahedronGeometry(3);
+const missileGeo = new THREE.ConeGeometry(1.5, 6, 4);
 
-// --- Rain Particle System ---
-const rainCount = 15000;
-const rainGeo = new THREE.BufferGeometry();
-const rainArray = new Float32Array(rainCount * 3);
-for (let i = 0; i < rainCount; i++) {
-    rainArray[i * 3] = Math.random() * 400 - 200;
-    rainArray[i * 3 + 1] = Math.random() * 200; // Yükseklik
-    rainArray[i * 3 + 2] = Math.random() * 400 - 200;
+// --- UI Logic Synchronization ---
+function updateMetrics(data) {
+    if (data.ammo !== undefined) {
+        document.getElementById('battery-bar').style.width = `${data.ammo}%`;
+        document.getElementById('battery-percent').textContent = `${data.ammo}%`;
+        if (data.ammo < 30) document.getElementById('battery-bar').className = "bar red";
+    }
+    
+    // Simulated CPU load for visual "show"
+    const cpuLoad = 10 + Math.random() * 15;
+    document.getElementById('cpu-bar').style.width = `${cpuLoad}%`;
+    document.getElementById('cpu-percent').textContent = `${Math.floor(cpuLoad)}%`;
 }
-rainGeo.setAttribute('position', new THREE.BufferAttribute(rainArray, 3));
-const rainMaterial = new THREE.LineBasicMaterial({
-    color: 0xaaaaaa,
-    transparent: true,
-    opacity: 0.1
-});
-// Using Points for rain is faster than Lines for thousands of particles
-const rainSystem = new THREE.Points(rainGeo, new THREE.PointsMaterial({
-    color: 0xaaaaaa, size: 0.5, transparent: true, opacity: 0.2
-}));
-scene.add(rainSystem);
-rainSystem.visible = false; // Kapalı başla
-
-
-// --- Window Resize ---
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
-
-// --- Particle Explosion System ---
-function createExplosion(x, y, z) {
-    const particleCount = 200; // Artırılmış partikül sayısı (Splash Damage hissi)
-    const particlesGeo = new THREE.BufferGeometry();
-    const posArray = new Float32Array(particleCount * 3);
-    const velArray = [];
-
-    for (let i = 0; i < particleCount; i++) {
-        posArray[i * 3] = x;
-        posArray[i * 3 + 1] = y;
-        posArray[i * 3 + 2] = z;
-        velArray.push({
-            x: (Math.random() - 0.5) * 15,
-            y: (Math.random() - 0.5) * 15,
-            z: (Math.random() - 0.5) * 15
-        });
-    }
-    particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-
-    const particleMat = new THREE.PointsMaterial({
-        size: 3,
-        color: 0xff4400, // Daha yoğun turuncu/kırmızı
-        transparent: true,
-        opacity: 1,
-        blending: THREE.AdditiveBlending // Daha parlak patlama efekti
-    });
-
-    const particleSystem = new THREE.Points(particlesGeo, particleMat);
-    scene.add(particleSystem);
-
-    // Splash Damage Şok Dalgası (Genişleyen Küre)
-    const waveGeo = new THREE.SphereGeometry(1, 32, 32);
-    const waveMat = new THREE.MeshBasicMaterial({
-        color: 0xffaa00,
-        transparent: true,
-        opacity: 0.5,
-        wireframe: true
-    });
-    const waveMesh = new THREE.Mesh(waveGeo, waveMat);
-    waveMesh.position.set(x, y, z);
-    scene.add(waveMesh);
-
-    explosions.push({ system: particleSystem, wave: waveMesh, velocities: velArray, age: 0 });
-}
-
-function createChaffEffect(x, y, z) {
-    const particleCount = 400;
-    const particlesGeo = new THREE.BufferGeometry();
-    const posArray = new Float32Array(particleCount * 3);
-    const velArray = [];
-
-    for (let i = 0; i < particleCount; i++) {
-        posArray[i * 3] = x;
-        posArray[i * 3 + 1] = y;
-        posArray[i * 3 + 2] = z;
-        velArray.push({
-            x: (Math.random() - 0.5) * 6,
-            y: (Math.random() - 0.5) * 6, // Yavaş düşüş yayılımı
-            z: (Math.random() - 0.5) * 6
-        });
-    }
-    particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-
-    const particleMat = new THREE.PointsMaterial({
-        size: 2,
-        color: 0xffffff, // Silver/White for Chaff
-        transparent: true,
-        opacity: 0.9,
-        blending: THREE.AdditiveBlending
-    });
-
-    const particleSystem = new THREE.Points(particlesGeo, particleMat);
-    scene.add(particleSystem);
-    explosions.push({ system: particleSystem, wave: null, velocities: velArray, age: 0, isChaff: true });
-}
-
-// --- Laser Weapon System (CIWS) ---
-const activeLasers = [];
-function createLaserBeam(startX, startY, startZ, endX, endY, endZ) {
-    const material = new THREE.LineBasicMaterial({
-        color: 0x33ff33, // Neon green
-        linewidth: 4,
-        transparent: true,
-        opacity: 1
-    });
-
-    const points = [];
-    points.push(new THREE.Vector3(startX, startY, startZ));
-    points.push(new THREE.Vector3(endX, endY, endZ));
-
-    const geometry = new THREE.BufferGeometry().setFromPoints(points);
-    const line = new THREE.Line(geometry, material);
-    scene.add(line);
-    activeLasers.push({ line: line, age: 0 });
-}
-
-// --- Telemetry Chart.js ---
-const ctx = document.getElementById('telemetryChart').getContext('2d');
-const telemetryChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: [],
-        datasets: [{
-            label: 'Tehdit Yoğunluğu',
-            data: [],
-            borderColor: '#0cf50c',
-            backgroundColor: 'rgba(12, 245, 12, 0.2)',
-            borderWidth: 2,
-            fill: true,
-            tension: 0.4,
-            pointRadius: 0
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 0 }, // Disable animation for performance
-        scales: {
-            x: { display: false },
-            y: {
-                display: true,
-                beginAtZero: true,
-                grid: { color: 'rgba(12, 245, 12, 0.1)' },
-                ticks: { color: '#0cf50c' }
-            }
-        },
-        plugins: {
-            legend: {
-                labels: { color: '#0cf50c', font: { family: "'Share Tech Mono', monospace" } }
-            }
-        }
-    }
-});
-// --- Web Audio API (Procedural SFX Engine) ---
-const AudioContext = window.AudioContext || window.webkitAudioContext;
-const audioCtx = new AudioContext();
-
-function playTone(freq, type, duration, vol) {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    const osc = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    const filter = audioCtx.createBiquadFilter();
-
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-
-    filter.type = 'lowpass';
-    filter.frequency.value = 2000;
-
-    gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-
-    osc.connect(filter);
-    filter.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    osc.start();
-    osc.stop(audioCtx.currentTime + duration);
-}
-
-const SFX = {
-    radarSweep: () => playTone(800, 'sine', 0.1, 0.05),
-    alarm: () => playTone(400, 'square', 0.3, 0.1),
-    laser: () => playTone(300, 'sawtooth', 0.15, 0.1),
-    empBlast: () => playTone(50, 'square', 3.0, 0.5),
-    missileTargetHit: () => playTone(150, 'triangle', 0.5, 0.3),
-    rainLoop: () => {
-        if (window.isWeatherRain) playTone(400, 'lowpass', 0.1, 0.01) // White noise simulation 
-    }
-};
-
-// --- Animation Loop ---
-function animate() {
-    requestAnimationFrame(animate);
-    scanGroup.rotation.y -= 0.05;
-    controls.update();
-
-    // Update Tooltips
-    for (const [id, mesh] of Object.entries(targetMeshes)) {
-        const tooltip = targetTooltips[id];
-        if (tooltip) {
-            const pos = mesh.position.clone();
-            pos.project(camera);
-            const x = (pos.x * .5 + .5) * window.innerWidth;
-            const y = (pos.y * -.5 + .5) * window.innerHeight;
-            tooltip.style.left = `${x}px`;
-            tooltip.style.top = `${y}px`;
-            tooltip.style.display = pos.z > 1 ? 'none' : 'block';
-        }
-    }
-
-    // Animate Rain
-    if (window.isWeatherRain && rainSystem.visible) {
-        const positions = rainSystem.geometry.attributes.position.array;
-        for (let i = 0; i < rainCount; i++) {
-            positions[i * 3 + 1] -= 3.0; // Düşüş hızı
-            positions[i * 3] -= 0.5; // Rüzgar
-            if (positions[i * 3 + 1] < 0) {
-                positions[i * 3 + 1] = 200; // Yukarıdan tekrar başlat
-                positions[i * 3] = Math.random() * 400 - 200;
-            }
-        }
-        rainSystem.geometry.attributes.position.needsUpdate = true;
-        if (Math.random() < 0.1) SFX.rainLoop();
-    }
-
-    // Update Explosions & Shockwaves & Smoke
-    for (let i = explosions.length - 1; i >= 0; i--) {
-        let exp = explosions[i];
-
-        if (exp.isSmoke) {
-            // Smoke Trail Animation
-            exp.age += 1;
-            exp.system.position.y += 0.05;
-            exp.system.material.opacity -= 0.02;
-            exp.system.scale.set(1 + exp.age * 0.1, 1 + exp.age * 0.1, 1 + exp.age * 0.1);
-            if (exp.system.material.opacity <= 0 || exp.age > 40) {
-                scene.remove(exp.system);
-                explosions.splice(i, 1);
-            }
-            continue;
-        }
-
-        if (exp.isChaff) {
-            // Chaff Particle Animation
-            exp.age += 1;
-            let positions = exp.system.geometry.attributes.position.array;
-            for (let j = 0; j < exp.velocities.length; j++) {
-                positions[j * 3] += exp.velocities[j].x;
-                positions[j * 3 + 1] += exp.velocities[j].y - 0.5; // Gravity effect
-                positions[j * 3 + 2] += exp.velocities[j].z;
-            }
-            exp.system.geometry.attributes.position.needsUpdate = true;
-            exp.system.material.opacity -= 0.009; // Yavaşça kaybolur
-            if (exp.age > 100) {
-                scene.remove(exp.system);
-                explosions.splice(i, 1);
-            }
-            continue;
-        }
-
-        // Partiküller
-        let positions = exp.system.geometry.attributes.position.array;
-        for (let j = 0; j < exp.velocities.length; j++) {
-            positions[j * 3] += exp.velocities[j].x;
-            positions[j * 3 + 1] += exp.velocities[j].y;
-            positions[j * 3 + 2] += exp.velocities[j].z;
-        }
-        exp.system.geometry.attributes.position.needsUpdate = true;
-        exp.system.material.opacity -= 0.015;
-
-        // Şok Dalgası (Splash Radius ~ 1km -> UI Scale: 10 birim büyüyecek)
-        exp.wave.scale.x += 1.0;
-        exp.wave.scale.y += 1.0;
-        exp.wave.scale.z += 1.0;
-        exp.wave.material.opacity -= 0.02;
-
-        exp.age++;
-
-        if (exp.age > 60) {
-            scene.remove(exp.system);
-            scene.remove(exp.wave);
-            explosions.splice(i, 1);
-        }
-    }
-
-    // --- Jamming (Glitch) Efekti ---
-    const jammingWarning = document.getElementById("jamming-warning");
-    if (window.isJammingActive) {
-        if (!jammingWarning) {
-            const warning = document.createElement("div");
-            warning.id = "jamming-warning";
-            warning.className = "jamming-glitch";
-            warning.innerText = "WARNING: EW JAMMING DETECTED";
-            document.body.appendChild(warning);
-        }
-    } else {
-        if (jammingWarning) {
-            jammingWarning.remove();
-        }
-    }
-
-    // Update Lasers
-    for (let i = activeLasers.length - 1; i >= 0; i--) {
-        let laser = activeLasers[i];
-        laser.line.material.opacity -= 0.05; // Fade out fast (20 frames)
-        laser.age++;
-        if (laser.age > 20) {
-            scene.remove(laser.line);
-            activeLasers.splice(i, 1);
-        }
-    }
-
-    renderer.render(scene, camera);
-}
-animate();
 
 // --- WebSocket ---
 let socket;
@@ -473,250 +156,130 @@ function connectWebSocket() {
         wsStatusEl.textContent = "BAĞLANTI AKTİF";
         wsStatusEl.className = "status-online";
     };
+
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         
-        // Sync Engine State
-        if (data.ammo !== undefined) {
-            const batteryBar = document.getElementById('battery-bar');
-            if (batteryBar) batteryBar.style.width = `${data.ammo}%`;
-        }
+        updateMetrics(data);
         
         if (data.auto_fire !== undefined) {
-            updateHUD(data.stage ? `AŞAMA ${data.stage}` : "", data.auto_fire);
-            const btnAuto = document.getElementById('btn-toggle-auto');
-            if (btnAuto) {
-                btnAuto.textContent = `OTONOM MOD: ${data.auto_fire ? 'AÇIK' : 'KAPALI'}`;
-                if (data.auto_fire) btnAuto.classList.add('active');
-                else btnAuto.classList.remove('active');
+            const hudMode = document.getElementById('hud-mode');
+            if (hudMode) {
+                hudMode.textContent = data.auto_fire ? "OTONOM" : "MANUEL";
+                hudMode.classList.toggle('gold-text', !data.auto_fire);
             }
+            const btn = document.getElementById('btn-toggle-auto');
+            btn.textContent = `OTONOM MOD: ${data.auto_fire ? 'AÇIK' : 'KAPALI'}`;
+            btn.classList.toggle('active', data.auto_fire);
         }
 
-        // Radar Update
+        if (data.stage) {
+            document.getElementById('hud-stage').textContent = `FAZ-${data.stage}`;
+            document.getElementById('comp-hud').classList.remove('hidden');
+        }
+
         updateRadar(data.targets || [], data.interceptors || [], data.lasers || []);
-        
-        // Strategic Update (Phase 10)
-        if (data.strategic) {
-            const drEl = document.getElementById('hud-directive');
-            const nwEl = document.getElementById('hud-network');
-            if (drEl) drEl.textContent = data.strategic.directive || "ANALİZ...";
-            if (nwEl) nwEl.textContent = `AĞ DURUMU: ${data.strategic.network_status || "OK"}`;
+        updateTargetList(data.targets || []);
+
+        if (data.score) {
+            document.getElementById('hud-score').textContent = data.score.total_score;
         }
 
-        updateTargetList(data.targets || []);
-        
-        if (data.emp) {
-            document.body.classList.add('emp-active');
-            setTimeout(() => document.body.classList.remove('emp-active'), 2000);
+        if (data.stage !== undefined) {
+            const stages = {
+                0: "BEKLEMEDE",
+                1: "AŞAMA 1: DURAN HEDEF",
+                2: "AŞAMA 2: SÜRÜ SALDIRISI",
+                3: "AŞAMA 3: KATMANLI SAVUNMA"
+            };
+            document.getElementById('hud-stage').textContent = stages[data.stage] || "BİLİNMİYOR";
+        }
+
+        if (data.strategic) {
+            document.getElementById('hud-directive').textContent = data.strategic.directive || "ANALİZ...";
+            const netStatus = data.strategic.network ? 
+                Object.values(data.strategic.network).every(v => v === "CONNECTED" || v === "SYNCHRONIZED") ? "AKTİF" : "SINIRLI" 
+                : "BAĞLANTI YOK";
+            document.getElementById('hud-network').textContent = `AĞ: GÖK-VATAN (${netStatus})`;
         }
     };
+
     socket.onclose = () => {
         wsStatusEl.textContent = "BAĞLANTI KESİLDİ - YENİLENİYOR...";
-        wsStatusEl.style.color = "red";
+        wsStatusEl.className = "status-offline";
         setTimeout(connectWebSocket, 2000);
     };
 }
 
-const hudEl = document.getElementById('comp-hud');
-const hudStageEl = document.getElementById('hud-stage');
-const hudModeEl = document.getElementById('hud-mode');
-
-function updateHUD(stage, isAuto) {
-    if (stage) {
-        hudEl.classList.remove('hidden');
-        hudStageEl.textContent = stage.toUpperCase();
-        hudModeEl.textContent = isAuto ? "OTONOM" : "MANUEL";
-        hudModeEl.style.color = isAuto ? "var(--primary-green)" : "var(--warning-gold)";
-    } else {
-        hudEl.classList.add('hidden');
-    }
-}
-
-function updateDashboard(targets, interceptors, lasers, jammingActive, empActive, emissionActive) {
-    targetListEl.innerHTML = "";
-
+function updateRadar(targets, interceptors, lasers) {
     const activeTargetIds = new Set();
     const activeIntIds = new Set();
 
-    // Emission UI Update
-    const btnEmission = document.getElementById('btn-toggle-emission');
-    if (emissionActive === false) {
-        if (!btnEmission.classList.contains('danger')) {
-            btnEmission.classList.remove('active');
-            btnEmission.classList.add('danger');
-            btnEmission.textContent = "RADAR YAYINI: PASİF";
-            gridHelper.material.opacity = 0.05; // Radar kapalı, ortam loş
-        }
-    } else {
-        if (!btnEmission.classList.contains('active')) {
-            btnEmission.classList.remove('danger');
-            btnEmission.classList.add('active');
-            btnEmission.textContent = "RADAR YAYINI: AÇIK";
-            gridHelper.material.opacity = 0.3;
-        }
-    }
-
-    // EMP Effect logic
-    const bodyEl = document.body;
-    if (empActive && !bodyEl.classList.contains('emp-active')) {
-        bodyEl.classList.add('emp-active');
-        SFX.empBlast();
-    } else if (!empActive) {
-        bodyEl.classList.remove('emp-active');
-    }
-
-    if (targets.length > 0) SFX.radarSweep();
-    let hasCritical = false;
-
-    // 1. Update Targets (Neon Spheres)
-    const tooltipContainer = document.getElementById('tooltips-container');
-    tooltipContainer.innerHTML = '';
-
-    // Dropdown for Stage-1 target selection
-    const targetSelector = document.getElementById('target-selector');
-    const prevVal = targetSelector ? targetSelector.value : "";
-    if (targetSelector) {
-        targetSelector.innerHTML = '<option value="">-- SELECT TARGET TO LOCK --</option>';
-    }
-
-    // --- Process Targets ---
     targets.forEach(t => {
         activeTargetIds.add(t.id);
-        const isKritik = t.oncelik === "KRİTİK";
-        if (isKritik) hasCritical = true;
-
-        // Sidebar Card
-        const isDost = t.is_dost;
-        
-        if (targetSelector && !isDost) {
-            const opt = document.createElement('option');
-            opt.value = t.id;
-            opt.textContent = `[${t.id}] ${t.etiket || t.tip} - ${parseFloat(t.mesafe * 1000).toFixed(0)}m`;
-            if (t.id === prevVal) opt.selected = true;
-            targetSelector.appendChild(opt);
-        }
-
-        const card = document.createElement("div");
-        card.className = `target-card ${isKritik ? "kritik" : ""} ${isDost ? "friend" : ""}`;
-
-        const distMeters = (t.mesafe * 1000).toFixed(0);
-        const altMeters = (t.irtifa * 1000).toFixed(0);
-
-        card.innerHTML = `
-            <div class="card-header">
-                <strong class="id-badge">${isDost ? "D" : "TEH"}: ${t.id}</strong> 
-                <span class="type-tag">${t.etiket || t.tip}</span>
-            </div>
-            <div class="card-stats">
-                <span>RNG: ${distMeters}m</span>
-                <span>ALT: ${altMeters}m</span>
-            </div>
-            <div class="card-footer">
-                ÖNC: ${t.oncelik} | DURUM: ${t.karar || "TAKİP"}
-            </div>
-        `;
-        targetListEl.appendChild(card);
-
-        // 3D Target Mesh
         const posX = t.x;
-        const posY = Math.max(t.irtifa * 10, 0);
+        const posY = Math.max(t.irtifa * 10, 2);
         const posZ = -t.y;
 
-        let targetColorMat = isKritik ? kritikMat : (isDost ? friendMat : normalMat);
-        if (t.is_arm) {
-            targetColorMat = new THREE.MeshBasicMaterial({ color: 0xff00ff }); // Magenta/Mor (ARM Füzesi)
-        } else if (t.is_jammer) {
-            targetColorMat = new THREE.MeshBasicMaterial({ color: 0xffa500 }); // Turuncu (Jammer)
-        } else if (t.is_ghost) {
-            targetColorMat = new THREE.MeshBasicMaterial({ color: 0xcc00ff }); // Mor/Pembe (Ghost)
-        }
-
-        if (typeof window.previousTargetStates === 'undefined') window.previousTargetStates = {};
-        if (t.chaff_deployed && !window.previousTargetStates[t.id]?.chaff_deployed) {
-            createChaffEffect(posX, posY, posZ);
-        }
-        window.previousTargetStates[t.id] = { chaff_deployed: t.chaff_deployed };
-
+        let mat = t.oncelik === "KRİTİK" ? kritikMat : (t.is_dost ? friendMat : normalMat);
+        let geo = t.tip === "FÜZE" || t.tip === "BALİSTİK" ? missileGeo : uavGeo;
+        
         if (targetMeshes[t.id]) {
             targetMeshes[t.id].position.set(posX, posY, posZ);
-            targetMeshes[t.id].material = targetColorMat;
-            targetTooltips[t.id].className = `tooltip ${isKritik ? "kritik" : ""} ${isDost ? "friend" : ""}`;
-            targetTooltips[t.id].textContent = `${t.etiket || t.id} [${distMeters}m]`;
-
-            // Ghost yanıp sönme (glitch) efekti
-            if (t.is_ghost && Math.random() < 0.2) {
-                targetMeshes[t.id].visible = false;
-            } else {
-                targetMeshes[t.id].visible = true;
-            }
+            targetMeshes[t.id].material = mat;
         } else {
-            const mesh = new THREE.Mesh(targetGeo, targetColorMat);
+            const mesh = new THREE.Mesh(geo, mat);
             mesh.position.set(posX, posY, posZ);
             scene.add(mesh);
             targetMeshes[t.id] = mesh;
 
             const tooltip = document.createElement('div');
-            tooltip.className = `tooltip ${isKritik ? "kritik" : ""}`;
-            tooltip.textContent = `${t.id} [${(t.irtifa * 1000).toFixed(0)}m]`;
+            tooltip.className = "tooltip";
             tooltipsContainer.appendChild(tooltip);
             targetTooltips[t.id] = tooltip;
         }
+        
+        // Advanced Data Tag
+        const distKm = t.mesafe.toFixed(2);
+        const altM = (t.irtifa * 1000).toFixed(0);
+        const speedKmh = (Math.random() * 200 + 400).toFixed(0);
+
+        targetTooltips[t.id].innerHTML = `
+            <div class="tag-id">${t.id}</div>
+            <div class="tag-data">
+                <span>RNG: ${distKm}km</span>
+                <span>ALT: ${altM}m</span>
+                <span>SPD: ${speedKmh}kph</span>
+            </div>
+            <div class="tag-footer">${t.tip}</div>
+        `;
+        targetTooltips[t.id].setAttribute('data-priority', t.oncelik);
     });
 
-    // --- Process Interceptors ---
-    interceptors.forEach(int => {
-        activeIntIds.add(int.id);
-        const posX = int.x;
-        const posY = Math.max(2 * 10, 0); // Flat altitude or mapped altitude if interceptors have altitude
-        const posZ = -int.y;
-
-        let mesh = interceptorMeshes[int.id];
-        if (mesh) {
-            // Calculate direction to rotate the cone
-            const dx = posX - mesh.position.x;
-            const dy = posY - mesh.position.y;
-            const dz = posZ - mesh.position.z;
-
-            // Only update rotation if moved
-            if (dx * dx + dy * dy + dz * dz > 0.01) {
-                // lookAt makes the object face a point in world space. By default, it faces +Z.
-                // Our cone default points +Z because we rotated it in geometry.
-                mesh.lookAt(posX + dx, posY + dy, posZ + dz);
-            }
-            mesh.position.set(posX, posY, posZ);
-        } else {
-            mesh = new THREE.Mesh(missileGeo, missileMat);
-            mesh.position.set(posX, posY, posZ);
-            scene.add(mesh);
-            interceptorMeshes[int.id] = mesh;
-        }
-
-        // Spawn Smoke Trail Particle behind missile
-        if (Math.random() > 0.3) {
-            const smokeGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-            const smokeMat = new THREE.MeshBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.8 });
-            const smoke = new THREE.Mesh(smokeGeo, smokeMat);
-            smoke.position.copy(mesh.position);
-            scene.add(smoke);
-            explosions.push({ system: smoke, wave: null, velocities: [], isSmoke: true, age: 0 });
-        }
-    });
-
-    // --- Cleanup & Explosions ---
+    // Cleanup disappeared targets
     for (const id in targetMeshes) {
         if (!activeTargetIds.has(id)) {
-            // Target disappeared. If it was being tracked by an interceptor that also disappeared, 
-            // or just simply, if we remove it, create a small explosion!
             createExplosion(targetMeshes[id].position.x, targetMeshes[id].position.y, targetMeshes[id].position.z);
-            SFX.missileTargetHit();
             scene.remove(targetMeshes[id]);
             delete targetMeshes[id];
-            if (targetTooltips[id]) {
-                targetTooltips[id].remove();
-                delete targetTooltips[id];
-            }
+            targetTooltips[id].remove();
+            delete targetTooltips[id];
         }
     }
+
+    // Interceptors (Simplified logic for now)
+    interceptors.forEach(int => {
+        activeIntIds.add(int.id);
+        if (!interceptorMeshes[int.id]) {
+            const intMesh = new THREE.Mesh(
+                new THREE.ConeGeometry(1, 4, 8),
+                new THREE.MeshBasicMaterial({ color: 0xffffff })
+            );
+            scene.add(intMesh);
+            interceptorMeshes[int.id] = intMesh;
+        }
+        interceptorMeshes[int.id].position.set(int.x, 5, -int.y);
+    });
 
     for (const id in interceptorMeshes) {
         if (!activeIntIds.has(id)) {
@@ -724,265 +287,204 @@ function updateDashboard(targets, interceptors, lasers, jammingActive, empActive
             delete interceptorMeshes[id];
         }
     }
+}
 
-    // --- Process CIWS Lasers ---
-    if (lasers) {
-        lasers.forEach(lz => {
-            const endX = lz.x;
-            const endY = Math.max(lz.z * 10, 0); // lz.z is altitude (km)
-            const endZ = -lz.y;
+function updateTargetList(targets) {
+    targetListEl.innerHTML = "";
+    const selector = document.getElementById('target-selector');
+    const currentSelected = selector.value;
+    selector.innerHTML = '<option value="">-- HEDEF KİLİTLE --</option>';
 
-            // CIWS base is at origin (0, 2, 0)
-            createLaserBeam(0, 2, 0, endX, endY, endZ);
+    targets.forEach(t => {
+        // Update Sidebar List
+        const card = document.createElement('div');
+        card.className = `target-card ${t.oncelik === "KRİTİK" ? 'kritik' : ''}`;
+        card.innerHTML = `
+            <div class="card-row">
+                <span class="id-badge">${t.id}</span>
+                <span class="status-indicator active">TAKİPTE</span>
+            </div>
+            <div class="card-main">
+                <div class="data-group">
+                    <label>MESAFE</label>
+                    <value>${(t.mesafe).toFixed(2)}km</value>
+                </div>
+                <div class="data-group">
+                    <label>İRTİFA</label>
+                    <value>${(t.irtifa * 1000).toFixed(0)}m</value>
+                </div>
+            </div>
+            <div class="card-footer">
+                <span>TİP: ${t.tip}</span>
+                <span>KARAR: ${t.karar || "ANALİZ"}</span>
+            </div>
+        `;
+        targetListEl.appendChild(card);
 
-            // Lazer vurduğunda ufak bir patlama da olsun
-            createExplosion(endX, endY, endZ);
-        });
+        // Update Target Selector Dropdown
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = `HEDEF ${t.id} (${t.tip})`;
+        if (t.id === currentSelected) opt.selected = true;
+        selector.appendChild(opt);
+    });
+}
 
-        if (lasers.length > 0) {
-            SFX.laser();
+// --- Explosions ---
+function createExplosion(x, y, z) {
+    const geo = new THREE.SphereGeometry(1, 8, 8);
+    const mat = new THREE.MeshBasicMaterial({ color: 0xff4400, transparent: true, opacity: 0.8 });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(x, y, z);
+    scene.add(mesh);
+    explosions.push({ mesh, age: 0 });
+}
+
+// --- Animation Loop ---
+function animate() {
+    requestAnimationFrame(animate);
+    
+    // Radar Pulse Animation
+    pulseMesh.scale.addScalar(0.08);
+    pulseMesh.material.opacity -= 0.01;
+    if (pulseMesh.material.opacity <= 0) {
+        pulseMesh.scale.set(1, 1, 1);
+        pulseMesh.material.opacity = 0.5;
+    }
+
+    scanGroup.rotation.y -= 0.03;
+    controls.update();
+
+    // Tooltip & Reticle Projection
+    for (const id in targetMeshes) {
+        const mesh = targetMeshes[id];
+        const pos = mesh.position.clone().project(camera);
+        const x = (pos.x * 0.5 + 0.5) * window.innerWidth;
+        const y = (pos.y * -0.5 + 0.5) * window.innerHeight;
+        
+        const tooltip = targetTooltips[id];
+        tooltip.style.left = `${x}px`;
+        tooltip.style.top = `${y}px`;
+        tooltip.style.display = pos.z > 1 ? 'none' : 'block';
+
+        // Rotate target meshes for dynamic feel
+        mesh.rotation.y += 0.05;
+        mesh.rotation.x += 0.02;
+
+        // Camera Follow Logic
+        if (currentCameraMode === 'FOLLOW' && id === followedTargetId) {
+            const targetPos = mesh.position;
+            const offset = new THREE.Vector3(50, 40, 50);
+            camera.position.lerp(targetPos.clone().add(offset), 0.1);
+            controls.target.lerp(targetPos, 0.1);
         }
     }
 
-    // --- Update Chart.js ---
-    telemetryChart.data.labels.push(chartTime++);
-    telemetryChart.data.datasets[0].data.push(targets.length);
-    if (telemetryChart.data.labels.length > 30) {
-        telemetryChart.data.labels.shift();
-        telemetryChart.data.datasets[0].data.shift();
+    // Reset follow if target lost
+    if (currentCameraMode === 'FOLLOW' && followedTargetId && !targetMeshes[followedTargetId]) {
+        followedTargetId = null;
+        setCameraMode('TACTICAL');
     }
-    telemetryChart.update();
+
+    // Explosion Animation
+    for (let i = explosions.length - 1; i >= 0; i--) {
+        const exp = explosions[i];
+        exp.age++;
+        exp.mesh.scale.multiplyScalar(1.1);
+        exp.mesh.material.opacity -= 0.02;
+        if (exp.age > 40) {
+            scene.remove(exp.mesh);
+            explosions.splice(i, 1);
+        }
+    }
+
+    renderer.render(scene, camera);
 }
 
-// --- Interactive C2 UI Controls ---
-function sendCommand(action, extraData = {}) {
-    const bodyArgs = { action: action, ...extraData };
+// --- Handlers ---
+document.getElementById('btn-toggle-auto').addEventListener('click', () => sendCommand('toggle_auto_fire'));
+document.getElementById('btn-toggle-emission').addEventListener('click', () => sendCommand('toggle_radar_emission'));
+
+function sendCommand(action, data = {}) {
     fetch('/api/command', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(bodyArgs)
-    })
-        .catch(err => console.error("Komut gönderim hatası:", err));
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, ...data })
+    });
 }
 
-document.getElementById('btn-toggle-emission').addEventListener('click', () => {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    sendCommand('toggle_radar_emission');
+// Window resize
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-document.getElementById('btn-toggle-auto').addEventListener('click', () => {
-    sendCommand('toggle_auto_fire');
-    const btn = document.getElementById('btn-toggle-auto');
-    if (btn.classList.contains('active')) {
-        btn.classList.remove('active');
-        btn.classList.add('warning');
-        btn.textContent = "AUTO-FIRE: DISABLED";
-    } else {
-        btn.classList.remove('warning');
-        btn.classList.add('active');
-        btn.textContent = "AUTO-FIRE: ENABLED";
-    }
-});
-
-document.getElementById('btn-manual-fire').addEventListener('click', () => {
-    const targetSelector = document.getElementById('target-selector');
-    let selectedId = null;
-    if (targetSelector && targetSelector.value) {
-        selectedId = targetSelector.value;
-    }
-    
-    sendCommand('manual_fire', { target_id: selectedId });
-    const btn = document.getElementById('btn-manual-fire');
-    const originalText = btn.textContent;
-    btn.textContent = ">>> KINETIC LAUNCH <<<";
-    setTimeout(() => btn.textContent = originalText, 500);
-});
-
-document.getElementById('btn-force-swarm').addEventListener('click', () => {
-    sendCommand('force_swarm');
-    // Görsel geri bildirim
-    const btn = document.getElementById('btn-force-swarm');
-    const originalText = btn.textContent;
-    btn.textContent = ">>> INITIATING SWARM <<<";
-    setTimeout(() => btn.textContent = originalText, 1000);
-});
-
-document.getElementById('btn-force-hypersonic').addEventListener('click', () => {
-    sendCommand('force_hypersonic');
-    const btn = document.getElementById('btn-force-hypersonic');
-    const originalText = btn.textContent;
-    btn.textContent = ">>> HYPERSONIC ALERT <<<";
-    setTimeout(() => btn.textContent = originalText, 1000);
-});
-
-document.getElementById('btn-start-mission').addEventListener('click', () => {
-    const selector = document.getElementById('mission-selector');
-    const mId = selector.value;
-    if (mId) {
-        sendCommand('start_mission', { mission_id: mId });
-        const btn = document.getElementById('btn-start-mission');
-        const originalText = btn.textContent;
-        btn.textContent = ">>> MISSION STARTED <<<";
-        setTimeout(() => btn.textContent = originalText, 1500);
-        
-        // Reset scale for operational missions (they use 200km range)
-        COMP_MODE = false;
-        MAX_RANGE = 200.0;
-        createRadarCircles();
-    }
-});
-
-document.getElementById('btn-generate-report').addEventListener('click', () => {
-    sendCommand('generate_report');
-    const btn = document.getElementById('btn-generate-report');
-    const originalText = btn.textContent;
-    btn.textContent = ">>> RAPOR OLUŞTURULUYOR <<<";
-    setTimeout(() => {
-        btn.textContent = ">>> RAPOR HAZIR (reports/aar/) <<<";
-        setTimeout(() => btn.textContent = originalText, 3000);
-    }, 1000);
-});
-
-document.getElementById('btn-trigger-emp').addEventListener('click', () => {
-    // If audio context is suspended (browser policy), resume it on first click
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    sendCommand('trigger_emp');
-});
-
-document.getElementById('btn-toggle-weather').addEventListener('click', () => {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    sendCommand('toggle_weather');
-    const btn = document.getElementById('btn-toggle-weather');
-    if (btn.classList.contains('info')) {
-        btn.classList.remove('info');
-        btn.classList.add('warning'); // Change color to yellow to indicate storm
-        btn.textContent = "WEATHER: TROPICAL STORM";
-    } else {
-        btn.classList.remove('warning');
-        btn.classList.add('info');
-        btn.textContent = "TOGGLE RAIN STORM";
-    }
-});
-
-let isEStopActive = false;
-document.getElementById('btn-estop').addEventListener('click', () => {
-    isEStopActive = !isEStopActive;
-    const btn = document.getElementById('btn-estop');
-    if (isEStopActive) {
-        sendCommand('trigger_estop');
-        btn.textContent = "RELEASE E-STOP";
-        btn.classList.add('active');
-    } else {
-        sendCommand('release_estop');
-        btn.textContent = "EMERGENCY STOP";
-        btn.classList.remove('active');
-    }
-});
-
-document.getElementById('btn-stage-1').addEventListener('click', () => {
-    sendCommand('set_stage_1');
-    COMP_MODE = true;
-    MAX_RANGE = 15;
-    createRadarCircles();
-    updateHUD("Phase 1", false);
-    controls.target.set(0, 0, 0);
-    camera.position.set(20, 30, 40);
-});
-
-document.getElementById('btn-stage-2').addEventListener('click', () => {
-    sendCommand('set_stage_2');
-    COMP_MODE = true;
-    MAX_RANGE = 15;
-    createRadarCircles();
-    updateHUD("Phase 2", true);
-    controls.target.set(0, 0, 0);
-    camera.position.set(20, 30, 40);
-});
-
-document.getElementById('btn-stage-3').addEventListener('click', () => {
-    sendCommand('set_stage_3');
-    COMP_MODE = true;
-    MAX_RANGE = 15;
-    createRadarCircles();
-    updateHUD("Phase 3", true);
-    controls.target.set(0, 0, 0);
-    camera.position.set(20, 30, 40);
-});
-
+// Boot Sequence
 function startBootSequence() {
     const bootOverlay = document.getElementById('boot-overlay');
-    const logs = [
-        "> GÖKKALKAN C2 KERNEL BAŞLATILIYOR...",
-        "> RADAR MODÜLLERİ YÜKLENİYOR [TAMAM]",
-        "> SATCOM BAĞLANTISI KURULUYOR [TAMAM]",
-        "> GÖKVATAN SAVUNMA AĞI AKTİF EDİLİYOR...",
-        "> YAPAY ZEKA TEHDİT SINIFLANDIRICI ÇEVRİMİÇİ",
-        "> KALMAN TAKTİK TAKİP SİSTEMİ HAZIR",
-        "> SİSTEM BÜTÜNLÜK KONTROLÜ: %100",
-        "> HOŞ GELDİNİZ, KOMUTAN."
-    ];
-    
-    let i = 0;
-    const interval = setInterval(() => {
-        if (i < logs.length) {
-            const p = document.createElement('p');
-            p.className = 'boot-text';
-            p.textContent = logs[i];
-            bootOverlay.appendChild(p);
-            i++;
-        } else {
-            clearInterval(interval);
-            setTimeout(() => {
-                bootOverlay.classList.add('boot-finished');
-                setTimeout(() => bootOverlay.style.display = 'none', 1000);
-            }, 500);
-        }
-    }, 200);
+    if (!bootOverlay) return;
+    setTimeout(() => {
+        bootOverlay.style.opacity = '0';
+        setTimeout(() => bootOverlay.style.display = 'none', 500);
+    }, 1000);
 }
 
-window.addEventListener('keydown', (e) => {
-    // Handling multiple key naming conventions for maximum compatibility
-    const key = e.key.toUpperCase();
-    const code = e.code;
-    
-    console.log(`[KEY] Pressed: ${key} (${code})`);
+connectWebSocket();
+animate();
+startBootSequence();
 
-    const actions = {
-        'Digit1': 'btn-stage-1',
-        'Digit2': 'btn-stage-2',
-        'Digit3': 'btn-stage-3',
-        'Key1': 'btn-stage-1', // Fallback
-        'Key2': 'btn-stage-2',
-        'Key3': 'btn-stage-3',
-        'KeyA': 'btn-toggle-auto',
-        'KeyF': 'btn-manual-fire'
-    };
+// --- Camera Controls ---
+let currentCameraMode = 'TACTICAL';
+let followedTargetId = null;
 
-    // Also support raw keys
-    const keyActions = {
-        '1': 'btn-stage-1',
-        '2': 'btn-stage-2',
-        '3': 'btn-stage-3',
-        'A': 'btn-toggle-auto',
-        'F': 'btn-manual-fire'
-    };
+function setCameraMode(mode) {
+    currentCameraMode = mode;
+    document.querySelectorAll('.camera-modes .btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`btn-cam-${mode.toLowerCase()}`).classList.add('active');
 
-    const targetId = actions[code] || keyActions[key];
-    if (targetId) {
-        const btn = document.getElementById(targetId);
-        if (btn) {
-            console.log(`[C2] Triggering ${targetId}`);
-            btn.click();
-            // Visual feedback for keyboard press
-            btn.style.filter = 'brightness(2)';
-            setTimeout(() => btn.style.filter = '', 100);
-        }
+    switch(mode) {
+        case 'TACTICAL':
+            camera.position.set(200, 250, 400);
+            controls.target.set(0, 0, 0);
+            break;
+        case 'TOP':
+            camera.position.set(0, 600, 1);
+            controls.target.set(0, 0, 0);
+            break;
+        case 'BASE':
+            camera.position.set(20, 15, 60);
+            controls.target.set(0, 50, -100);
+            break;
+        case 'FOLLOW':
+            // Logic handled in animate loop
+            break;
     }
+}
+
+document.getElementById('btn-cam-tactical').addEventListener('click', () => setCameraMode('TACTICAL'));
+document.getElementById('btn-cam-top').addEventListener('click', () => setCameraMode('TOP'));
+document.getElementById('btn-cam-base').addEventListener('click', () => setCameraMode('BASE'));
+document.getElementById('btn-cam-follow').addEventListener('click', () => {
+    setCameraMode('FOLLOW');
+    const ids = Object.keys(targetMeshes);
+    if (ids.length > 0) followedTargetId = ids[0];
 });
 
-window.onload = () => {
-    connectWebSocket();
-    startBootSequence();
-};
+// Add missing event listeners from HTML
+const stages = [1, 2, 3];
+stages.forEach(s => {
+    document.getElementById(`btn-stage-${s}`).addEventListener('click', () => sendCommand(`set_stage_${s}`));
+});
+document.getElementById('btn-force-swarm').addEventListener('click', () => sendCommand('force_swarm'));
+document.getElementById('btn-force-hypersonic').addEventListener('click', () => sendCommand('force_hypersonic'));
+document.getElementById('btn-trigger-emp').addEventListener('click', () => sendCommand('trigger_emp'));
+document.getElementById('btn-estop').addEventListener('click', () => sendCommand('trigger_estop'));
+document.getElementById('btn-manual-fire').addEventListener('click', () => {
+    const targetId = document.getElementById('target-selector').value;
+    sendCommand('manual_fire', { target_id: targetId });
+});
+document.getElementById('btn-start-mission').addEventListener('click', () => {
+    const missionId = document.getElementById('mission-selector').value;
+    if (missionId) sendCommand('start_mission', { mission_id: missionId });
+});

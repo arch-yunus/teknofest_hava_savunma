@@ -1,7 +1,7 @@
-# 📐 GökKalkan AI - İleri Teknik Mimari ve Balistik Doktrini
+# 📐 ARGUS AI - İleri Teknik Mimari ve Balistik Doktrini
 
 ## 1. Giriş
-Bu doküman, GökKalkan AI sisteminin altında yatan matematiksel ve fiziksel temelleri detaylandırmak için hazırlanmıştır. Sistem, kinetik ve elektromanyetik verileri işleyerek otonom karar mekanizmalarını tetikler.
+Bu doküman, ARGUS AI sisteminin altında yatan matematiksel ve fiziksel temelleri detaylandırmak için hazırlanmıştır. Sistem, kinetik ve elektromanyetik verileri işleyerek otonom karar mekanizmalarını tetikler.
 
 ## 2. Balistik Tahmin Algoritmaları
 
@@ -28,7 +28,7 @@ $$d_{CPA} = \frac{|\vec{P} \times \vec{V}|}{|\vec{V}|}$$
 ```mermaid
 sequenceDiagram
     participant R as 📡 Radar Grid
-    participant C as 🧠 GökKalkan Core
+    participant C as 🧠 ARGUS Core
     participant B as 🚀 Interceptor Battery
     participant T as 📝 Telemetry Log
     
@@ -54,7 +54,7 @@ Sistemde kullanılan bazı profesyonel kalıplar:
 3.  **Strategy Pattern:** Farklı tehdit tipleri (İHA vs Balistik Füze) için farklı engelleme stratejileri uygulanabilir.
 
 ## 5. Donanım Gereksinim Projeksiyonu
-GökKalkan AI, gerçek dünya senaryolarında aşağıdaki donanım mimarisiyle entegre çalışacak şekilde tasarlanmıştır:
+ARGUS AI, gerçek dünya senaryolarında aşağıdaki donanım mimarisiyle entegre çalışacak şekilde tasarlanmıştır:
 - **FPGA:** Gerçek zamanlı sinyal işleme (DSP).
 - **GPU:** Yapay zeka tabanlı görüntü tanıma ve tehdit sınıflandırma.
 - **Embedded Python:** Yüksek seviye mantık ve strateji katmanı.

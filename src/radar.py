@@ -146,46 +146,52 @@ class RadarSistemi:
         """TEKNOFEST Aşama-1: Fiziksel Parkur (5m, 10m, 15m) sabit hedefler."""
         self.aktif_hedefler.clear()
         
+        # Şartname: 5m, 10m, 15m mesafelerde DURAN hedefler.
         hedefler = [
             ("Balistik Fuze", 0.005), # 5m
             ("Helikopter", 0.010),    # 10m
             ("Savas Ucagi (F16)", 0.015), # 15m
-            ("Mini/Micro IHA", 0.010)  # 10m (farklı vektör)
+            ("Mini/Micro IHA", 0.010)  # 10m
         ]
         
         for i, (label, dist) in enumerate(hedefler):
-            angle = (i * math.pi / 2) + random.uniform(-0.1, 0.1)
+            # Farklı açılardan yerleştir (90 derece arayla)
+            angle = (i * math.pi / 2.0)
             x = dist * math.cos(angle)
             y = dist * math.sin(angle)
-            z = random.uniform(0.001, 0.002) # 1-2 metre yükseklik
+            z = random.uniform(0.001, 0.003) # 1-3 metre irtifa
             
-            # Aşama 1 hedefleri özeldir
+            # Duran hedef (vx=0, vy=0, vz=0)
             h = Hedef(f"STG1-{i}", x, y, z, 0, 0, 0, rcs=0.5)
             h.etiket = label
             self.aktif_hedefler.append(h)
 
     def hedef_uret_asama2(self) -> List[Hedef]:
-        """TEKNOFEST Aşama-2: Sürü Saldırı (3 koldan, toplam 15 hedef, parkur içi: 0-15m)."""
+        """TEKNOFEST Aşama-2: Sürü Saldırı (3 koldan, parkur içi: 0-15m)."""
         self.aktif_hedefler.clear()
         suru = []
         
-        # 3 farklı koldan (yön) hedeflerin yaklaşması
-        kollar = [0, 2*math.pi/3, 4*math.pi/3]
-        labels = ["Balistik Fuze", "Mini/Micro IHA", "Savas Ucagi (F16)"]
+        # Şartname: 3 koldan (yön) yaklaşan Kamikaze İHA ve Balistik Füze maketleri. 
+        # Parkur 15m'den başlar.
+        kollar = [0, 2*math.pi/3, 4*math.pi/3] # 0, 120, 240 derece
+        types = ["Balistik Fuze", "Mini/Micro IHA", "Savas Ucagi (F16)"]
         
-        for k_idx, angle in enumerate(kollar):
-            for i in range(5):  # Her koldan 5 hedef, toplam 15
-                dist = 0.015 + (i * 0.002) # 15m'den başlayarak dizili
-                x = dist * math.cos(angle + random.uniform(-0.1, 0.1))
-                y = dist * math.sin(angle + random.uniform(-0.1, 0.1))
-                z = 0.001 + (random.random() * 0.001)
+        for k_idx, base_angle in enumerate(kollar):
+            for i in range(4): # Kol başına 4, toplam 12 adet (5-12 arası şartnameye uygun)
+                # Formasyonlu yaklaşma
+                dist = 0.015 + (i * 0.001) # 15m ve gerisi
+                angle = base_angle + (random.uniform(-0.05, 0.05))
+                x = dist * math.cos(angle)
+                y = dist * math.sin(angle)
+                z = 0.002 + (i * 0.0005) # Kademeli irtifa
                 
-                hiz_mps = 0.8 / 1000 # 0.8 m/s -> km/s
+                # Merkeze doğru yavaş ilerleme (Teknofest hızı ~ 0.5 - 1.0 m/s)
+                hiz_mps = 1.0 / 1000.0 # 1.0 m/s -> km/s
                 vx = -x / dist * hiz_mps
                 vy = -y / dist * hiz_mps
                 
                 h = Hedef(f"SWRM-{k_idx}-{i}", x, y, z, vx, vy, 0, rcs=0.1)
-                h.etiket = labels[k_idx]
+                h.etiket = types[k_idx]
                 self.aktif_hedefler.append(h)
                 suru.append(h)
         return suru

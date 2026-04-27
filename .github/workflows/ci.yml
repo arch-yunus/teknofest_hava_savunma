@@ -1,4 +1,4 @@
-name: GökKalkan CI
+name: ARGUS CI
 
 on:
   push:

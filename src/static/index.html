@@ -4,9 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GÖKKALKAN AI | Millî Hava Savunma Sistemi</title>
+    <title>ARGUS AI | Millî Hava Savunma Sistemi</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -18,75 +17,94 @@
     <div class="crt-overlay"></div>
     <div class="emp-whiteout"></div>
 
-    <div id="comp-hud" class="comp-hud hidden">
+    <!-- HIGH-LEVEL HUD -->
+    <header id="comp-hud" class="comp-hud hidden">
         <div class="hud-box">
-            <span class="hud-label">AKTİF AŞAMA</span>
+            <span class="hud-label">SİSTEM AŞAMASI</span>
             <span id="hud-stage" class="hud-value">-</span>
         </div>
-        <div class="hud-box separator"></div>
         <div class="hud-box">
-            <span class="hud-label">STRATEJİK DİREKTİF</span>
-            <span id="hud-directive" class="hud-value gold-text">ANALİZ...</span>
+            <span class="hud-label">TEKNOFEST PUANI</span>
+            <span id="hud-score" class="hud-value gold-text">0</span>
         </div>
-        <div class="hud-box separator"></div>
         <div class="hud-box">
-            <span class="hud-label">AĞ DURUMU</span>
-            <span id="hud-network" class="hud-value">GÖK-VATAN: OK</span>
+            <span class="hud-label">OPERASYONEL MOD</span>
+            <span id="hud-mode" class="hud-value">ANALİZ</span>
         </div>
-    </div>
+        <div class="hud-box">
+            <span class="hud-label">AĞ SENKRONİZASYONU</span>
+            <span id="hud-network" class="hud-value">GÖK-VATAN: AKTİF</span>
+        </div>
+    </header>
 
-    <div class="ui-layer">
+    <main class="ui-layer">
+        <!-- LEFT SIDEBAR: INTEL & METRICS -->
         <aside class="sidebar">
             <div class="logo-box">
-                <h1>GÖKKALKAN</h1>
+                <h1>ARGUS</h1>
                 <div class="sub-logo">
-                    <span>MİLLÎ HAVA SAVUNMA KOMUTA MERKEZİ</span>
-                    <div class="version">v2026.1-PRO</div>
+                    <span>MİLLÎ HAVA SAVUNMA KOMUTASI</span>
+                    <div class="version">v2026.1-TACTICAL</div>
                 </div>
             </div>
 
-            <div class="system-grid">
+            <section class="system-grid">
                 <div class="system-item">
-                    <span class="label">BATARYA GÜCÜ</span>
+                    <div class="label">
+                        <span>BATARYA ENERJİSİ</span>
+                        <span id="battery-percent">100%</span>
+                    </div>
                     <div class="bar-container">
                         <div id="battery-bar" class="bar green" style="width: 100%"></div>
                     </div>
                 </div>
                 <div class="system-item">
-                    <span class="label">İŞLEMCİ YÜKÜ</span>
+                    <div class="label">
+                        <span>İŞLEMCİ YÜKÜ</span>
+                        <span id="cpu-percent">12%</span>
+                    </div>
                     <div class="bar-container">
-                        <div id="cpu-bar" class="bar cyan" style="width: 15%"></div>
+                        <div id="cpu-bar" class="bar cyan" style="width: 12%"></div>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <div class="metrics-panel">
+            <section class="metrics-panel">
                 <div class="panel-header">
                     <span class="led green"></span>
-                    <h2>GERÇEK ZAMANLI TEHDİT AKIŞI</h2>
+                    <h2>TEHDİT TAKİP MATRİSİ</h2>
                 </div>
-                <div id="target-list" class="target-list"></div>
-            </div>
+                <div id="target-list" class="target-list">
+                    <!-- Dynamic Entry -->
+                </div>
+            </section>
 
-            <div class="telemetry-chart-box">
-                <div class="chart-header">TEHDİT YOĞUNLUK ANALİZİ</div>
+            <section class="telemetry-chart-box">
                 <canvas id="telemetryChart"></canvas>
-            </div>
+            </section>
 
-            <div class="footer-info">
+            <footer class="footer-info">
                 <div class="connection-status">
-                    SİSTEM DURUMU: <span id="ws-status" class="status-offline">BAĞLANILIYOR...</span>
+                    DURUM: <span id="ws-status" class="status-offline">BAĞLANILIYOR...</span>
                 </div>
-                <div class="shortcuts">
-                    [1-3] AŞAMALAR | [A] OTO-ATIŞ | [F] MANUEL ATEŞ
-                </div>
-            </div>
+            </footer>
         </aside>
 
+        <!-- CENTER/RIGHT AREA: HUD & C2 CONSOLE -->
         <div id="tooltips-container"></div>
 
-        <div class="c2-controls">
-            <div class="control-header">C2 HAREKAT PROTOKOLLERİ</div>
+        <section class="c2-controls">
+            <div class="control-header">
+                <span>C2 HAREKAT KONSOLU</span>
+                <span id="hud-directive" class="gold-text">BEKLEMEDE...</span>
+            </div>
+
+            <div class="control-row camera-modes">
+                <button id="btn-cam-tactical" class="btn active">TAKTIK</button>
+                <button id="btn-cam-top" class="btn">TEPE</button>
+                <button id="btn-cam-base" class="btn">ÜS</button>
+                <button id="btn-cam-follow" class="btn">TAKİP</button>
+            </div>
 
             <div class="control-row">
                 <button id="btn-stage-1" class="btn">AŞAMA-1</button>
@@ -102,8 +120,8 @@
             </div>
 
             <div class="control-row tertiary">
-                <button id="btn-toggle-auto" class="btn active">OTONOM MOD: AÇIK</button>
-                <button id="btn-toggle-emission" class="btn active">RADAR YAYINI: AÇIK</button>
+                <button id="btn-toggle-auto" class="btn">OTONOM MOD: KAPALI</button>
+                <button id="btn-toggle-emission" class="btn active">RADAR YAYINI: AKTİF</button>
                 <button id="btn-toggle-weather" class="btn info">METEOROLOJİ</button>
             </div>
 
@@ -114,20 +132,24 @@
                     <option value="BALLISTIC_SALVO">Balistik Füze Yaylımı</option>
                     <option value="HYPERSONIC_THREAT">Hipersonik Önleme</option>
                     <option value="EW_OPERATIONS">Elektronik Harp (EW)</option>
-                    <option value="HYBRID_ESCORT">Karma Refakat</option>
                 </select>
                 <button id="btn-start-mission" class="btn active">GÖREVİ BAŞLAT</button>
             </div>
 
             <div class="control-row actions">
                 <button id="btn-trigger-emp" class="btn danger-alt">EMP BLAST</button>
-                <button id="btn-force-swarm" class="btn warning-alt">SWARM TEST</button>
-                <button id="btn-force-hypersonic" class="btn gold-btn">HYPERSONIC TEST</button>
-                <button id="btn-generate-report" class="btn success-alt">AAR RAPORU OLUŞTUR</button>
-                <button id="btn-estop" class="btn estop">ACİL DURDURMA</button>
+                <button id="btn-force-swarm" class="btn">SWARM</button>
+                <button id="btn-force-hypersonic" class="btn">HYPERSONIC</button>
+                <button id="btn-estop" class="btn estop">E-STOP</button>
             </div>
-        </div>
-    </div>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
+iv>
 
     <script src="app.js"></script>
 </body>

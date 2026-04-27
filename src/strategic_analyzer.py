@@ -1,4 +1,5 @@
 import random
+import math
 from typing import List, Dict, Any
 from enum import Enum
 
@@ -23,7 +24,7 @@ class StrategicAnalyzer:
             "C2_Global": "SYNCHRONIZED"
         }
 
-    def analiz_et(self, hedefler: List[Dict[str, Any]], mühimmat: int, mission_id: str = "DEFAULT") -> Dict[str, Any]:
+    def analiz_et(self, hedefler: List[Dict[str, Any]], mühimmat: int, mission_id: str = "DEFAULT", stage: int = 0) -> Dict[str, Any]:
         """
         Hedef yoğunluğu, mühimmat durumu ve EH faaliyetlerine göre stratejik rapor sunar.
         """
@@ -32,21 +33,34 @@ class StrategicAnalyzer:
         jamming_mevcut = any(h.get("is_jammer") or h.get("is_ghost") for h in hedefler)
         arm_mevcut = any(h.get("is_arm") for h in hedefler)
         
+        # Sürü Analizi (Swarm Centroid)
+        swarm_targets = [h for h in hedefler if "SWRM" in str(h.get("id", ""))]
+        centroid = {"x": 0, "y": 0, "z": 0}
+        if swarm_targets:
+            centroid["x"] = sum(h["x"] for h in swarm_targets) / len(swarm_targets)
+            centroid["y"] = sum(h["y"] for h in swarm_targets) / len(swarm_targets)
+            centroid["z"] = sum(h["z"] for h in swarm_targets) / len(swarm_targets)
+
+        # Sektör Analizi (Teknofest 3-Kol Yapısı)
+        # Sektör 1: 0-120 derece, Sektör 2: 120-240, Sektör 3: 240-360
+        sectors = {1: 0, 2: 0, 3: 0}
+        for h in hedefler:
+            angle = (math.atan2(h["y"], h["x"]) * 180 / math.pi) % 360
+            if 0 <= angle < 120: sectors[1] += 1
+            elif 120 <= angle < 240: sectors[2] += 1
+            else: sectors[3] += 1
+        
+        active_sector = max(sectors, key=sectors.get) if toplam_hedef > 0 else "YOK"
+
         directive = StrategicDirective.STATUS_QUO
         
         if arm_mevcut:
             directive = StrategicDirective.RADAR_SILENCE
-        elif toplam_hedef > 10:
+        elif stage == 2 or toplam_hedef > 8:
             directive = StrategicDirective.SWARM_EMERGENCY
         elif mühimmat < 10 and kritik_hedefler > 0:
             directive = StrategicDirective.CONSERVE_AMMO
         elif kritik_hedefler > 3:
-            directive = StrategicDirective.MAX_INTERCEPTION
-            
-        # Mission Specific Overrides
-        if mission_id == "SWARM_ATTACK":
-            directive = StrategicDirective.SWARM_EMERGENCY
-        elif mission_id == "HYPERSONIC_THREAT" and kritik_hedefler > 0:
             directive = StrategicDirective.MAX_INTERCEPTION
             
         self.last_directive = directive
@@ -58,14 +72,21 @@ class StrategicAnalyzer:
             "directive": directive.value,
             "fusion_score": f"%{fusion_score:.1f}",
             "network": self.network_status,
-            "recommendation": self._get_recommendation(directive, jamming_mevcut)
+            "recommendation": self._get_recommendation(directive, jamming_mevcut, stage),
+            "swarm_centroid": centroid if swarm_targets else None,
+            "hot_sector": active_sector,
+            "sector_density": sectors
         }
 
-    def _get_recommendation(self, directive: StrategicDirective, jamming: bool) -> str:
+    def _get_recommendation(self, directive: StrategicDirective, jamming: bool, stage: int) -> str:
+        if stage == 1:
+            return "AŞAMA-1: DURAN HEDEFLERE ANGAJE OLUN. MENZİL KONTROLÜ AKTİF."
+        if stage == 3:
+            return "AŞAMA-3: DOST UNSURLARI (IFF) KORUYUN. KATMANLI SAVUNMA AKTİF."
         if directive == StrategicDirective.RADAR_SILENCE:
             return "RADARI KAPATIN VE PASİF TAKİBE GEÇİN."
         if directive == StrategicDirective.SWARM_EMERGENCY:
-            return "SÜRÜYÜ DAĞITMAK İÇİN CIWS VE SPLASH DAMAGE ÖNCELİKLENDİRİLDİ."
+            return f"SÜRÜYÜ DAĞITMAK İÇİN CIWS ÖNCELİKLENDİRİLDİ. SEKTÖR ODAKLI SAVUNMA."
         if jamming:
             return "BİLİŞSEL ECCM ALGORİTMALARI AKTİF EDİLDİ. GHOST FİLTRESİ %85."
         return "SİSTEM OPTİMAL ÇALIŞIYOR. MANUEL MÜDAHALE GEREKMİYOR."

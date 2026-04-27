@@ -1,10 +1,10 @@
-# 🧮 GökKalkan: Operasyonel Matematik Modelleri (MATH_MODELS)
+# 🧮 ARGUS: Operasyonel Matematik Modelleri (MATH_MODELS)
 
-Bu doküman, GökKalkan AI sisteminin çekirdeğinde (Core Engine) saniyede binlerce kez işletilen fizik, diferansiyel denklem ve istatistiksel olasılık algoritmalarının matematiksel izdüşümüdür.
+Bu doküman, ARGUS AI sisteminin çekirdeğinde (Core Engine) saniyede binlerce kez işletilen fizik, diferansiyel denklem ve istatistiksel olasılık algoritmalarının matematiksel izdüşümüdür.
 
 ## 1. Kalman Filtresi: Özyineli Durum Tahmini (Recursive State Estimation)
 
-Radardan gelen ölçümler her zaman "clutter" (çevresel gürültü) içerir. GökKalkan, `kalman_takip.py` modülü ile hedefin *gerçek* uzay koordinatlarını $X_k$ şu denklemlerle bulur:
+Radardan gelen ölçümler her zaman "clutter" (çevresel gürültü) içerir. ARGUS, `kalman_takip.py` modülü ile hedefin *gerçek* uzay koordinatlarını $X_k$ şu denklemlerle bulur:
 
 ### Durum Tahmini (Zaman Güncellemesi / Time Update)
 Hedefin bir sonraki $(k+1)$ anındaki durumu, mevcut bilgi ve fizik kuralları çerçevesinde tahmin edilir:
@@ -32,7 +32,7 @@ $$ P_{k|k} = (I - K_k \cdot H) \cdot P_{k|k-1} $$
 
 ## 2. AESA Radar Menzil Denklemi (The Radar Equation)
 
-GökKalkan `radar.py` içerisinde bir Sinyal-Gürültü Oranı (SNR) filtresi kullanır. Hedefin tespiti, radar kesit alanına ($\sigma$) ve mesafeye ($R$) bağlı dördüncü dereceden ters orantılı bir fonksiyondur:
+ARGUS `radar.py` içerisinde bir Sinyal-Gürültü Oranı (SNR) filtresi kullanır. Hedefin tespiti, radar kesit alanına ($\sigma$) ve mesafeye ($R$) bağlı dördüncü dereceden ters orantılı bir fonksiyondur:
 
 $$ SNR = \frac{P_t \cdot G^2 \cdot \lambda^2 \cdot \sigma}{(4\pi)^3 \cdot R^4 \cdot k \cdot T_s \cdot B \cdot L} $$
 
@@ -49,7 +49,7 @@ $$ SNR = \frac{P_t \cdot G^2 \cdot \lambda^2 \cdot \sigma}{(4\pi)^3 \cdot R^4 \c
 Eğer hesaplanan $SNR > SNR_{min\_esik\_db}$ ise, hedef (Blip) ekrana yansıtılır.
 
 ### Swerling Hedef Modelleri (RCS Dalgalanması)
-GökKalkan, hedefin sabit bir demir parçası değil, dönen türbinleri ve manevra yapan kanatları olduğunu varsayar (Swerling I/III). RCS dalgalanması Exponential (Rayleigh) veya Gamma dağılımlarıyla modellenir:
+ARGUS, hedefin sabit bir demir parçası değil, dönen türbinleri ve manevra yapan kanatları olduğunu varsayar (Swerling I/III). RCS dalgalanması Exponential (Rayleigh) veya Gamma dağılımlarıyla modellenir:
 
 $$ p(\sigma) = \frac{1}{\sigma_{avg}} e^{-\sigma/\sigma_{avg}} \quad \text{(Swerling 1)} $$
 
@@ -82,4 +82,4 @@ $$ t_{CPA} = - \frac{\vec{r}_{hedef} \cdot \vec{v}_{hedef}}{||\vec{v}_{hedef}||^
 $$ \vec{P}_{CPA} = \vec{r}_{hedef} + \vec{v}_{hedef} \cdot t_{CPA} $$
 $$ CPA_{Mesafe} = ||\vec{P}_{CPA}|| $$
 
-*GökKalkan bu denklemleri harmanlayarak, "hangi hedefin saniyeler içinde başımıza dert açacağını" mekanik bir soğukkanlılıkla bulur.*
+*ARGUS bu denklemleri harmanlayarak, "hangi hedefin saniyeler içinde başımıza dert açacağını" mekanik bir soğukkanlılıkla bulur.*

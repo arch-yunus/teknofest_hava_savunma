@@ -8,18 +8,18 @@ import time
 import threading
 import logging
 
-from src.engine import GokkalkanEngine
+from src.engine import ArgusEngine
 from src.api import start_server
 
 def main():
     # Setup Logging
     logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger("GokkalkanLauncher")
+    logger = logging.getLogger("ArgusLauncher")
     
-    logger.info("GÖKKALKAN | Millî Hava Savunma Simülasyonu Başlatılıyor...")
+    logger.info("ARGUS | Millî Hava Savunma Simülasyonu Başlatılıyor...")
 
     # 1. Initialize Engine
-    engine = GokkalkanEngine(fps=5) # High frequency for smooth UI
+    engine = ArgusEngine(fps=5) # High frequency for smooth UI
     
     # 2. Start API Server (Background)
     api_thread = threading.Thread(

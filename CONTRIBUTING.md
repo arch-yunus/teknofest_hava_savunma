@@ -1,7 +1,7 @@
-# GökKalkan YZ'ye Katkıda Bulunma
+# ARGUS YZ'ye Katkıda Bulunma
 
 ## Görev Özeti
-GökKalkan YZ geliştirme birimine hoş geldiniz. Yeni nesil hava savunma sistemlerini inşa ediyoruz. Doğruluk ve güvenilirlik her şeyden önemlidir.
+ARGUS YZ geliştirme birimine hoş geldiniz. Yeni nesil hava savunma sistemlerini inşa ediyoruz. Doğruluk ve güvenilirlik her şeyden önemlidir.
 
 ## Protokol
 1.  **Fork** (Çatallama) işlemini yapın.

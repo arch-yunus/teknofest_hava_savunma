@@ -1,6 +1,6 @@
-# 🗺️ GökKalkan AI - 2026 Taktik Yol Haritası (Strategic Roadmap)
+# 🗺️ ARGUS AI - 2026 Taktik Yol Haritası (Strategic Roadmap)
 
-GökKalkan AI projesi, 2026 yılı sonuna kadar hava savunma doktrinlerini tamamen otonom ve bilişsel bir seviyeye taşımayı hedeflemektedir.
+ARGUS AI projesi, 2026 yılı sonuna kadar hava savunma doktrinlerini tamamen otonom ve bilişsel bir seviyeye taşımayı hedeflemektedir.
 
 ## 📅 2026 Q1: Sürü Zekası ve Dağıtık Sensör Füzyonu [TAMAMLANDI]
 - **Sürü Savunması (Swarm Defense):** 50+ eşzamanlı İHA tehdidini koordine bir şekilde önleyebilen "Sürü Önleme" algoritmalarının entegrasyonu.

@@ -8,7 +8,7 @@ from pydantic import BaseModel
 import uvicorn
 import os
 
-app = FastAPI(title="GökKalkan UI Server")
+app = FastAPI(title="ARGUS UI Server")
 
 app.add_middleware(
     CORSMiddleware,

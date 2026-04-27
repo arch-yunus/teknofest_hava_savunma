@@ -35,7 +35,7 @@ class AARReporter:
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>GökKalkan AAR Raporu - {timestamp}</title>
+    <title>ARGUS AAR Raporu - {timestamp}</title>
     <style>
         body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }}
         .header {{ border-left: 5px solid #38bdf8; padding-left: 15px; margin-bottom: 30px; }}
@@ -53,7 +53,7 @@ class AARReporter:
 </head>
 <body>
     <div class="header">
-        <h1>GökKalkan After Action Review</h1>
+        <h1>ARGUS After Action Review</h1>
         <p>Operasyon Tarihi: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")}</p>
         <p>Birim: VATAN-1 Ana Kontrol Merkezi</p>
     </div>

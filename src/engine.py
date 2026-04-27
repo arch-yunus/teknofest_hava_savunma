@@ -12,6 +12,7 @@ from src.telemetry import TelemetriSistemi
 from src.tehdit_siniflandirici import TehditSiniflandirici, TehditOnceligi
 from src.kalman_takip import KalmanTakipYoneticisi
 from src.strategic_analyzer import StrategicAnalyzer
+from src.scoring import TeknofestScorer
 import src.utils as utils
 import src.api as api
 from src.aar_logger import AARLogger
@@ -20,11 +21,11 @@ from src.network_manager import NetworkManager
 from src.missions import MissionManager
 from src.aar_reporter import AARReporter
 
-class GokkalkanEngine:
-    """GökKalkan Millî Hava Savunma Sistemi - Merkezi Simülasyon Motoru (v10.0)"""
+class ArgusEngine:
+    """ARGUS Millî Hava Savunma Sistemi - Merkezi Simülasyon Motoru (v10.0)"""
     def __init__(self, config_path: str = "config/ayarlar.yaml"):
         self.ayarlar = self.load_config(config_path)
-        self.telemetri = TelemetriSistemi(log_dosyasi="logs/gokkalkan_core.log")
+        self.telemetri = TelemetriSistemi(log_dosyasi="logs/argus_core.log")
         self.siniflandirici = TehditSiniflandirici()
         self.kalman_yoneticisi = KalmanTakipYoneticisi(dt=1.0)
         
@@ -54,6 +55,7 @@ class GokkalkanEngine:
         self.current_telemetry: Dict[str, Any] = {}
         self.aar_logger = AARLogger()
         self.sim_time_cumulative = 0.0
+        self.scorer = TeknofestScorer()
 
     def load_config(self, yol: str) -> Dict[str, Any]:
         """Konfigürasyonu yükler ve temel şema doğrulaması yapar."""
@@ -81,14 +83,14 @@ class GokkalkanEngine:
         self.loop_thread = threading.Thread(target=self._run_loop, daemon=True)
         if self.loop_thread:
             self.loop_thread.start()
-        self.telemetri.olay_kaydet("INFO", "GokkalkanEngine simülasyon döngüsü başlatıldı.")
+        self.telemetri.olay_kaydet("INFO", "ArgusEngine simülasyon döngüsü başlatıldı.")
 
     def stop(self):
         """Stop the simulation loop."""
         self.running = False
         if self.loop_thread:
             self.loop_thread.join(timeout=2.0)
-        self.telemetri.olay_kaydet("INFO", "GokkalkanEngine simülasyon döngüsü durduruldu.")
+        self.telemetri.olay_kaydet("INFO", "ArgusEngine simülasyon döngüsü durduruldu.")
 
     def _run_loop(self):
         while self.running:
@@ -134,11 +136,19 @@ class GokkalkanEngine:
             
             for vh in tum_vurulanlar:
                 if vh in self.radar.aktif_hedefler:
-                    self.radar.aktif_hedefler.remove(vh)
+                    is_dost = getattr(vh, 'is_dost', False)
                     vh_id = getattr(vh, 'id', 'Unknown')
+                    
+                    if is_dost:
+                        self.scorer.record_friendly_fire()
+                        self.telemetri.olay_kaydet("CRITICAL", f"DOST ATEŞİ! {vh_id} VURULDU!")
+                    else:
+                        self.scorer.record_hit(vh, self.current_stage)
+                        self.telemetri.olay_kaydet("SUCCESS", f"Hedef İmha Edildi: {vh_id}")
+                    
+                    self.radar.aktif_hedefler.remove(vh)
                     self.kalman_yoneticisi.hedef_sil(vh_id)
-                    self.telemetri.olay_kaydet("SUCCESS", f"Hedef İmha Edildi: {vh_id}")
-                    self.aar_logger.log_event(self.sim_time_cumulative, "HIT", vh_id, "Target altitude/position neutralized")
+                    self.aar_logger.log_event(self.sim_time_cumulative, "HIT", vh_id, f"Target neutralized (Dost: {is_dost})")
 
             # 3. Target Processing & AI Analysis
             all_target_info = []
@@ -201,7 +211,7 @@ class GokkalkanEngine:
                 all_target_info.append(data)
 
             # 4. Strategic Analysis & Autonomous Directive Execution
-            stratejik_rapor = self.stratejik_analizor.analiz_et(all_target_info, self.batarya.muhimmat, mission_id=self.active_mission_id)
+            stratejik_rapor = self.stratejik_analizor.analiz_et(all_target_info, self.batarya.muhimmat, mission_id=self.active_mission_id, stage=self.current_stage)
             directive_val = stratejik_rapor.get("directive", "")
             
             # Otonom Direktif İcrası (Phase 15)
@@ -238,7 +248,8 @@ class GokkalkanEngine:
                 "strategic": stratejik_rapor,
                 "ammo": self.batarya.muhimmat,
                 "auto_fire": self.auto_fire_enabled,
-                "stage": self.current_stage
+                "stage": self.current_stage,
+                "score": self.scorer.get_report()
             }
             api.push_data_to_clients(self.current_telemetry)
             self.network_manager.start_broadcasting(self.current_telemetry)

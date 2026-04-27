@@ -1,4 +1,4 @@
-name: GökKalkan AI Quality Check
+name: ARGUS AI Quality Check
 
 on:
   push:

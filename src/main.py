@@ -8,14 +8,14 @@ from rich.panel import Panel
 from rich.live import Live
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
-from src.engine import GokkalkanEngine
+from src.engine import ArgusEngine
 import src.api as api
 
 console = Console()
 
 def create_status_table(target_data: list, battery_ammo: int) -> Table:
     table = Table(
-        title="[bold blue]GÖKKALKAN YZ v10.0 — CANLI TAKTİK TABLO[/]",
+        title="[bold blue]ARGUS YZ v10.0 — CANLI TAKTİK TABLO[/]",
         border_style="blue"
     )
 
@@ -57,11 +57,11 @@ def create_status_table(target_data: list, battery_ammo: int) -> Table:
 
 def main():
     # 1. Initialize Engine and API
-    engine = GokkalkanEngine()
+    engine = ArgusEngine()
     
     console.clear()
     console.print(Panel.fit(
-        "[bold cyan]GÖKKALKAN YZ v10.0 — HAVA SAVUNMA KOMUTA MERKEZİ[/]\n"
+        "[bold cyan]ARGUS YZ v10.0 — HAVA SAVUNMA KOMUTA MERKEZİ[/]\n"
         "[dim]Merkezi Simülasyon Motoru (Core Engine) Aktif[/]\n"
         "[dim]Mimar: Bahattin Yunus Çetin | Sektör: Gök Vatan[/]",
         border_style="bold blue"

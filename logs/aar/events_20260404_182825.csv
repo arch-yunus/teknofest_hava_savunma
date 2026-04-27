@@ -1,0 +1,15 @@
+timestamp,sim_time,event_type,target_id,details
+2026-04-04T19:41:52.613671,8789.0,HIT,SWRM-0-4,Target altitude/position neutralized
+2026-04-04T19:41:52.613746,8789.0,HIT,SWRM-1-0,Target altitude/position neutralized
+2026-04-04T19:41:52.613774,8789.0,HIT,SWRM-1-1,Target altitude/position neutralized
+2026-04-04T19:41:52.613795,8789.0,HIT,SWRM-1-3,Target altitude/position neutralized
+2026-04-04T19:41:52.613815,8789.0,HIT,SWRM-0-2,Target altitude/position neutralized
+2026-04-04T19:41:52.613834,8789.0,HIT,SWRM-1-2,Target altitude/position neutralized
+2026-04-04T19:41:52.613860,8789.0,HIT,SWRM-0-1,Target altitude/position neutralized
+2026-04-04T19:41:52.613880,8789.0,HIT,SWRM-0-0,Target altitude/position neutralized
+2026-04-04T19:41:52.613900,8789.0,HIT,SWRM-1-4,Target altitude/position neutralized
+2026-04-04T19:41:52.613917,8789.0,HIT,SWRM-0-3,Target altitude/position neutralized
+2026-04-04T19:41:54.118388,8792.0,HIT,STG1-1,Target altitude/position neutralized
+2026-04-04T19:41:54.118536,8792.0,HIT,STG1-3,Target altitude/position neutralized
+2026-04-04T19:41:54.118577,8792.0,HIT,STG1-2,Target altitude/position neutralized
+2026-04-04T19:41:54.118605,8792.0,HIT,STG1-0,Target altitude/position neutralized

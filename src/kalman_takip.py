@@ -1,7 +1,7 @@
 """
 kalman_takip.py
 ===============
-GökKalkan YZ - Kalman Filtresi Tabanlı Hedef Takip Sistemi
+ARGUS YZ - Kalman Filtresi Tabanlı Hedef Takip Sistemi
 
 Gürültülü radar ölçümlerini filtreler ve hedefin gelecek konumunu tahmin eder.
 Doğrusal hareket modeli varsayımıyla 6-boyutlu durum vektörü kullanır:

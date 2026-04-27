@@ -1,4 +1,4 @@
-# GökKalkan AI: Askeri Disiplin ve Katkıda Bulunma Kuralları (Code of Conduct)
+# ARGUS AI: Askeri Disiplin ve Katkıda Bulunma Kuralları (Code of Conduct)
 
 Bu depo, vatan savunması vizyonuyla geliştirilmiş otonom karar destek sistemleri içermektedir. Projeye katkıda bulunacak tüm mühendislerin, araştırmacıların ve gönüllülerin uyması gereken temel etik ve profesyonel kurallar aşağıda listelenmiştir.
 
@@ -16,7 +16,7 @@ Bu depo, vatan savunması vizyonuyla geliştirilmiş otonom karar destek sisteml
 
 ## 3. Güvenlik ve Gizlilik
 
-*   GökKalkan AI bir teknoloji simülasyonu ve eğitim/araştırma projesidir. Ancak paylaşılan kodlarda veya tartışma panolarında, **hiçbir şekilde gerçek dünya askeri sırları, kapalı kaynak istihbarat verileri veya gizli donanım spesifikasyonları paylaşılamaz.**
+*   ARGUS AI bir teknoloji simülasyonu ve eğitim/araştırma projesidir. Ancak paylaşılan kodlarda veya tartışma panolarında, **hiçbir şekilde gerçek dünya askeri sırları, kapalı kaynak istihbarat verileri veya gizli donanım spesifikasyonları paylaşılamaz.**
 *   Bu kuralı ihlal eden katkıcılar, projeden süresiz olarak uzaklaştırılır.
 
 ## 4. İhlallerin Bildirilmesi

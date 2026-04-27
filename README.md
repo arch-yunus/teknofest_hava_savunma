@@ -1,18 +1,18 @@
-# 🛡️ GökKalkan AI: Üstün Hava Savunma Doktrini ve Global Harp Ansiklopedisi
+# 🛡️ ARGUS AI: Üstün Hava Savunma Doktrini ve Global Harp Ansiklopedisi
 
 ```console
-[SYSTEM BOOT] Initiating GökKalkan AI Core...
+[SYSTEM BOOT] Initiating ARGUS AI Core...
 [SYSTEM BOOT] Loading Tactical Knowledge Base (LORE.md) ... OK
 [SYSTEM BOOT] Calibrating Kalman Matrices (MATH_MODELS.md) ... OK
 [SYSTEM BOOT] Powering up 3D Phased Array Radars ... OK
 [SYSTEM BOOT] EW Jammer Counter-Measures ... ONLINE
 [SYSTEM BOOT] C5ISR Strategic Orchestrator ... READY
 [SYSTEM BOOT] ...
-[SYSTEM BOOT] GÖKKALKAN AI v10.0 GÖK-VATAN STRATEGIC STANDING BY.
+[SYSTEM BOOT] ARGUS AI v10.0 GÖK-VATAN STRATEGIC STANDING BY.
 ```
 <div align="center">
 
-![GökKalkan AI Banner](docs/banner.png)
+![ARGUS AI Banner](docs/banner.png)
 
 [![Komuta Merkezi](https://img.shields.io/badge/KOMUTA--MERKEZ%C4%B0-Aktif-0052cc?style=for-the-badge&logo=opsgenie&logoColor=white)](https://github.com/bahattinyunus/teknofest_hava_savunma)
 [![Sürüm numarası](https://img.shields.io/badge/VERS%C4%B0YON-10.0_G%C3%96K--VATAN-ffd700?style=for-the-badge&logo=rocket&logoColor=black)](https://github.com/bahattinyunus/teknofest_hava_savunma/releases)
@@ -36,7 +36,7 @@
 
 ## 🌍 GLOBAL BAĞLAM: Teknik Rakip Analizi ve Stratejik Kaynaklar
 
-GökKalkan AI, dünya çapında yürütülen en ileri düzey savunma ve radar teknolojileri projeleriyle aynı teknolojik vizyonu paylaşmaktadır. Aşağıda, bu alandaki küresel organizasyonların teknik derinliği ve projelerinin algoritmik altyapısı analiz edilmiştir:
+ARGUS AI, dünya çapında yürütülen en ileri düzey savunma ve radar teknolojileri projeleriyle aynı teknolojik vizyonu paylaşmaktadır. Aşağıda, bu alandaki küresel organizasyonların teknik derinliği ve projelerinin algoritmik altyapısı analiz edilmiştir:
 
 ### 🏆 Küresel Savunma Yarışmaları (Global Defense Challenges)
 1.  **MAFAT Radar Challenge** (İsrail Savunma Bakanlığı)
@@ -73,15 +73,15 @@ GökKalkan AI, dünya çapında yürütülen en ileri düzey savunma ve radar te
 
 ## 🚀 PROJE VİZYONU: Modern Hava Harbinin Dijital Kalesi
 
-**GökKalkan AI**, hava savunma disiplinini bir bilgisayar simülasyonundan çok daha ötesine taşıyan, tarihsel, teknik ve stratejik boyutlarıyla ele alan **yaşayan bir yapay zeka ansiklopedisidir.** TEKNOFEST vizyonunu akademik bir derinlikle birleştirerek, savunma sanayii meraklıları ve mühendisleri için uçtan uca, askeri sınıf (military-grade) bir komuta kontrol rehberi ve simülasyon iskeleti sunar.
+**ARGUS AI**, hava savunma disiplinini bir bilgisayar simülasyonundan çok daha ötesine taşıyan, tarihsel, teknik ve stratejik boyutlarıyla ele alan **yaşayan bir yapay zeka ansiklopedisidir.** TEKNOFEST vizyonunu akademik bir derinlikle birleştirerek, savunma sanayii meraklıları ve mühendisleri için uçtan uca, askeri sınıf (military-grade) bir komuta kontrol rehberi ve simülasyon iskeleti sunar.
 
-Sistem, elektromanyetik spektrumdaki zayıf sinyalleri yakalayarak, **Kalman Filtreleme**, **Yapay Zeka Tabanlı Tehdit Sınıflandırma** algoritmaları ve **Gelişmiş Önleyici Projeksiyonları** ile hedefleri etkisiz hale getirecek saniyenin altındaki (sub-second) reaksiyonları otonom olarak yönetmek üzere tasarlanmıştır. Projenin kalbinde, sadece kod yazmak değil; havada süzülen bir tehdidin ardındaki fiziksel mekaniği ve harp doktrinini anlamak yatar. GökKalkan artık sadece komut satırında değil, WebSocket destekli entegre **Web Tabanlı Radar Paneli** (V4.0) üzerinden de komuta edilebilir.
+Sistem, elektromanyetik spektrumdaki zayıf sinyalleri yakalayarak, **Kalman Filtreleme**, **Yapay Zeka Tabanlı Tehdit Sınıflandırma** algoritmaları ve **Gelişmiş Önleyici Projeksiyonları** ile hedefleri etkisiz hale getirecek saniyenin altındaki (sub-second) reaksiyonları otonom olarak yönetmek üzere tasarlanmıştır. Projenin kalbinde, sadece kod yazmak değil; havada süzülen bir tehdidin ardındaki fiziksel mekaniği ve harp doktrinini anlamak yatar. ARGUS artık sadece komut satırında değil, WebSocket destekli entegre **Web Tabanlı Radar Paneli** (V4.0) üzerinden de komuta edilebilir.
 
 ---
 
 ## 🔮 MİMARİ ve İŞ AKIŞI: Otonom Karar Destek Mekanizması
 
-Aşağıda GökKalkan AI sisteminin C2 (Komuta Kontrol) Merkezinde nasıl çalıştığı, sensör verilerinden hedefe angajmana kadar geçen süreç görselleştirilmiştir:
+Aşağıda ARGUS AI sisteminin C2 (Komuta Kontrol) Merkezinde nasıl çalıştığı, sensör verilerinden hedefe angajmana kadar geçen süreç görselleştirilmiştir:
 
 ```mermaid
 sequenceDiagram
@@ -117,9 +117,9 @@ teknofest_hava_savunma/
 │   ├── TEKNIK_MIMARI.md    # Matematiksel sensör modelleri ve formüller
 │   ├── MATH_MODELS.md      # 🧮 Kalman, SNR ve PN Formülleri (LaTeX)
 │   ├── LORE.md             # 🌌 Sistemin Felsefesi ve Harp Tarihçesi
-│   ├── banner.png          # GökKalkan Görsel Sancağı
+│   ├── banner.png          # ARGUS Görsel Sancağı
 │   └── MANIFESTO.md        # Sistemin felsefesi ve hedef kitlesi
-├── src/                    # 🧠 GökKalkan AI Çekirdek Kodları
+├── src/                    # 🧠 ARGUS AI Çekirdek Kodları
 │   ├── main.py             # C2 (Komuta-Kontrol) Karar Merkezi (Orkestratör)
 │   ├── radar.py            # Elektromanyetik Sinyal & Sensör Simülasyonu (AESA/PESA)
 │   ├── kalman_takip.py     # Hassas İz ve Yörünge Filtreleme (Kalman Filter)
@@ -143,7 +143,7 @@ teknofest_hava_savunma/
 
 ## ⚡ 1. BÖLÜM: Bilişim Devrimi İçinde Hava Savunma
 
-GökKalkan AI, pürüzsüz bir spektrum yönetimi sunarken, donanımsal radar çalışma prensiplerini yazılımsal parametrelere indirger:
+ARGUS AI, pürüzsüz bir spektrum yönetimi sunarken, donanımsal radar çalışma prensiplerini yazılımsal parametrelere indirger:
 
 *   **Çok Bantlı Simülasyon (L, S, X, Ku Bandı):** Farklı frekanslarda sahte taramalarla erken uyarı (Early Warning) veya hassas hedef kilitlenmesini (Target Lock) simüle eder. L bandı uzun menzilde geniş resim verirken, X bandı füze hedefe yaklaşırken santimetrik hassasiyet sunar.
 *   **Stealth (Görünmezlik) & RCS (Radar Kesit Alanı):** Sistem, hedeflerin düşük RCS (Radar Cross Section) profillerini - örneğin seyir füzeleri veya 5. nesil savaş uçakları - tespit etmek için sinyal-gürültü oranını (SNR) analiz eden ileri düzey altyapıya sahiptir.
@@ -153,7 +153,7 @@ GökKalkan AI, pürüzsüz bir spektrum yönetimi sunarken, donanımsal radar ç
 
 ## 🎯 2. BÖLÜM: Üst Düzey Karar Destek & YZ Derinlikleri
 
-Binlerce veri noktasını ve elektromanyetik yansımayı alıp süzmek yetmez. GökKalkan'ın AI Çekirdek Filtreleri, veriyi anlama dönüştürür.
+Binlerce veri noktasını ve elektromanyetik yansımayı alıp süzmek yetmez. ARGUS'ın AI Çekirdek Filtreleri, veriyi anlama dönüştürür.
 
 ### 2.1 Makine Öğrenmesi ile IFF (Dost-Düşman Tanıma)
 Sistemimiz, `scikit-learn` tabanlı bir **Random Forest (Rastgele Orman)** modeli kullanarak uçuş profillerini analiz eder.
@@ -181,23 +181,23 @@ Bir tehdit tespit edildiğinde, sistem saniyeler içerisinde "Ateşle veya Bekle
 
 ## 🌪️ 4. BÖLÜM: Gelişmiş Tehdit Senaryoları (Advanced Threats)
 
-GökKalkan, statik hedefleri vurmak için değil, günümüzün asimetrik ve karmaşık savaş sahası senaryoları için kurgulanmıştır:
+ARGUS, statik hedefleri vurmak için değil, günümüzün asimetrik ve karmaşık savaş sahası senaryoları için kurgulanmıştır:
 
 ### 4.1 Sürü İHA Saldırıları (Drone Swarms)
 -   **Tanım:** Aynı anda 50-100 adet düşük maliyetli kamikaze dronun (Loitering Munition) tek bir hedefe dalış yapması.
--   **Savunma Yaklaşımı:** GökKalkan, tüm sürü üyelerini tekilleştirmek (Track Splitting) yerine önceliği, formasyon merkezine veya bataryaya en hızlı yaklaşana (Minimum TTI) verir. Satha yönelik hızlı mühimmat tüketimi kontrol edilir.
+-   **Savunma Yaklaşımı:** ARGUS, tüm sürü üyelerini tekilleştirmek (Track Splitting) yerine önceliği, formasyon merkezine veya bataryaya en hızlı yaklaşana (Minimum TTI) verir. Satha yönelik hızlı mühimmat tüketimi kontrol edilir.
 
 ### 4.2 Balistik Füze (TBM & ICBM) Tespiti
 -   **Tanım:** Atmosfer dışına çıkarak yüksek parabolik bir yörünge izleyen devasa hızlardaki roketler.
--   **Savunma Yaklaşımı:** Klasik hava hedeflerinden ziyade, yerçekimi ivmesi ve yanma sonu hızı hesaplarına göre çok önceden düşüş noktası projeksiyonu çizmek gerekir. GökKalkan'ın `interceptor` motorunda Exospheric (atmosfer dışı) kinetik önleme konseptleri simüle edilmektedir.
+-   **Savunma Yaklaşımı:** Klasik hava hedeflerinden ziyade, yerçekimi ivmesi ve yanma sonu hızı hesaplarına göre çok önceden düşüş noktası projeksiyonu çizmek gerekir. ARGUS'ın `interceptor` motorunda Exospheric (atmosfer dışı) kinetik önleme konseptleri simüle edilmektedir.
 
 ### 4.3 Elektronik Harp (Jamming) & Sinyal Karıştırıcılar
 -   **Tanım:** Özel modifiye edilmiş savaş uçaklarının hedefe radar "hayaletleri" yansıtması (`is_ghost`).
--   **Savunma Yaklaşımı:** GökKalkan'ın radar modülü bunu anında tespit eder, ekranda siberpunk bir uyarı fırlatır (`WARNING: EW JAMMING DETECTED`) ve "Glitching" efektiyle komutanı, hedefin sahte olabileceğine karşı uyarır.
+-   **Savunma Yaklaşımı:** ARGUS'ın radar modülü bunu anında tespit eder, ekranda siberpunk bir uyarı fırlatır (`WARNING: EW JAMMING DETECTED`) ve "Glitching" efektiyle komutanı, hedefin sahte olabileceğine karşı uyarır.
 
 ### 4.4 Lazer Nokta Savunma (CIWS)
 -   **Tanım:** Kinetik füzelerin tükendiği veya aşırı yakına giren hedefler için 15km menzilli Işık Hızı silahları.
--   **Savunma Yaklaşımı:** BVR (Görüş Ötesi) çarpışmalar yeterli olmadığında GökKalkan, 3D Taktik Sahada yeşil `THREE.Line` lazerlerini ateşleyerek hedefi anında imha eder. Füzeler tükense de lazer jeneratörü ateş etmeye devam eder.
+-   **Savunma Yaklaşımı:** BVR (Görüş Ötesi) çarpışmalar yeterli olmadığında ARGUS, 3D Taktik Sahada yeşil `THREE.Line` lazerlerini ateşleyerek hedefi anında imha eder. Füzeler tükense de lazer jeneratörü ateş etmeye devam eder.
 
 ### 4.5 Elektromanyetik Darbe (EMP) Silahı
 -   **Tanım:** Kritik üs savunmasının çöktüğü anlarda başvurulan devasa bir taktiksel enerji darbesi.
@@ -223,7 +223,7 @@ GökKalkan, statik hedefleri vurmak için değil, günümüzün asimetrik ve kar
 
 ### 4.10 Hipersonik Tehditler (Mach 5+)
 -   **Tanım:** Geleneksel füzelerin yakalayamayacağı kadar hızlı (Mach 5 - Mach 8) seyreden gelişmiş mühimmatlar.
--   **Savunma Yaklaşımı:** GökKalkan v10.0, hipersonik hedeflerin yüksek ısı imzasını ve plazma izini simüle eder. Radar modülündeki `is_hypersonic` bayrağı ile bu hedefler anında tespit edilir ve C2 paneline "HYPERSONIC ALERT" uyarısı düşer.
+-   **Savunma Yaklaşımı:** ARGUS v10.0, hipersonik hedeflerin yüksek ısı imzasını ve plazma izini simüle eder. Radar modülündeki `is_hypersonic` bayrağı ile bu hedefler anında tespit edilir ve C2 paneline "HYPERSONIC ALERT" uyarısı düşer.
 
 ### 4.11 Stratejik Analiz ve C5ISR Orkestrasyonu
 -   **Tanım:** Sadece hedefleri vurmak yerine, tüm savaş sahasını bir ağ olarak analiz etmek.
@@ -233,7 +233,7 @@ GökKalkan, statik hedefleri vurmak için değil, günümüzün asimetrik ve kar
 
 ## 📡 5. BÖLÜM: Ağ Merkezli Harp (NCW) ve Siber Güvenlik Doktrinleri (C5ISR)
 
-Modern hava savunması, füzelerin ne kadar hızlı uçtuğundan çok, bilginin birimler arasında ne kadar hızlı ve güvenli dolaştığına bağlıdır. GökKalkan AI, askeri standartlarda C5ISR (Command, Control, Computers, Communications, Cyber, Intelligence, Surveillance, and Reconnaissance) mimarisine doğru evrilmektedir:
+Modern hava savunması, füzelerin ne kadar hızlı uçtuğundan çok, bilginin birimler arasında ne kadar hızlı ve güvenli dolaştığına bağlıdır. ARGUS AI, askeri standartlarda C5ISR (Command, Control, Computers, Communications, Cyber, Intelligence, Surveillance, and Reconnaissance) mimarisine doğru evrilmektedir:
 
 ### 5.1 Sıfır Güven Mimarisi (Zero Trust Architecture)
 Sistem içindeki hiçbir alt donanım (Radar, Atış Kontrol Bilgisayarı, Batarya veya Dış Telemetri Akışı) doğuştan güvenilir kabul edilmez.
@@ -243,7 +243,7 @@ Sistem içindeki hiçbir alt donanım (Radar, Atış Kontrol Bilgisayarı, Batar
 ### 5.2 Sensör Füzyonu ve Bilişsel Radarlar (Cognitive Radars)
 Sadece Kalman Filtresi değil, yapay zekanın radyo dalgalarıyla doğrudan iletişim kurduğu **Sensör Füzyonu** devrinin kapıları aralanıyor:
 - **RF Zeka (Radio Frequency Intelligence):** Hedefin yalnızca radar yansıması değil, emitör sınıfı (üzerindeki elektronik cihazların frekans salınımı) dinlenerek teşhis edilir (ESM - Elektronik Destek Tedbirleri).
-- **Adaptif Dalga Şekillendirme:** GökKalkan, hedefin hızına göre radar dalga boyunu mikro saniyeler içinde değiştirerek karşı taraftaki tehdidin RWR (Radar Uyarı Alıcısı) sistemlerini aldatmayı hedefler.
+- **Adaptif Dalga Şekillendirme:** ARGUS, hedefin hızına göre radar dalga boyunu mikro saniyeler içinde değiştirerek karşı taraftaki tehdidin RWR (Radar Uyarı Alıcısı) sistemlerini aldatmayı hedefler.
 
 ---
 
@@ -265,7 +265,7 @@ Projeyi teknik derinliğiyle kavrayabilmek için askeri jargon:
 
 ## 🛣️ 7. BÖLÜM: GELECEK VİZYONU VE YOL HARİTASI (ROADMAP)
 
-GökKalkan AI, durağan bir sistem değil, sürekli gelişen bir organizmadır. Planlanan büyük güncellemeler:
+ARGUS AI, durağan bir sistem değil, sürekli gelişen bir organizmadır. Planlanan büyük güncellemeler:
 
 - [x] **v1.0**: Temel Radar ve Önleyici yapısının kurulması.
 - [x] **v2.0**: Kalman Filtresi ile yörünge tahmini ve düzeltme adaptasyonu.
@@ -303,7 +303,7 @@ cd teknofest_hava_savunma
 
 ### 2) Mühimmat ve Sensör Uyumlandırılması (Dependencies)
 
-GökKalkan AI, yüksek performanslı matris çarpımları ve AI eğitimleri için modern Python kütüphanelerine dayanır:
+ARGUS AI, yüksek performanslı matris çarpımları ve AI eğitimleri için modern Python kütüphanelerine dayanır:
 ```bash
 # Python 3.10 veya üzeri önerilir.
 pip install -r requirements.txt
@@ -341,7 +341,7 @@ Ana Python dosyası çalışırken tarayıcınızı açın ve gerçek zamanlı r
 
 <br/>
 
-**Hava savunma, bir milletin gökyüzündeki imzasıdır. GökKalkan AI, bu imzanın dijital mürekkebi olmak için geliştirilmiştir.**
+**Hava savunma, bir milletin gökyüzündeki imzasıdır. ARGUS AI, bu imzanın dijital mürekkebi olmak için geliştirilmiştir.**
 <br/>
 <br/>
 <h3 align="center"><i>"Türkiye Yüzyılı'nda, Gök Vatan Emin Ellerde!"</i></h3>

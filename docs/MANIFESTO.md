@@ -1,7 +1,7 @@
-# 🇹🇷 GökKalkan YZ: Milli Teknoloji Manifestosu
+# 🇹🇷 ARGUS YZ: Milli Teknoloji Manifestosu
 
 ## 1. Vizyon
-GökKalkan YZ, sadece satırlardan oluşan bir kod değil; bağımsız bir geleceğin, hür bir gökyüzünün ve "Tam Bağımsız Türkiye" idealinin dijital bir yansımasıdır. 
+ARGUS YZ, sadece satırlardan oluşan bir kod değil; bağımsız bir geleceğin, hür bir gökyüzünün ve "Tam Bağımsız Türkiye" idealinin dijital bir yansımasıdır. 
 
 ## 2. İlkeler
 - **Yerlilik:** Algoritmalarımızın her satırı, bu toprakların mühendislik birikimiyle yoğrulmuştur.
@@ -14,5 +14,5 @@ TEKNOFEST ruhunu, kodun her hücresinde yaşatmak ve Türk gençliğinin teknolo
 > "Gök vatanın bekçisi, milli yazılımın gücü!"
 
 ---
-**GökKalkan Proje Ekibi**
+**ARGUS Proje Ekibi**
 *Baş Sistem Mimarı: Bahattin Yunus Çetin*

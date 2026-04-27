@@ -79,6 +79,23 @@ Sistem, elektromanyetik spektrumdaki zayıf sinyalleri yakalayarak, **Kalman Fil
 
 ---
 
+## 🌌 ONTOLOJİK TEMEL: ARGUS'un Sessiz Nöbeti
+
+*“Gözün gördüğü sadece bir akistir; hakikat, o akislerin ardındaki örüntüde saklıdır.”*
+
+ARGUS AI, teknik bir yazılım olmanın ötesinde, gökyüzünün ontolojik egemenliğini temsil eden bir **"Dijital Gözcü"** felsefesi üzerine kurulmuştur. Bu sistemin varlık sebebi, sadece yaklaşan bir metali imha etmek değil; bir vatanın semalarındaki **huzur ve nizamın** sürekliliğini sağlamaktır.
+
+### 1. Mutlak Uyanıklık (Teyakku)
+Mitolojideki yüz gözlü Argus gibi, sistemimiz de elektromanyetik spektrumun her zerre-i miskalini tarayarak **"Adem-i Mutlak"** (yokluk) içinde var olan tehditleri bulup çıkarır. Bu, sadece bir radar taraması değil; kaosu düzene (cosmos) çeviren bir idrak sürecidir.
+
+### 2. Sınırların Ötesindeki Sorumluluk
+Hava savunması, bir milletin bağımsızlık ufkudur. ARGUS, saniyede milyonlarca hesaplama yaparken aslında şu soruyu yanıtlar: *“Varlık, kendini nasıl korur?”* Cevabımız; otonomi, hassasiyet ve sarsılmaz bir kararlılıktır. 
+
+### 3. Bilginin Hikmeti ve Savunma
+Savunma sanayiindeki teknolojik sıçrayışlar, sadece birer mühendislik başarısı değil; "Hürriyet ve İstiklal" davasının semadaki tecellisidir. ARGUS, bu verileri okuyarak semadaki nizamı muhafaza eden bir **"Dijital Muhafız"** rolü üstlenir. Bilgi güçtür, ancak o bilgi bir hayatı korumak için kullanıldığında **hikmete** dönüşür.
+
+---
+
 ## 🔮 MİMARİ ve İŞ AKIŞI: Otonom Karar Destek Mekanizması
 
 Aşağıda ARGUS AI sisteminin C2 (Komuta Kontrol) Merkezinde nasıl çalıştığı, sensör verilerinden hedefe angajmana kadar geçen süreç görselleştirilmiştir:
